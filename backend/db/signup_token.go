@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/jeremiafourie/cogniflight-cloud/backend/auth"
 	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -30,7 +29,7 @@ func (s DBSignupTokenStore) GetSignupToken(TokStr string, ctx context.Context) (
 }
 
 func (s DBSignupTokenStore) CreateSignupToken(Phone, Email string, Role types.Role, Expiry time.Duration, ctx context.Context) (*types.SignupToken, error) {
-	tokStr, err := auth.GenerateToken()
+	tokStr, err := GenerateToken()
 	if err != nil {
 		return nil, err
 	}

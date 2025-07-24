@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jeremiafourie/cogniflight-cloud/backend/testutil"
 	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -56,7 +57,7 @@ func (s *FakeSignupTokenStore) GetSignupToken(TokStr string, ctx context.Context
 }
 
 func TestCreateSignupToken(t *testing.T) {
-	r := InitTestEngine()
+	r := testutil.InitTestEngine()
 
 	tokenStore := FakeSignupTokenStore{}
 	r.POST("/create-signup-token", CreateSignupToken(&tokenStore))
@@ -73,7 +74,7 @@ func TestCreateSignupToken(t *testing.T) {
 
 		for i, body := range badBodies {
 			t.Run(fmt.Sprintf("Case %d", i), func(t *testing.T) {
-				w := FakeRequest(t, r, "POST", body, "/create-signup-token", nil)
+				w := testutil.FakeRequest(t, r, "POST", body, "/create-signup-token", nil)
 
 				t.Logf("Request body: %q", body)
 				if w.Result().StatusCode != 400 {
@@ -91,7 +92,7 @@ func TestCreateSignupToken(t *testing.T) {
 
 		for i, body := range goodBodies {
 			t.Run(fmt.Sprintf("Case %d", i), func(t *testing.T) {
-				w := FakeRequest(t, r, "POST", body, "/create-signup-token", nil)
+				w := testutil.FakeRequest(t, r, "POST", body, "/create-signup-token", nil)
 
 				t.Logf("Request body: %q", body)
 				if w.Result().StatusCode != 201 {
@@ -116,14 +117,14 @@ func TestSignup(t *testing.T) {
 		t.Fatalf("TokenStore returned err: %v", err)
 	}
 
-	userStore := FakeUserStore{}
-	sessionStore := FakeSessionStore{}
+	userStore := testutil.FakeUserStore{}
+	sessionStore := testutil.FakeSessionStore{}
 
-	r := InitTestEngine()
+	r := testutil.InitTestEngine()
 	r.POST("/signup", Signup(&userStore, &tokenStore, &sessionStore))
 
 	t.Run("No body is 400", func(t *testing.T) {
-		w := FakeRequest(t, r, "POST", "", "/signup", nil)
+		w := testutil.FakeRequest(t, r, "POST", "", "/signup", nil)
 
 		if w.Result().StatusCode != 400 {
 			t.Errorf("Wrong StatusCode: want %d got %d", 400, w.Result().StatusCode)
@@ -132,7 +133,7 @@ func TestSignup(t *testing.T) {
 
 	t.Run("No pwd is 400", func(t *testing.T) {
 		body := fmt.Sprintf(`{"tokStr": "%s"}`, pilotTok.TokStr)
-		w := FakeRequest(t, r, "POST", body, "/signup", nil)
+		w := testutil.FakeRequest(t, r, "POST", body, "/signup", nil)
 
 		if w.Result().StatusCode != 400 {
 			t.Errorf("Wrong StatusCode: want %d got %d", 400, w.Result().StatusCode)
@@ -141,7 +142,7 @@ func TestSignup(t *testing.T) {
 
 	t.Run("Valid request", func(t *testing.T) {
 		body := fmt.Sprintf(`{"tokStr": "%s", "pwd": "123pizza", "name": "John Doe"}`, pilotTok.TokStr)
-		w := FakeRequest(t, r, "POST", body, "/signup", nil)
+		w := testutil.FakeRequest(t, r, "POST", body, "/signup", nil)
 
 		if w.Result().StatusCode != 201 {
 			t.Errorf("Wrong StatusCode: want %d got %d", 201, w.Result().StatusCode)
@@ -167,7 +168,7 @@ func TestSignup(t *testing.T) {
 
 	t.Run("Wrong token string", func(t *testing.T) {
 		body := `{"tokStr": "wrong", "pwd": "123pizza", "name": "John Doe"}`
-		w := FakeRequest(t, r, "POST", body, "/signup", nil)
+		w := testutil.FakeRequest(t, r, "POST", body, "/signup", nil)
 
 		if w.Result().StatusCode != 401 {
 			t.Errorf("Wrong StatusCode: want %d got %d", 401, w.Result().StatusCode)

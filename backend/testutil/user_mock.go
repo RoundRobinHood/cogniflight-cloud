@@ -1,14 +1,10 @@
-package auth
+package testutil
 
 import (
 	"context"
-	"net/http/httptest"
-	"strings"
-	"testing"
 	"time"
 
-	"github.com/RoundRobinHood/jlogging"
-	"github.com/gin-gonic/gin"
+	"github.com/jeremiafourie/cogniflight-cloud/backend/db"
 	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -63,7 +59,7 @@ func (s *FakeSessionStore) CreateSession(UserID primitive.ObjectID, Role types.R
 	s.CreateCalled = true
 	s.UserID = UserID
 	s.Role = Role
-	sessID, err := GenerateToken()
+	sessID, err := db.GenerateToken()
 	if err != nil {
 		return nil, err
 	}
@@ -98,29 +94,4 @@ func (s FakeSessionStore) GetSession(SessID string, ctx context.Context) (*types
 	} else {
 		return &session, nil
 	}
-}
-
-func FakeRequest(t testing.TB, r *gin.Engine, method, body, uri string, headers map[string]string) *httptest.ResponseRecorder {
-	t.Helper()
-
-	req := httptest.NewRequest(method, uri, strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	if headers != nil {
-		for key, val := range headers {
-			req.Header.Set(key, val)
-		}
-	}
-
-	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-
-	return w
-}
-
-func InitTestEngine() *gin.Engine {
-	gin.SetMode(gin.TestMode)
-	r := gin.New()
-
-	r.Use(jlogging.Middleware())
-	return r
 }
