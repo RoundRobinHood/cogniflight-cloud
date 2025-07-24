@@ -8,9 +8,12 @@ import (
 )
 
 type EdgeNode struct {
-	ID     primitive.ObjectID `bson:"_id,omitempty"`
-	MAC    string             `bson:"mac"`
-	APIKey string             `bson:"apiKey"`
+	ID        primitive.ObjectID `bson:"_id,omitempty"`
+	MAC       string             `bson:"mac"`
+	APIKey    string             `bson:"apiKey"`
+	PlaneInfo struct {
+		TailNr string `bson:"tailNumber"`
+	} `bson:"planeInfo"`
 }
 
 var ErrNodeNotExist = errors.New("Edge node does not exist")
