@@ -25,7 +25,7 @@ type PilotInfo struct {
 		CabinTempPref struct {
 			OptimalTemp    float64 `bson:"optimalTemperature" json:"optimalTemperature"`
 			ToleranceRange float64 `bson:"toleranceRange" json:"toleranceRange"`
-		} `bson:"cabinTemperaturPreferences" json:"cabinTemperaturPreferences"`
+		} `bson:"cabinTemperaturePreferences" json:"cabinTemperaturePreferences"`
 		NoiseSensitivity string `bson:"noiseSensitivity" json:"noiseSensitivity"`
 		LightSensitivity string `bson:"lightSensitivity" json:"lightSensitivity"`
 	} `bson:"environmentPreferences" json:"environmentPreferences"`

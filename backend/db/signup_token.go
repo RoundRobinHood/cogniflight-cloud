@@ -28,7 +28,7 @@ func (s DBSignupTokenStore) GetSignupToken(TokStr string, ctx context.Context) (
 	return &result, nil
 }
 
-func (s DBSignupTokenStore) CreateSignupToken(Phone, Email string, Role types.Role, Expiry time.Duration, ctx context.Context) (*types.SignupToken, error) {
+func (s DBSignupTokenStore) CreateSignupToken(Phone, Email string, Role types.Role, PilotInfo *types.PilotInfo, Expiry time.Duration, ctx context.Context) (*types.SignupToken, error) {
 	tokStr, err := GenerateToken()
 	if err != nil {
 		return nil, err
@@ -39,6 +39,7 @@ func (s DBSignupTokenStore) CreateSignupToken(Phone, Email string, Role types.Ro
 		Email:     Email,
 		Phone:     Phone,
 		Role:      Role,
+		PilotInfo: PilotInfo,
 		CreatedAt: time.Now(),
 		Expires:   time.Now().Add(Expiry),
 	}

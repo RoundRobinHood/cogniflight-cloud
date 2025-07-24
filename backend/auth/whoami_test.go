@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/testutil"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,7 +16,7 @@ import (
 func TestWhoami(t *testing.T) {
 
 	userStore := &testutil.FakeUserStore{}
-	if hashed, err := HashPwd("123pizza"); err != nil {
+	if hashed, err := db.HashPwd("123pizza"); err != nil {
 		t.Fatalf("Failed to hash pwd: %s", err)
 	} else {
 		userStore.CreateUser(types.User{
@@ -35,7 +36,7 @@ func TestWhoami(t *testing.T) {
 	}
 
 	r := testutil.InitTestEngine()
-	r.GET("/whoami", AuthMiddleware(sessionStore, map[types.Role]struct{}{types.RolePilot: {}}), WhoAmI(sessionStore, userStore))
+	r.GET("/whoami", UserAuthMiddleware(sessionStore, map[types.Role]struct{}{types.RolePilot: {}}), WhoAmI(sessionStore, userStore))
 
 	t.Run("Valid credentials", func(t *testing.T) {
 		w := testutil.FakeRequest(t, r, "GET", "", "/whoami", map[string]string{"Cookie": "sessid=" + sess.SessID})

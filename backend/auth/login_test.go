@@ -5,13 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/testutil"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestLogin(t *testing.T) {
-	hash_pwd, err := HashPwd("123pizza")
+	hash_pwd, err := db.HashPwd("123pizza")
 	if err != nil {
 		t.Fatalf("HashPwd error: %v", err)
 	}

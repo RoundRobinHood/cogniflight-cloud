@@ -62,7 +62,7 @@ func main() {
 							phone := os.Getenv("BOOTSTRAP_PHONE")
 							pwd := os.Getenv("BOOTSTRAP_PWD")
 
-							hashed_pwd, err := auth.HashPwd(pwd)
+							hashed_pwd, err := db.HashPwd(pwd)
 							if err != nil {
 								fmt.Fprintln(os.Stderr, "Failed to hash pwd: ", err)
 								return

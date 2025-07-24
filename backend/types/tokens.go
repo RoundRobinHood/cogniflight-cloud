@@ -14,6 +14,7 @@ type SignupToken struct {
 	Email     string             `bson:"email"`
 	Phone     string             `bson:"phone"`
 	Role      Role               `bson:"role"`
+	PilotInfo *PilotInfo         `bson:"pilotInfo"`
 	CreatedAt time.Time          `bson:"createdAt"`
 	Expires   time.Time          `bson:"expires"`
 }
@@ -21,6 +22,6 @@ type SignupToken struct {
 var ErrSignupTokenNotExist = errors.New("Signup token does not exist")
 
 type SignupTokenStore interface {
-	CreateSignupToken(Phone, Email string, Role Role, Expiry time.Duration, ctx context.Context) (*SignupToken, error)
+	CreateSignupToken(Phone, Email string, Role Role, PilotInfo *PilotInfo, Expiry time.Duration, ctx context.Context) (*SignupToken, error)
 	GetSignupToken(TokStr string, ctx context.Context) (*SignupToken, error)
 }
