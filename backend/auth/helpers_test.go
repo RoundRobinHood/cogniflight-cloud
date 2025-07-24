@@ -29,6 +29,16 @@ func (s *FakeUserStore) GetUserByEmail(email string, ctx context.Context) (*type
 	}
 }
 
+func (s *FakeUserStore) GetUserByID(ID primitive.ObjectID, ctx context.Context) (*types.User, error) {
+	for _, user := range s.Users {
+		if user.ID == ID {
+			return &user, nil
+		}
+	}
+
+	return nil, types.ErrUserNotExist
+}
+
 func (s *FakeUserStore) CreateUser(User types.User, ctx context.Context) (*types.User, error) {
 	if s.Users == nil {
 		s.Users = map[string]types.User{}
@@ -61,8 +71,9 @@ func (s *FakeSessionStore) CreateSession(UserID primitive.ObjectID, Role types.R
 	if s.Sessions == nil {
 		s.Sessions = map[string]types.Session{}
 	}
+	ID := primitive.NewObjectID()
 	s.Sessions[sessID] = types.Session{
-		ID:        primitive.NewObjectID(),
+		ID:        ID,
 		SessID:    sessID,
 		UserID:    UserID,
 		Role:      Role,
@@ -71,11 +82,11 @@ func (s *FakeSessionStore) CreateSession(UserID primitive.ObjectID, Role types.R
 
 	s.SessID = sessID
 	return &types.Session{
-		ID:        primitive.NewObjectID(),
+		ID:        ID,
+		SessID:    sessID,
 		UserID:    UserID,
 		Role:      Role,
 		CreatedAt: time.Now(),
-		SessID:    sessID,
 	}, nil
 }
 

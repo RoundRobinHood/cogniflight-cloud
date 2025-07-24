@@ -33,9 +33,18 @@ type User struct {
 	CreatedAt    time.Time          `bson:"createdAt"`
 }
 
+type UserInfo struct {
+	ID    primitive.ObjectID `json:"id"`
+	Name  string             `json:"name"`
+	Email string             `json:"email"`
+	Phone string             `json:"phone"`
+	Role  Role               `json:"role"`
+}
+
 var ErrUserNotExist = errors.New("User does not exist")
 
 type UserStore interface {
 	GetUserByEmail(email string, ctx context.Context) (*User, error)
+	GetUserByID(ID primitive.ObjectID, ctx context.Context) (*User, error)
 	CreateUser(User User, ctx context.Context) (*User, error)
 }

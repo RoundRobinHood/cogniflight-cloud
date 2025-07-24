@@ -102,6 +102,11 @@ func main() {
 	r.POST("/login", auth.Login(userStore, sessionStore))
 	r.POST("/signup-token", auth.AuthMiddleware(sessionStore, map[types.Role]struct{}{types.RoleSysAdmin: {}}), auth.CreateSignupToken(signupTokenStore))
 	r.POST("/signup", auth.Signup(userStore, signupTokenStore, sessionStore))
+	r.GET("/whoami", auth.AuthMiddleware(sessionStore, map[types.Role]struct{}{
+		types.RoleSysAdmin: {},
+		types.RoleATC:      {},
+		types.RolePilot:    {},
+	}), auth.WhoAmI(sessionStore, userStore))
 
 	server := &http.Server{
 		Addr:    ":8080",

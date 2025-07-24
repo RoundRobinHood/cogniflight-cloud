@@ -27,6 +27,20 @@ func (s DBUserStore) GetUserByEmail(email string, ctx context.Context) (*types.U
 	return &result, nil
 }
 
+func (s DBUserStore) GetUserByID(ID primitive.ObjectID, ctx context.Context) (*types.User, error) {
+	var result types.User
+	err := s.Col.FindOne(ctx, bson.M{"_id": ID}).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, types.ErrUserNotExist
+		} else {
+			return nil, err
+		}
+	}
+
+	return &result, nil
+}
+
 func (s DBUserStore) CreateUser(User types.User, ctx context.Context) (*types.User, error) {
 	inserted, err := s.Col.InsertOne(ctx, &User)
 	if err != nil {

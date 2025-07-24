@@ -46,6 +46,8 @@ func Login(u types.UserStore, s types.SessionStore) gin.HandlerFunc {
 			return
 		}
 
+		l.Set("email", req.Email)
+
 		user, err := u.GetUserByEmail(req.Email, c.Request.Context())
 		if err != nil {
 			c.Status(401)

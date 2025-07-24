@@ -67,14 +67,18 @@ services:
     build: ./backend
     restart: unless-stopped
     environment:
+      ENV: "${ENV:-development}"
       MONGO_URI: "${MONGO_URI:-mongodb://ohno:${MONGO_PWD:-rootpass}@mongo:27017/?authSource=admin}"
-      INFLUX_URL: "${INFLUXDB_URL:-http:influxdb:8086}"
+      INFLUX_URL: "${INFLUXDB_URL:-http://influxdb:8086}"
       MQTT_URI: "${MQTTS_URL:-mosquitto:8883}"
       MQTT_INSECURE_SKIP_VERIFY: "${INSECURE_SKIP_VERIFY_MQTT:-true}"
       BOOTSTRAP_USERNAME: "${BOOTSTRAP_USERNAME}"
       BOOTSTRAP_EMAIL: "${BOOTSTRAP_EMAIL}"
       BOOTSTRAP_PHONE: "${BOOTSTRAP_PHONE}"
       BOOTSTRAP_PWD: "${BOOTSTRAP_PWD}"
+
+      SERVER_DOMAIN: "${SERVER_DOMAIN:-localhost}"
+      TRUSTED_PROXIES: "${TRUSTED_PROXIES:-frontend}"
     ports:
       - 8080:8080
     develop:
@@ -84,4 +88,26 @@ services:
           target: /app
     profiles:
       - backend
+
+  frontend:
+    build: 
+      context: ./frontend
+      target: "${ENV:-development}"
+      args:
+        NODE_ENV: "${ENV:-development}"
+        # Very likely that this flexibility isn't necessary, just good practice
+        API_PREFIX: "${API_PREFIX:-/api}"
+    restart: unless-stopped
+    environment:
+      # This turns the vite frontend into reverse proxy (useful for local dev)
+      BACKEND_URL: "${BACKEND_URL:-http://backend:8080}"
+      __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: "${SERVER_DOMAIN:-localhost}"
+      BIND_IP: 0.0.0.0 # Don't change
+    ports:
+      - 5173:1024
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
 
