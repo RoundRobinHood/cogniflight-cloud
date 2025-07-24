@@ -1,9 +1,9 @@
 package auth
 
 import (
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
 )
 
 func WhoAmI(s types.SessionStore, u types.UserStore) gin.HandlerFunc {

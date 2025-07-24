@@ -1,4 +1,4 @@
-module github.com/jeremiafourie/cogniflight-cloud/backend
+module github.com/RoundRobinHood/cogniflight-cloud/backend
 
 go 1.24.2
 

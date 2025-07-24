@@ -18,5 +18,6 @@ var ErrNodeNotExist = errors.New("Edge node does not exist")
 type EdgeNodeStore interface {
 	GetNodeByMAC(MAC string, ctx context.Context) (*EdgeNode, error)
 	GetNodeByID(ID primitive.ObjectID, ctx context.Context) (*EdgeNode, error)
+	GetNodeByKey(APIKey string, ctx context.Context) (*EdgeNode, error)
 	CreateEdgeNode(node EdgeNode, ctx context.Context) (*EdgeNode, error)
 }

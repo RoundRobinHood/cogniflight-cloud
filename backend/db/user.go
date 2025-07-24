@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

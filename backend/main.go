@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/auth"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/db"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -100,9 +100,9 @@ func main() {
 	r.Use(jlogging.Middleware())
 
 	r.POST("/login", auth.Login(userStore, sessionStore))
-	r.POST("/signup-token", auth.AuthMiddleware(sessionStore, map[types.Role]struct{}{types.RoleSysAdmin: {}}), auth.CreateSignupToken(signupTokenStore))
+	r.POST("/signup-token", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{types.RoleSysAdmin: {}}), auth.CreateSignupToken(signupTokenStore))
 	r.POST("/signup", auth.Signup(userStore, signupTokenStore, sessionStore))
-	r.GET("/whoami", auth.AuthMiddleware(sessionStore, map[types.Role]struct{}{
+	r.GET("/whoami", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
 		types.RoleSysAdmin: {},
 		types.RoleATC:      {},
 		types.RolePilot:    {},

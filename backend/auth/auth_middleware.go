@@ -1,12 +1,12 @@
 package auth
 
 import (
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
 )
 
-func AuthMiddleware(s types.SessionStore, allowedRoles map[types.Role]struct{}) gin.HandlerFunc {
+func UserAuthMiddleware(s types.SessionStore, allowedRoles map[types.Role]struct{}) gin.HandlerFunc {
 	if allowedRoles == nil {
 		panic("allowedRoles == nil on AuthMiddleware")
 	}

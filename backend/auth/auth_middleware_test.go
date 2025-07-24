@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/testutil"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/gin-gonic/gin"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/testutil"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -23,7 +23,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	r := testutil.InitTestEngine()
-	r.GET("/ping", AuthMiddleware(sessionStore, map[types.Role]struct{}{types.RolePilot: {}}), func(c *gin.Context) {
+	r.GET("/ping", UserAuthMiddleware(sessionStore, map[types.Role]struct{}{types.RolePilot: {}}), func(c *gin.Context) {
 		c.String(200, "pong!")
 	})
 

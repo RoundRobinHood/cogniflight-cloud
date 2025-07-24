@@ -5,9 +5,9 @@ import (
 	"encoding/base64"
 	"os"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
 	"golang.org/x/crypto/bcrypt"
 )
 
