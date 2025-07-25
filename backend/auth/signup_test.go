@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/testutil"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -20,7 +20,7 @@ type FakeSignupTokenStore struct {
 }
 
 func (s *FakeSignupTokenStore) CreateSignupToken(Phone, Email string, Role types.Role, pilotInfo *types.PilotInfo, Expiry time.Duration, ctx context.Context) (*types.SignupToken, error) {
-	tokStr, err := db.GenerateToken()
+	tokStr, err := util.GenerateToken()
 	s.CreateCalled = true
 
 	if err != nil {

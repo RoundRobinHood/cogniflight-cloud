@@ -13,6 +13,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -62,7 +63,7 @@ func main() {
 							phone := os.Getenv("BOOTSTRAP_PHONE")
 							pwd := os.Getenv("BOOTSTRAP_PWD")
 
-							hashed_pwd, err := db.HashPwd(pwd)
+							hashed_pwd, err := util.HashPwd(pwd)
 							if err != nil {
 								fmt.Fprintln(os.Stderr, "Failed to hash pwd: ", err)
 								return

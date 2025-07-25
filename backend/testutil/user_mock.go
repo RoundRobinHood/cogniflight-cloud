@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -59,7 +59,7 @@ func (s *FakeSessionStore) CreateSession(UserID primitive.ObjectID, Role types.R
 	s.CreateCalled = true
 	s.UserID = UserID
 	s.Role = Role
-	sessID, err := db.GenerateToken()
+	sessID, err := util.GenerateToken()
 	if err != nil {
 		return nil, err
 	}

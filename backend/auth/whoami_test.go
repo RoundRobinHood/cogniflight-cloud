@@ -7,16 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/testutil"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestWhoami(t *testing.T) {
 
 	userStore := &testutil.FakeUserStore{}
-	if hashed, err := db.HashPwd("123pizza"); err != nil {
+	if hashed, err := util.HashPwd("123pizza"); err != nil {
 		t.Fatalf("Failed to hash pwd: %s", err)
 	} else {
 		userStore.CreateUser(types.User{

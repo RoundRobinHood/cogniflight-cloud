@@ -4,8 +4,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
 )
@@ -71,7 +71,7 @@ func Signup(u types.UserStore, s types.SignupTokenStore, sess types.SessionStore
 			return
 		}
 
-		hashed_pwd, err := db.HashPwd(req.Pwd)
+		hashed_pwd, err := util.HashPwd(req.Pwd)
 		if err != nil {
 			c.JSON(500, gin.H{"error": "Internal error"})
 			l.Printf("Error occurred while hashing pwd: %v", err)

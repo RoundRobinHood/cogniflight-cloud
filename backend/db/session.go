@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,7 +30,7 @@ func (s DBSessionStore) GetSession(SessID string, ctx context.Context) (*types.S
 }
 
 func (s DBSessionStore) CreateSession(UserID primitive.ObjectID, Role types.Role, ctx context.Context) (*types.Session, error) {
-	sessID, err := GenerateToken()
+	sessID, err := util.GenerateToken()
 	if err != nil {
 		return nil, err
 	}

@@ -3,8 +3,8 @@ package auth
 import (
 	"os"
 
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
 )
@@ -31,7 +31,7 @@ func Login(u types.UserStore, s types.SessionStore) gin.HandlerFunc {
 			return
 		}
 
-		if db.CheckPwd(user.Pwd, req.Pwd) {
+		if util.CheckPwd(user.Pwd, req.Pwd) {
 			secure_session := false
 			if os.Getenv("IS_HTTPS") == "TRUE" {
 				secure_session = true
