@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/testutil"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
+	"github.com/RoundRobinHood/jlogging"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -39,6 +41,7 @@ func TestLogin(t *testing.T) {
 		w := testutil.FakeRequest(t, r, "POST", body, "/login", nil)
 
 		if w.Result().StatusCode != 200 {
+			fmt.Print(jlogging.TestLogStr)
 			t.Errorf("Wrong StatusCode: want %d, got %d", 200, w.Result().StatusCode)
 		}
 		if !sessionStore.CreateCalled {

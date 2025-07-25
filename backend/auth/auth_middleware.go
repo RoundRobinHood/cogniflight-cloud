@@ -58,6 +58,7 @@ func KeyAuthMiddleware(s types.APIKeyStore) gin.HandlerFunc {
 			} else {
 				c.AbortWithStatus(500)
 			}
+			return
 		}
 
 		c.Set("key", *key)

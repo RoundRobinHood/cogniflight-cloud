@@ -8,6 +8,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/testutil"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
+	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -33,6 +34,7 @@ func TestUserAuthMiddleware(t *testing.T) {
 		w := testutil.FakeRequest(t, r, "GET", "", "/ping", nil)
 
 		if w.Result().StatusCode != 401 {
+			fmt.Print(jlogging.TestLogStr)
 			t.Errorf("Wrong StatusCode, have: %d, want: %d", w.Result().StatusCode, 401)
 		}
 	})
@@ -40,6 +42,7 @@ func TestUserAuthMiddleware(t *testing.T) {
 		w := testutil.FakeRequest(t, r, "GET", "", "/ping", map[string]string{"Cookie": "sessid=" + sess.SessID})
 
 		if w.Result().StatusCode != 200 {
+			fmt.Print(jlogging.TestLogStr)
 			t.Errorf("Wrong StatusCode, have: %d, want: %d", w.Result().StatusCode, 200)
 		}
 	})
@@ -47,6 +50,7 @@ func TestUserAuthMiddleware(t *testing.T) {
 		w := testutil.FakeRequest(t, r, "GET", "", "/ping", map[string]string{"Cookie": "sessid=heh"})
 
 		if w.Result().StatusCode != 401 {
+			fmt.Print(jlogging.TestLogStr)
 			t.Errorf("Wrong StatusCode, have: %d, want: %d", w.Result().StatusCode, 401)
 		}
 	})
@@ -54,6 +58,7 @@ func TestUserAuthMiddleware(t *testing.T) {
 		w := testutil.FakeRequest(t, r, "GET", "", "/ping", map[string]string{"Cookie": "sessid=" + sess2.SessID})
 
 		if w.Result().StatusCode != 403 {
+			fmt.Print(jlogging.TestLogStr)
 			t.Errorf("Wrong StatusCode, have: %d, want: %d", w.Result().StatusCode, 403)
 		}
 	})
@@ -73,12 +78,14 @@ func TestKeyAuthMiddleware(t *testing.T) {
 		w := testutil.FakeRequest(t, r, "GET", "", "/ping", nil)
 
 		if w.Result().StatusCode != 401 {
+			fmt.Print(jlogging.TestLogStr)
 			t.Errorf("Wrong StatusCode, have: %d, want: %d", w.Result().StatusCode, 400)
 		}
 	})
 	t.Run("Request with non-bearer key 401", func(t *testing.T) {
 		w := testutil.FakeRequest(t, r, "GET", "", "/ping", map[string]string{"Authorization": "Basic abcbdefefef78723"})
 		if code := w.Result().StatusCode; code != 401 {
+			fmt.Print(jlogging.TestLogStr)
 			t.Errorf("Wrong StatusCode, have: %d, want: 401", code)
 		}
 	})
@@ -92,6 +99,7 @@ func TestKeyAuthMiddleware(t *testing.T) {
 		w := testutil.FakeRequest(t, r, "GET", "", "/ping", map[string]string{"Authorization": "Bearer " + keyStr})
 
 		if code := w.Result().StatusCode; code != 401 {
+			fmt.Print(jlogging.TestLogStr)
 			t.Errorf("Wrong StatusCode, have: %d, want 401", code)
 		}
 	})
@@ -99,6 +107,7 @@ func TestKeyAuthMiddleware(t *testing.T) {
 		w := testutil.FakeRequest(t, r, "GET", "", "/ping", map[string]string{"Authorization": "Bearer " + keyStr})
 
 		if code := w.Result().StatusCode; code != 200 {
+			fmt.Print(jlogging.TestLogStr)
 			t.Errorf("Wrong StatusCode, have: %d, want 200", code)
 		}
 	})
