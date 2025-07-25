@@ -76,9 +76,6 @@ func TestCreateSignupToken(t *testing.T) {
 			`{"phone": "271738749839"}`,
 			`{"role": "pilot"}`,
 
-			// Pilots need pilotInfo
-			`{"email": "example@gmail.com", "role": "pilot"}`,
-
 			// Other roles can't have pilotInfo
 			`{"email": "example@gmail.com", "role": "sysadmin", "pilotInfo": {
 				"faceEmbeddings": [],
@@ -112,6 +109,7 @@ func TestCreateSignupToken(t *testing.T) {
 		goodBodies := []string{
 			`{"email": "example@gmail.com", "role": "sysadmin"}`,
 			`{"phone": "271738749839", "role": "sysadmin"}`,
+			`{"email": "example@gmail.com", "role": "pilot"}`,
 			`{
 				"email": "example@gmail.com", 
 				"phone": "271738749839", 

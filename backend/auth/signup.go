@@ -25,12 +25,7 @@ func CreateSignupToken(s types.SignupTokenStore) gin.HandlerFunc {
 			return
 		}
 
-		if req.Role == types.RolePilot {
-			if req.PilotInfo == nil {
-				c.JSON(400, gin.H{"error": "Please provide pilot info if you are signing up a pilot"})
-				return
-			}
-		} else if req.PilotInfo != nil {
+		if req.Role != types.RolePilot && req.PilotInfo != nil {
 			c.JSON(400, gin.H{"error": "Cannot provide pilot info if the target role is not a pilot"})
 			return
 		}
