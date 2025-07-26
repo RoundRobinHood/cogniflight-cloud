@@ -50,3 +50,16 @@ func (s DBUserStore) CreateUser(User types.User, ctx context.Context) (*types.Us
 
 	return &User, nil
 }
+
+func (s DBUserStore) UpdateUser(ID primitive.ObjectID, update types.UserUpdate, ctx context.Context) (*types.User, error) {
+	var updated types.User
+	if err := s.Col.FindOneAndUpdate(ctx, bson.M{"_id": ID}, bson.M{"$set": update}).Decode(&updated); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, types.ErrUserNotExist
+		} else {
+			return nil, err
+		}
+	}
+
+	return &updated, nil
+}

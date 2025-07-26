@@ -12,6 +12,7 @@ import (
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/settings"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
@@ -108,6 +109,11 @@ func main() {
 		types.RoleATC:      {},
 		types.RolePilot:    {},
 	}), auth.WhoAmI(sessionStore, userStore))
+	r.PATCH("/settings", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
+		types.RoleSysAdmin: {},
+		types.RoleATC:      {},
+		types.RolePilot:    {},
+	}), settings.Settings(userStore))
 
 	server := &http.Server{
 		Addr:    ":8080",
