@@ -20,5 +20,5 @@ var ErrKeyInvalid = errors.New("API key is invalid")
 
 type APIKeyStore interface {
 	Authenticate(APIKey string, ctx context.Context) (*APIKey, error)
-	CreateKey(ctx context.Context) (string, *APIKey, error)
+	CreateKey(edgeID *primitive.ObjectID, ctx context.Context) (string, *APIKey, error)
 }

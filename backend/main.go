@@ -12,6 +12,9 @@ import (
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/edge"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/keys"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/pilot"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/settings"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
@@ -38,6 +41,8 @@ func main() {
 	userStore := db.DBUserStore{Col: database.Collection("users")}
 	sessionStore := db.DBSessionStore{Col: database.Collection("sessions")}
 	signupTokenStore := db.DBSignupTokenStore{Col: database.Collection("signup_tokens")}
+	nodeStore := db.DBEdgeNodeStore{Col: database.Collection("edge_nodes")}
+	keyStore := db.DBAPIKeyStore{Col: database.Collection("api_keys")}
 
 	go func() {
 		for {
@@ -102,7 +107,7 @@ func main() {
 	r.Use(jlogging.Middleware())
 
 	r.POST("/login", auth.Login(userStore, sessionStore))
-	r.POST("/signup-token", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{types.RoleSysAdmin: {}}), auth.CreateSignupToken(signupTokenStore))
+	r.POST("/signup-tokens", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{types.RoleSysAdmin: {}}), auth.CreateSignupToken(signupTokenStore))
 	r.POST("/signup", auth.Signup(userStore, signupTokenStore, sessionStore))
 	r.GET("/whoami", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
 		types.RoleSysAdmin: {},
@@ -114,6 +119,13 @@ func main() {
 		types.RoleATC:      {},
 		types.RolePilot:    {},
 	}), settings.Settings(userStore))
+	r.POST("/edge-nodes", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
+		types.RoleSysAdmin: {},
+	}), edge.CreateEdgeNode(nodeStore))
+	r.POST("/api-keys", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
+		types.RoleSysAdmin: {},
+	}), keys.CreateAPIKey(keyStore, nodeStore))
+	r.GET("/pilots/:id", auth.KeyAuthMiddleware(keyStore), pilot.FetchPilotByID(userStore))
 
 	server := &http.Server{
 		Addr:    ":8080",

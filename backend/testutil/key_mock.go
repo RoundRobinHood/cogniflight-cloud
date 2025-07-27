@@ -58,7 +58,7 @@ func (s *FakeAPIKeyStore) Authenticate(APIKey string, ctx context.Context) (*typ
 	}
 }
 
-func (s *FakeAPIKeyStore) CreateKey(ctx context.Context) (string, *types.APIKey, error) {
+func (s *FakeAPIKeyStore) CreateKey(edgeID *primitive.ObjectID, ctx context.Context) (string, *types.APIKey, error) {
 	if s.Keys == nil {
 		s.Keys = map[primitive.ObjectID]types.APIKey{}
 	}
@@ -67,6 +67,7 @@ func (s *FakeAPIKeyStore) CreateKey(ctx context.Context) (string, *types.APIKey,
 		return "", nil, err
 	}
 
+	keyObj.EdgeID = edgeID
 	s.Keys[keyObj.ID] = *keyObj
 	return fmt.Sprintf("%s-%x", keyObj.ID.Hex(), key), keyObj, nil
 }

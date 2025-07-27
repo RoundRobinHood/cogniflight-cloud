@@ -62,11 +62,13 @@ func (s DBAPIKeyStore) Authenticate(APIKey string, ctx context.Context) (*types.
 	}
 }
 
-func (s DBAPIKeyStore) CreateKey(ctx context.Context) (string, *types.APIKey, error) {
+func (s DBAPIKeyStore) CreateKey(edgeID *primitive.ObjectID, ctx context.Context) (string, *types.APIKey, error) {
 	key, keyObj, err := util.GenerateKey(ctx)
 	if err != nil {
 		return "", nil, err
 	}
+
+	keyObj.EdgeID = edgeID
 
 	_, err = s.Col.InsertOne(ctx, &keyObj)
 	if err != nil {
