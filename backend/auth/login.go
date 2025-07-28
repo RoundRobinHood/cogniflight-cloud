@@ -1,37 +1,13 @@
 package auth
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"os"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
-	"golang.org/x/crypto/bcrypt"
 )
-
-func GenerateToken() (string, error) {
-	bytes := make([]byte, 32)
-	_, err := rand.Read(bytes)
-	if err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(bytes), nil
-}
-
-func HashPwd(pwd string) (string, error) {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hashed), nil
-}
-
-func CheckPwd(hashedPwd, plainPwd string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPwd), []byte(plainPwd))
-	return err == nil
-}
 
 func Login(u types.UserStore, s types.SessionStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -55,7 +31,7 @@ func Login(u types.UserStore, s types.SessionStore) gin.HandlerFunc {
 			return
 		}
 
-		if CheckPwd(user.Pwd, req.Pwd) {
+		if util.CheckPwd(user.Pwd, req.Pwd) {
 			secure_session := false
 			if os.Getenv("IS_HTTPS") == "TRUE" {
 				secure_session = true

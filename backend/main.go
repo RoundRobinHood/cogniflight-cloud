@@ -10,11 +10,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/edge"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/keys"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/pilot"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/settings"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/auth"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/db"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -36,6 +41,8 @@ func main() {
 	userStore := db.DBUserStore{Col: database.Collection("users")}
 	sessionStore := db.DBSessionStore{Col: database.Collection("sessions")}
 	signupTokenStore := db.DBSignupTokenStore{Col: database.Collection("signup_tokens")}
+	nodeStore := db.DBEdgeNodeStore{Col: database.Collection("edge_nodes")}
+	keyStore := db.DBAPIKeyStore{Col: database.Collection("api_keys")}
 
 	go func() {
 		for {
@@ -62,7 +69,7 @@ func main() {
 							phone := os.Getenv("BOOTSTRAP_PHONE")
 							pwd := os.Getenv("BOOTSTRAP_PWD")
 
-							hashed_pwd, err := auth.HashPwd(pwd)
+							hashed_pwd, err := util.HashPwd(pwd)
 							if err != nil {
 								fmt.Fprintln(os.Stderr, "Failed to hash pwd: ", err)
 								return
@@ -100,13 +107,25 @@ func main() {
 	r.Use(jlogging.Middleware())
 
 	r.POST("/login", auth.Login(userStore, sessionStore))
-	r.POST("/signup-token", auth.AuthMiddleware(sessionStore, map[types.Role]struct{}{types.RoleSysAdmin: {}}), auth.CreateSignupToken(signupTokenStore))
+	r.POST("/signup-tokens", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{types.RoleSysAdmin: {}}), auth.CreateSignupToken(signupTokenStore))
 	r.POST("/signup", auth.Signup(userStore, signupTokenStore, sessionStore))
-	r.GET("/whoami", auth.AuthMiddleware(sessionStore, map[types.Role]struct{}{
+	r.GET("/whoami", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
 		types.RoleSysAdmin: {},
 		types.RoleATC:      {},
 		types.RolePilot:    {},
 	}), auth.WhoAmI(sessionStore, userStore))
+	r.PATCH("/settings", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
+		types.RoleSysAdmin: {},
+		types.RoleATC:      {},
+		types.RolePilot:    {},
+	}), settings.Settings(userStore))
+	r.POST("/edge-nodes", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
+		types.RoleSysAdmin: {},
+	}), edge.CreateEdgeNode(nodeStore))
+	r.POST("/api-keys", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
+		types.RoleSysAdmin: {},
+	}), keys.CreateAPIKey(keyStore, nodeStore))
+	r.GET("/pilots/:id", auth.KeyAuthMiddleware(keyStore), pilot.FetchPilotByID(userStore))
 
 	server := &http.Server{
 		Addr:    ":8080",

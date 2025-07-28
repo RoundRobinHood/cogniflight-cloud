@@ -1,16 +1,20 @@
 package auth
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/testutil"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
+	"github.com/RoundRobinHood/jlogging"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestLogin(t *testing.T) {
-	hash_pwd, err := HashPwd("123pizza")
+	hash_pwd, err := util.HashPwd("123pizza")
 	if err != nil {
 		t.Fatalf("HashPwd error: %v", err)
 	}
@@ -22,21 +26,22 @@ func TestLogin(t *testing.T) {
 		Role:      types.RolePilot,
 		CreatedAt: time.Now(),
 	}
-	userStore := FakeUserStore{
+	userStore := testutil.FakeUserStore{
 		Users: map[string]types.User{
 			"example@gmail.com": exampleUser,
 		},
 	}
-	sessionStore := &FakeSessionStore{}
+	sessionStore := &testutil.FakeSessionStore{}
 
-	r := InitTestEngine()
+	r := testutil.InitTestEngine()
 	r.POST("/login", Login(&userStore, sessionStore))
 
 	t.Run("Correct credentials", func(t *testing.T) {
 		body := `{"email": "example@gmail.com", "pwd": "123pizza"}`
-		w := FakeRequest(t, r, "POST", body, "/login", nil)
+		w := testutil.FakeRequest(t, r, "POST", body, "/login", nil)
 
 		if w.Result().StatusCode != 200 {
+			fmt.Print(jlogging.TestLogStr)
 			t.Errorf("Wrong StatusCode: want %d, got %d", 200, w.Result().StatusCode)
 		}
 		if !sessionStore.CreateCalled {
@@ -58,7 +63,7 @@ func TestLogin(t *testing.T) {
 	sessionStore.CreateCalled = false
 	t.Run("Incorrect password", func(t *testing.T) {
 		body := `{"email": "example@gmail.com", "pwd": "password"}`
-		w := FakeRequest(t, r, "POST", body, "/login", nil)
+		w := testutil.FakeRequest(t, r, "POST", body, "/login", nil)
 
 		if w.Result().StatusCode != 401 {
 			t.Errorf("Wrong StatusCode: want %d, got %d", 401, w.Result().StatusCode)
@@ -71,7 +76,7 @@ func TestLogin(t *testing.T) {
 	sessionStore.CreateCalled = false
 	t.Run("Malformed request body", func(t *testing.T) {
 		body := `{"email": "example@gmail.com", "pwd": "123pizza"`
-		w := FakeRequest(t, r, "POST", body, "/login", nil)
+		w := testutil.FakeRequest(t, r, "POST", body, "/login", nil)
 
 		if w.Result().StatusCode != 400 {
 			t.Errorf("Wrong StatusCode: want %d, got %d", 400, w.Result().StatusCode)

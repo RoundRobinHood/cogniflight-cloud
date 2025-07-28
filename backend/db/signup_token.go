@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/jeremiafourie/cogniflight-cloud/backend/auth"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,8 +29,8 @@ func (s DBSignupTokenStore) GetSignupToken(TokStr string, ctx context.Context) (
 	return &result, nil
 }
 
-func (s DBSignupTokenStore) CreateSignupToken(Phone, Email string, Role types.Role, Expiry time.Duration, ctx context.Context) (*types.SignupToken, error) {
-	tokStr, err := auth.GenerateToken()
+func (s DBSignupTokenStore) CreateSignupToken(Phone, Email string, Role types.Role, PilotInfo *types.PilotInfo, Expiry time.Duration, ctx context.Context) (*types.SignupToken, error) {
+	tokStr, err := util.GenerateToken()
 	if err != nil {
 		return nil, err
 	}
@@ -40,6 +40,7 @@ func (s DBSignupTokenStore) CreateSignupToken(Phone, Email string, Role types.Ro
 		Email:     Email,
 		Phone:     Phone,
 		Role:      Role,
+		PilotInfo: PilotInfo,
 		CreatedAt: time.Now(),
 		Expires:   time.Now().Add(Expiry),
 	}

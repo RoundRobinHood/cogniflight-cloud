@@ -1,4 +1,4 @@
-package auth
+package settings
 
 import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func WhoAmI(s types.SessionStore, u types.UserStore) gin.HandlerFunc {
+func Settings(u types.UserStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		l := jlogging.MustGet(c)
 		sess_get, ok := c.Get("sess")
@@ -15,18 +15,33 @@ func WhoAmI(s types.SessionStore, u types.UserStore) gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": "Internal error"})
 			return
 		}
-
 		sess := sess_get.(*types.Session)
-		l.Set("userID", sess.UserID)
-		user, err := u.GetUserByID(sess.UserID, c.Request.Context())
+
+		var update types.UserUpdate
+		if err := c.ShouldBindJSON(&update); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		if update.Role != "" {
+			c.JSON(403, gin.H{"error": "Not allowed to change own role in settings."})
+			return
+		}
+
+		if update.PilotInfo.Provided && sess.Role != types.RolePilot {
+			c.JSON(400, gin.H{"error": "Only pilots can change pilotInfo"})
+			return
+		}
+
+		user, err := u.UpdateUser(sess.UserID, update, c.Request.Context())
 		if err != nil {
-			l.Printf("Failed to get user from valid session: %s", err)
+			l.Printf("User update failed: %v", err)
 			c.JSON(500, gin.H{"error": "Internal error"})
 			return
 		}
 
 		c.JSON(200, types.UserInfo{
-			ID:        sess.UserID,
+			ID:        user.ID,
 			Name:      user.Name,
 			Email:     user.Email,
 			Phone:     user.Phone,

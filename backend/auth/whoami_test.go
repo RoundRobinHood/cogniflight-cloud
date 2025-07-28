@@ -7,14 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/testutil"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestWhoami(t *testing.T) {
 
-	userStore := &FakeUserStore{}
-	if hashed, err := HashPwd("123pizza"); err != nil {
+	userStore := &testutil.FakeUserStore{}
+	if hashed, err := util.HashPwd("123pizza"); err != nil {
 		t.Fatalf("Failed to hash pwd: %s", err)
 	} else {
 		userStore.CreateUser(types.User{
@@ -27,17 +29,17 @@ func TestWhoami(t *testing.T) {
 		}, context.Background())
 	}
 
-	sessionStore := &FakeSessionStore{}
+	sessionStore := &testutil.FakeSessionStore{}
 	sess, err := sessionStore.CreateSession(userStore.Created.ID, types.RolePilot, context.Background())
 	if err != nil {
 		t.Fatalf("SessionStore failed to create session: %v", err)
 	}
 
-	r := InitTestEngine()
-	r.GET("/whoami", AuthMiddleware(sessionStore, map[types.Role]struct{}{types.RolePilot: {}}), WhoAmI(sessionStore, userStore))
+	r := testutil.InitTestEngine()
+	r.GET("/whoami", UserAuthMiddleware(sessionStore, map[types.Role]struct{}{types.RolePilot: {}}), WhoAmI(sessionStore, userStore))
 
 	t.Run("Valid credentials", func(t *testing.T) {
-		w := FakeRequest(t, r, "GET", "", "/whoami", map[string]string{"Cookie": "sessid=" + sess.SessID})
+		w := testutil.FakeRequest(t, r, "GET", "", "/whoami", map[string]string{"Cookie": "sessid=" + sess.SessID})
 
 		if w.Result().StatusCode != 200 {
 			t.Errorf("Wrong StatusCode, have: %d, want: %d", w.Result().StatusCode, 200)

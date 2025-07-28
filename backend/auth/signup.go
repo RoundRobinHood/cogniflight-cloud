@@ -4,22 +4,29 @@ import (
 	"os"
 	"time"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
 )
 
 func CreateSignupToken(s types.SignupTokenStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		l := jlogging.MustGet(c)
 		var req struct {
-			Email string     `json:"email"`
-			Phone string     `json:"phone"`
-			Role  types.Role `json:"role" binding:"required"`
+			Email     string           `json:"email"`
+			Phone     string           `json:"phone"`
+			Role      types.Role       `json:"role" binding:"required"`
+			PilotInfo *types.PilotInfo `json:"pilotInfo"`
 		}
 
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		if req.Role != types.RolePilot && req.PilotInfo != nil {
+			c.JSON(400, gin.H{"error": "Cannot provide pilot info if the target role is not a pilot"})
 			return
 		}
 
@@ -28,7 +35,7 @@ func CreateSignupToken(s types.SignupTokenStore) gin.HandlerFunc {
 			return
 		}
 
-		tok, err := s.CreateSignupToken(req.Phone, req.Email, req.Role, 6*time.Hour, c.Request.Context())
+		tok, err := s.CreateSignupToken(req.Phone, req.Email, req.Role, req.PilotInfo, 6*time.Hour, c.Request.Context())
 		if err != nil {
 			c.JSON(500, gin.H{"error": "Internal error"})
 			l.Printf("Error creating signup token: %v", err)
@@ -59,7 +66,7 @@ func Signup(u types.UserStore, s types.SignupTokenStore, sess types.SessionStore
 			return
 		}
 
-		hashed_pwd, err := HashPwd(req.Pwd)
+		hashed_pwd, err := util.HashPwd(req.Pwd)
 		if err != nil {
 			c.JSON(500, gin.H{"error": "Internal error"})
 			l.Printf("Error occurred while hashing pwd: %v", err)
@@ -70,6 +77,7 @@ func Signup(u types.UserStore, s types.SignupTokenStore, sess types.SessionStore
 			Email:     tok.Email,
 			Phone:     tok.Phone,
 			Pwd:       hashed_pwd,
+			PilotInfo: tok.PilotInfo,
 			Role:      tok.Role,
 			CreatedAt: time.Now(),
 		}

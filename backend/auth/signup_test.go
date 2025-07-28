@@ -7,7 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jeremiafourie/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/testutil"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -17,8 +19,8 @@ type FakeSignupTokenStore struct {
 	Created      *types.SignupToken
 }
 
-func (s *FakeSignupTokenStore) CreateSignupToken(Phone, Email string, Role types.Role, Expiry time.Duration, ctx context.Context) (*types.SignupToken, error) {
-	tokStr, err := GenerateToken()
+func (s *FakeSignupTokenStore) CreateSignupToken(Phone, Email string, Role types.Role, pilotInfo *types.PilotInfo, Expiry time.Duration, ctx context.Context) (*types.SignupToken, error) {
+	tokStr, err := util.GenerateToken()
 	s.CreateCalled = true
 
 	if err != nil {
@@ -30,6 +32,7 @@ func (s *FakeSignupTokenStore) CreateSignupToken(Phone, Email string, Role types
 		TokStr:    tokStr,
 		Email:     Email,
 		Phone:     Phone,
+		PilotInfo: pilotInfo,
 		Role:      Role,
 		CreatedAt: time.Now(),
 	}
@@ -56,24 +59,43 @@ func (s *FakeSignupTokenStore) GetSignupToken(TokStr string, ctx context.Context
 }
 
 func TestCreateSignupToken(t *testing.T) {
-	r := InitTestEngine()
+	r := testutil.InitTestEngine()
 
 	tokenStore := FakeSignupTokenStore{}
 	r.POST("/create-signup-token", CreateSignupToken(&tokenStore))
 
 	t.Run("Invalid request body is 400", func(t *testing.T) {
 		badBodies := []string{
+			// Invalid JSON
+			`{"em`,
 			"",
 			`{}`,
+
+			// Need at least contact info + role
 			`{"email": "example@gmail.com"}`,
 			`{"phone": "271738749839"}`,
 			`{"role": "pilot"}`,
-			`{"em`,
+
+			// Other roles can't have pilotInfo
+			`{"email": "example@gmail.com", "role": "sysadmin", "pilotInfo": {
+				"faceEmbeddings": [],
+				"licenseNr": "JJ38471",
+				"flightHours": 100,
+				"baseline": {},
+				"environmentPreferences": {
+					"cabinTemperaturePreferences": {
+						"optimalTemperature": 26,
+						"toleranceRange": 5
+					},
+					"noiseSensitivity": "high",
+					"lightSensitivity": "low"
+				}
+			}}`,
 		}
 
 		for i, body := range badBodies {
 			t.Run(fmt.Sprintf("Case %d", i), func(t *testing.T) {
-				w := FakeRequest(t, r, "POST", body, "/create-signup-token", nil)
+				w := testutil.FakeRequest(t, r, "POST", body, "/create-signup-token", nil)
 
 				t.Logf("Request body: %q", body)
 				if w.Result().StatusCode != 400 {
@@ -83,15 +105,36 @@ func TestCreateSignupToken(t *testing.T) {
 		}
 	})
 	t.Run("Valid request succeeds", func(t *testing.T) {
+		// NOTE: Make sure the last object in this array has a pilotInfo object so that later checks pass
 		goodBodies := []string{
-			`{"email": "example@gmail.com", "phone": "271738749839", "role": "pilot"}`,
+			`{"email": "example@gmail.com", "role": "sysadmin"}`,
+			`{"phone": "271738749839", "role": "sysadmin"}`,
 			`{"email": "example@gmail.com", "role": "pilot"}`,
-			`{"phone": "271738749839", "role": "pilot"}`,
+			`{
+				"email": "example@gmail.com", 
+				"phone": "271738749839", 
+				"role": "pilot",
+				"pilotInfo": {
+					"faceEmbeddings": [],
+					"licenseNr": "JJ38471",
+					"flightHours": 100,
+					"baseline": {},
+					"environmentPreferences": {
+						"cabinTemperaturePreferences": {
+							"optimalTemperature": 26,
+							"toleranceRange": 5
+						},
+						"noiseSensitivity": "high",
+						"lightSensitivity": "low"
+					}
+				}
+			}`,
 		}
 
 		for i, body := range goodBodies {
+			tokenStore = FakeSignupTokenStore{}
 			t.Run(fmt.Sprintf("Case %d", i), func(t *testing.T) {
-				w := FakeRequest(t, r, "POST", body, "/create-signup-token", nil)
+				w := testutil.FakeRequest(t, r, "POST", body, "/create-signup-token", nil)
 
 				t.Logf("Request body: %q", body)
 				if w.Result().StatusCode != 201 {
@@ -104,26 +147,29 @@ func TestCreateSignupToken(t *testing.T) {
 				}
 
 			})
-			tokenStore = FakeSignupTokenStore{}
+		}
+
+		if tokenStore.Created == nil || tokenStore.Created.PilotInfo == nil {
+			t.Error("Expected pilotInfo to be set")
 		}
 	})
 }
 
 func TestSignup(t *testing.T) {
 	tokenStore := FakeSignupTokenStore{}
-	pilotTok, err := tokenStore.CreateSignupToken("271738749839", "example@gmail.com", types.RolePilot, time.Hour*6, context.Background())
+	pilotTok, err := tokenStore.CreateSignupToken("271738749839", "example@gmail.com", types.RolePilot, &types.PilotInfo{}, time.Hour*6, context.Background())
 	if err != nil {
 		t.Fatalf("TokenStore returned err: %v", err)
 	}
 
-	userStore := FakeUserStore{}
-	sessionStore := FakeSessionStore{}
+	userStore := testutil.FakeUserStore{}
+	sessionStore := testutil.FakeSessionStore{}
 
-	r := InitTestEngine()
+	r := testutil.InitTestEngine()
 	r.POST("/signup", Signup(&userStore, &tokenStore, &sessionStore))
 
 	t.Run("No body is 400", func(t *testing.T) {
-		w := FakeRequest(t, r, "POST", "", "/signup", nil)
+		w := testutil.FakeRequest(t, r, "POST", "", "/signup", nil)
 
 		if w.Result().StatusCode != 400 {
 			t.Errorf("Wrong StatusCode: want %d got %d", 400, w.Result().StatusCode)
@@ -132,7 +178,7 @@ func TestSignup(t *testing.T) {
 
 	t.Run("No pwd is 400", func(t *testing.T) {
 		body := fmt.Sprintf(`{"tokStr": "%s"}`, pilotTok.TokStr)
-		w := FakeRequest(t, r, "POST", body, "/signup", nil)
+		w := testutil.FakeRequest(t, r, "POST", body, "/signup", nil)
 
 		if w.Result().StatusCode != 400 {
 			t.Errorf("Wrong StatusCode: want %d got %d", 400, w.Result().StatusCode)
@@ -141,7 +187,7 @@ func TestSignup(t *testing.T) {
 
 	t.Run("Valid request", func(t *testing.T) {
 		body := fmt.Sprintf(`{"tokStr": "%s", "pwd": "123pizza", "name": "John Doe"}`, pilotTok.TokStr)
-		w := FakeRequest(t, r, "POST", body, "/signup", nil)
+		w := testutil.FakeRequest(t, r, "POST", body, "/signup", nil)
 
 		if w.Result().StatusCode != 201 {
 			t.Errorf("Wrong StatusCode: want %d got %d", 201, w.Result().StatusCode)
@@ -149,6 +195,8 @@ func TestSignup(t *testing.T) {
 
 		if !userStore.CreateCalled {
 			t.Error("Expected user to be created")
+		} else if userStore.Created.PilotInfo == nil {
+			t.Error("Expected pilotInfo to be set on pilot user")
 		}
 
 		if !sessionStore.CreateCalled {
@@ -167,7 +215,7 @@ func TestSignup(t *testing.T) {
 
 	t.Run("Wrong token string", func(t *testing.T) {
 		body := `{"tokStr": "wrong", "pwd": "123pizza", "name": "John Doe"}`
-		w := FakeRequest(t, r, "POST", body, "/signup", nil)
+		w := testutil.FakeRequest(t, r, "POST", body, "/signup", nil)
 
 		if w.Result().StatusCode != 401 {
 			t.Errorf("Wrong StatusCode: want %d got %d", 401, w.Result().StatusCode)
