@@ -76,7 +76,7 @@ type UserInfo struct {
 	Email     string             `json:"email"`
 	Phone     string             `json:"phone"`
 	Role      Role               `json:"role"`
-	PilotInfo *PilotInfo         `json:"pilotInfo"`
+	PilotInfo *PilotInfo         `json:"pilotInfo,omitempty"`
 }
 
 var ErrUserNotExist = errors.New("User does not exist")

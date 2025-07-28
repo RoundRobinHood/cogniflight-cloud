@@ -38,7 +38,13 @@ func FetchPilotByID(u types.UserStore) gin.HandlerFunc {
 		} else if user.Role != types.RolePilot {
 			c.JSON(409, gin.H{"error": "ID is not a pilot"})
 		} else {
-			c.JSON(200, user)
+			c.JSON(200, types.UserInfo{
+				ID:        user.ID,
+				Name:      user.Name,
+				Phone:     user.Phone,
+				Role:      user.Role,
+				PilotInfo: user.PilotInfo,
+			})
 		}
 	}
 }

@@ -88,7 +88,7 @@ func TestFetchByID(t *testing.T) {
 	t.Run("Valid ID", func(t *testing.T) {
 		w := testutil.FakeRequest(t, r, "GET", "", "/pilots/"+pilot.ID.Hex(), nil)
 
-		var resp types.User
+		var resp types.UserInfo
 		if code := w.Result().StatusCode; code != 200 {
 			fmt.Println(jlogging.TestLogStr)
 			t.Errorf("Wrong StatusCode. Want: 200, got: %d", code)
