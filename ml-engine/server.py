@@ -1,28 +1,15 @@
 import socket
 import os
 import json
-import time
 from jsonrpc import JSONRPCResponseManager, dispatcher
 from concurrent.futures import ThreadPoolExecutor
 import threading
+import handler_imports
 
-SOCKET_PATH = "./test.sock"
+SOCKET_PATH = os.getenv("SOCK_FILE") or "./test.sock"
+
 executor = ThreadPoolExecutor(max_workers=4)
 lock = threading.Lock()  # optional, for writing back in sync
-
-# --- Define functions exposed via JSON-RPC ---
-@dispatcher.add_method
-def add(a, b):
-    return a + b
-
-@dispatcher.add_method
-def multiply(a, b):
-    return a * b
-
-@dispatcher.add_method
-def sleep_echo(message, duration):
-    time.sleep(duration)
-    return message
 
 # --- Handle a single connection (long-lived) ---
 def handle_connection(conn):
@@ -38,7 +25,7 @@ def handle_connection(conn):
             # Process in thread pool
             executor.submit(process_message, message, file)
         except Exception as e:
-            print(f"Error reading line: {e}")
+            print(f"Error reading line: {e}", flush=True)
             break
 
 def process_message(message, file):
@@ -49,7 +36,7 @@ def process_message(message, file):
                 file.write((json.dumps(response.data) + '\n').encode('utf-8'))
                 file.flush()
     except Exception as e:
-        print(f"Error processing message: {e}")
+        print(f"Error processing message: {e}", flush=True)
 
 # --- Unix socket server ---
 def run_server():
@@ -59,7 +46,7 @@ def run_server():
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as server_sock:
         server_sock.bind(SOCKET_PATH)
         server_sock.listen()
-        print(f"Listening on {SOCKET_PATH}")
+        print(f"Listening on {SOCKET_PATH}", flush=True)
         while True:
             conn, _ = server_sock.accept()
             threading.Thread(target=handle_connection, args=(conn,), daemon=True).start()
