@@ -97,6 +97,8 @@ services:
       TRUSTED_PROXIES: "${TRUSTED_PROXIES:-frontend}"
 
       ML_SOCK_FILE: "/sockets/ml-engine.sock"
+    depends_on:
+      - ml-engine
     ports:
       - 8080:8080
     develop:

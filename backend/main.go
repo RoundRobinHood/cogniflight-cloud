@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,6 +21,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
+	"github.com/sourcegraph/jsonrpc2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -101,6 +103,24 @@ func main() {
 		}
 
 	}()
+
+	mlSockFile := "../ml-engine/test.sock"
+	if path := os.Getenv("ML_SOCK_FILE"); path != "" {
+		mlSockFile = path
+	}
+	var conn net.Conn
+	for {
+		if conn, err = net.Dial("unix", mlSockFile); err != nil {
+			fmt.Printf("Failed to connect to ml-engine (%v). Waiting...\n", err)
+			time.Sleep(2 * time.Second)
+		} else {
+			fmt.Printf("Successfully connected to ml-engine at %s\n", mlSockFile)
+			break
+		}
+	}
+
+	stream := jsonrpc2.NewPlainObjectStream(conn)
+	_ = jsonrpc2.NewConn(context.Background(), stream, nil)
 
 	r := gin.New()
 	r.SetTrustedProxies(strings.Split(os.Getenv("TRUSTED_PROXIES"), ","))
