@@ -63,6 +63,22 @@ services:
     ports:
       - "${MONGO_PORT:-27017}:27017"
 
+  ml-engine:
+    build: ./ml-engine
+    restart: unless-stopped
+    environment:
+      SOCK_FILE: "/sockets/ml-engine.sock"
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./ml-engine
+          target: /app
+    profiles:
+      - backend
+      - ml-engine
+    volumes:
+      - ./sockets:/sockets
+
   backend:
     build: ./backend
     restart: unless-stopped
@@ -79,6 +95,10 @@ services:
 
       SERVER_DOMAIN: "${SERVER_DOMAIN:-localhost}"
       TRUSTED_PROXIES: "${TRUSTED_PROXIES:-frontend}"
+
+      ML_SOCK_FILE: "/sockets/ml-engine.sock"
+    depends_on:
+      - ml-engine
     ports:
       - 8080:8080
     develop:
@@ -88,6 +108,9 @@ services:
           target: /app
     profiles:
       - backend
+      - rest-api
+    volumes:
+      - ./sockets:/sockets
 
   frontend:
     build: 

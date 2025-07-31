@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,6 +14,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/edge"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/images"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/keys"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/pilot"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/settings"
@@ -20,8 +22,10 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
+	"github.com/sourcegraph/jsonrpc2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/gridfs"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -37,12 +41,17 @@ func main() {
 	}
 
 	database := client.Database("cogniflight")
+	bucket, err := gridfs.NewBucket(database)
+	if err != nil {
+		log.Fatalf("Couldn't create gridFS bucket: %v", err)
+	}
 
 	userStore := db.DBUserStore{Col: database.Collection("users")}
 	sessionStore := db.DBSessionStore{Col: database.Collection("sessions")}
 	signupTokenStore := db.DBSignupTokenStore{Col: database.Collection("signup_tokens")}
 	nodeStore := db.DBEdgeNodeStore{Col: database.Collection("edge_nodes")}
 	keyStore := db.DBAPIKeyStore{Col: database.Collection("api_keys")}
+	imageStore := db.DBUserImageStore{Col: database.Collection("user_images"), Bucket: bucket}
 
 	go func() {
 		for {
@@ -102,6 +111,24 @@ func main() {
 
 	}()
 
+	mlSockFile := "../ml-engine/test.sock"
+	if path := os.Getenv("ML_SOCK_FILE"); path != "" {
+		mlSockFile = path
+	}
+	var conn net.Conn
+	for {
+		if conn, err = net.Dial("unix", mlSockFile); err != nil {
+			fmt.Printf("Failed to connect to ml-engine (%v). Waiting...\n", err)
+			time.Sleep(2 * time.Second)
+		} else {
+			fmt.Printf("Successfully connected to ml-engine at %s\n", mlSockFile)
+			break
+		}
+	}
+
+	stream := jsonrpc2.NewPlainObjectStream(conn)
+	_ = jsonrpc2.NewConn(context.Background(), stream, nil)
+
 	r := gin.New()
 	r.SetTrustedProxies(strings.Split(os.Getenv("TRUSTED_PROXIES"), ","))
 	r.Use(jlogging.Middleware())
@@ -126,6 +153,11 @@ func main() {
 		types.RoleSysAdmin: {},
 	}), keys.CreateAPIKey(keyStore, nodeStore))
 	r.GET("/pilots/:id", auth.KeyAuthMiddleware(keyStore), pilot.FetchPilotByID(userStore))
+	r.POST("/my/images", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
+		types.RoleSysAdmin: {},
+		types.RoleATC:      {},
+		types.RolePilot:    {},
+	}), images.UploadImage(imageStore))
 
 	server := &http.Server{
 		Addr:    ":8080",
