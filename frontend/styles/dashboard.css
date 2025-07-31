@@ -1,0 +1,59 @@
+:root {
+  --primary: #1e293b;
+  --card: #ffffff;
+  --bg: #f0f4f8;
+  --accent: #2563eb;
+  --danger: #dc2626;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  font-family: "Segoe UI", sans-serif;
+}
+
+.dashboard-wrapper {
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--primary);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.vitals-card {
+  background-color: var(--card);
+  border-left: 5px solid var(--accent);
+  border-radius: 10px;
+  padding: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.alert-card {
+  border-left-color: var(--danger);
+}
+
+.vitals-card h3 {
+  margin-bottom: 10px;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.vitals-card alert {
+  color: var(--danger);
+  font-weight: bold;
+  margin-top: 10px;
+}
