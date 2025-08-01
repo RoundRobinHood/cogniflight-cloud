@@ -25,6 +25,11 @@ let router = createBrowserRouter([
     path: "/login",
     Component: Login,
   },
+  { path: "/dashboard", Component: PilotDashboard },
+  {
+    path: "/register",
+    element: <RegistrationForm />,
+  },
 ]);
 
 createRoot(document.getElementById("root")).render(
