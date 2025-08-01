@@ -1,4 +1,4 @@
-import { Navigate, useLoaderData, useNavigate } from "react-router-dom"
+import { Navigate, useLoaderData, useNavigate } from "react-router-dom";
 
 function Root() {
   const authStatus = useLoaderData();
@@ -10,4 +10,8 @@ function Root() {
   }
 }
 
-export default Root
+// function Root() {
+//   return <Navigate to="/register" />;
+// }
+
+export default Root;

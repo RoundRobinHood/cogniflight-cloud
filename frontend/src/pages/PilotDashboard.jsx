@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import VitalsCard from "../components/VitalsCard";
 
-function Dashboard() {
+function PilotDashboard() {
   //variable declaration & initialisation
   const [heartRate, setHeartRate] = useState(78);
   const [blinkRate, setBlinkRate] = useState(12);
@@ -67,4 +67,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default PilotDashboard;
