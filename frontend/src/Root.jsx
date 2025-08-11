@@ -1,17 +1,19 @@
 import { Navigate, useLoaderData, useNavigate } from "react-router-dom";
+import DevMenu from "./pages/DevMenu.jsx";
+import { DEV_MODE } from "./devConfig.js";
 
 function Root() {
-  const authStatus = useLoaderData();
+  if (DEV_MODE) {
+    return <DevMenu />;
+  }
 
+  //Normal behaviour:
+  const authStatus = useLoaderData();
   if (authStatus.authorized) {
     return <Navigate to="/home" />;
   } else {
     return <Navigate to="/login" />;
   }
 }
-
-// function Root() {
-//   return <Navigate to="/dashboard" />;
-// }
 
 export default Root;

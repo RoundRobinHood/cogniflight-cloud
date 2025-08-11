@@ -1,0 +1,174 @@
+:root {
+  --bg: #f8f9fb;
+  --card: #fff;
+  --text: #0f172a;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 2rem 1rem;
+}
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+.page-header {
+  display: grid;
+  gap: 0.25rem;
+}
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.page-subtitle {
+  color: var(--muted);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+.card-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.card-header-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+.card-header-icon {
+  font-size: 1.25rem;
+}
+.card-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.card-subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.card-body {
+  padding: 1.25rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+.label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.req {
+  color: #dc2626;
+}
+.input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 0.95rem;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+.hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.error {
+  font-size: 0.8rem;
+  color: #dc2626;
+}
+
+.btn {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.55rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border-color: transparent;
+}
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+.btn-ghost {
+  background: transparent;
+}
+.btn-ghost:hover {
+  background: #f3f4f6;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.grid {
+  display: grid;
+}
+.two-col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.gap {
+  gap: 1rem;
+}
+.gap-lg {
+  gap: 1.25rem;
+}
+.mt {
+  margin-top: 0.75rem;
+}
+.mt-1 {
+  margin-top: 0.25rem;
+}
+.small {
+  font-size: 0.85rem;
+}
+.muted {
+  color: var(--muted);
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.5rem 0;
+}
+.password-wrap {
+  position: relative;
+}
+.password-toggle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 0.35rem 0.5rem;
+}
