@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import VitalsCard from "../components/VitalsCard";
+import VitalsCard from "../components/ui/VitalsCard";
 
 function PilotDashboard() {
   //variable declaration & initialisation
