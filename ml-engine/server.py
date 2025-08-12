@@ -5,6 +5,25 @@ from jsonrpc import JSONRPCResponseManager, dispatcher
 from concurrent.futures import ThreadPoolExecutor
 import threading
 import handler_imports
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--check", help="Check if a method is registered")
+parser.add_argument("--check-list", action="store_true", help="List all registered methods")
+args = parser.parse_args()
+
+if args.check:
+    if args.check in dispatcher.method_map.keys():
+        print(f"✅ '{args.check}' is registered in {dispatcher.method_map[args.check].__module__}.")
+    else:
+        print(f"❌ '{args.check}' is NOT registered.")
+    exit(0)
+
+if args.check_list:
+    print("Registered RPC methods:")
+    for name, method in dispatcher.method_map.items():
+        print(" -", name, ":", method.__module__)
+    exit(0)
 
 SOCKET_PATH = os.getenv("SOCK_FILE") or "./test.sock"
 
