@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useLoaderData, Navigate } from "react-router-dom";
-import { DEV_MODE } from "../devConfig";
 
 //replace with real API call
 async function updatePilotProfile(profile) {

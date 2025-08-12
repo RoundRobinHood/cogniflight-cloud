@@ -3,7 +3,6 @@ import AdminTokenForm from "../components/forms/AdminTokenForm";
 import { useTokenStore } from "../services/tokenStore";
 
 export default function GenerateToken() {
- 
   const tokenStore = useTokenStore();
 
   const onTokenReady = (token, data) => {

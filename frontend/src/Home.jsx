@@ -1,24 +1,21 @@
 import { Link, Navigate, useLoaderData } from "react-router-dom";
-import { DEV_MODE } from "./devConfig";
 
 function Home() {
-  //In Dev mode no loader is used, so this will be undefined. Default to {} then.
-  const authStatus = useLoaderData() ?? {};
+  const authStatus = useLoaderData();
+  const authorized = authStatus?.authorized === true;
 
-  const user = authStatus.user;
+  const user = authStatus?.user;
 
-  //If not in Dev mode - keep guard/redirect to login:
-  if (!DEV_MODE) {
-    if (!authStatus.authorized || !user) {
-      console.error("Not logged in. Redirecting to login");
-      return <Navigate to="/login" />;
-    }
+  if (!authStatus.authorized) {
+    console.error("Not logged in. Redirecting to login");
+    return <Navigate to="/login" />;
   }
 
-  // Safe fallbacks for dev mode
-  const role = authStatus.user?.role ?? "pilot";
-  const name = authStatus.user?.name ?? "Guest";
+  const role = user.role;
+  const name = user.name;
   const isAdmin = role === "admin";
+  const isPilot = role === "pilot";
+  console.log("authStatus:", authStatus);
 
   return (
     <>
@@ -26,19 +23,20 @@ function Home() {
         Welcome to the {role} dashboard, {name}!
       </h1>
 
-      {/*Pilot-side (available to pilots && admins*/}
-      <section style={{ marginTop: "1rem" }}>
-        <h3>Pilot</h3>
-        <ul>
-          <li>
-            <Link to="/pilot/profile">Manage Profile</Link>
-          </li>
-          <li>
-            <Link to="/pilot/dashboard">View Dashboard</Link>
-          </li>
-        </ul>
-      </section>
-
+      {/*Pilot-side (available to pilots and admins*/}
+      {(isPilot || isAdmin) && (
+        <section style={{ marginTop: "1rem" }}>
+          <h3>Pilot</h3>
+          <ul>
+            <li>
+              <Link to="/pilot/profile">Manage Profile</Link>
+            </li>
+            <li>
+              <Link to="/pilot/dashboard">View Dashboard</Link>
+            </li>
+          </ul>
+        </section>
+      )}
       {/* Admin-only */}
       {isAdmin && (
         <section style={{ marginTop: "1rem" }}>
