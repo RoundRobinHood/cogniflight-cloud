@@ -3,7 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import "./styles/dashboard.css";
-import "./styles/pilotOnboarding.css";
+import "./styles/PilotOnboarding.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Root from "./Root.jsx";
 import { WhoAmI } from "./api/auth.js";
