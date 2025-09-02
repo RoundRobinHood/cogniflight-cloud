@@ -2,8 +2,15 @@ import paths from "./paths";
 
 export async function WhoAmI() {
   let response;
+  let response_body;
   try {
     response = await fetch(paths.whoami); 
+    let text = await response.text();
+    if(text.length != 0) {
+      response_body = JSON.parse(text);
+    } else {
+      response_body = {};
+    }
   } catch(err) {
     console.error("Failed to initialize whoami request:", err);
     return {authorized: false, reason: 400, err};
@@ -12,7 +19,7 @@ export async function WhoAmI() {
   switch(response.status) {
     case 200:
       try {
-        const body = await response.json();
+        const body = response_body;
         if(!body.id || !body.name || !body.email || !body.phone || !body.role) {
           return {authorized: false, reason: 400, body};
         }
@@ -28,6 +35,8 @@ export async function WhoAmI() {
         console.error("Error fetching whoami:", err);
         return {authorized: false, reason: 500};
       }
+    case 400:
+      return {authorized: false, reason: 400, message: response_body.error ?? "invalid request"}
     case 401:
       return {authorized: false, reason: 401};
     case 403:
@@ -55,10 +64,84 @@ export async function Login({ email, pwd }) {
   switch(response.status) {
     case 200:
       return {authorized: true, reason: 200};
+    case 400:
+      return {authorized: false, reason: 400, message: response_body.error ?? "invalid request"}
     case 401:
       return {authorized: false, reason: 401};
     case 403:
       return {authorized: false, reason: 500, message: "all user roles should be able to log in."};
+    default:
+      return {authorized: false, reason: 400, message: "Unknown status code received: " + response.status};
+  }
+}
+
+export async function CreateSignupToken({ phone, email, role }) {
+  let response;
+  let response_body;
+  try {
+    response = await fetch(paths.signup.create_token, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({email,phone,role})
+    });
+    let text = await response.text();
+    if(text.length != 0) {
+      response_body = JSON.parse(text);
+    } else {
+      response_body = {};
+    }
+  } catch(err) {
+    console.error("Failed to send create-token request:", err);
+    return {token: null, reason: err};
+  }
+
+  switch(response.status) {
+    case 201:
+      return {token: response_body.tokStr, reason: 201};
+    case 400:
+      return {authorized: false, reason: 400, message: response_body.error ?? "invalid request"}
+    case 401:
+      return {token: null, reason: 401};
+    case 403:
+      return {token: null, reason: 403};
+    default:
+      return {token: null, reason: 400, message: "Unknown status code received: " + response.status};
+  }
+}
+
+export async function Signup({ name, phone, email, pwd, tokStr }) {
+  let response;
+  let response_body;
+  try {
+    response = await fetch(paths.signup.signup, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({name, phone, email, pwd, tokStr })
+    });
+    let text = await response.text();
+    if(text.length != 0) {
+      response_body = JSON.parse(text);
+    } else {
+      response_body = {};
+    }
+  } catch(err) {
+    console.error("Failed to send signup request:", err);
+    return {authorized: false, reason: err};
+  }
+
+  switch(response.status) {
+    case 201:
+      return {authorized: true, reason: 201};
+    case 400:
+      return {authorized: false, reason: 400, message: response_body.error ?? "invalid request"};
+    case 401:
+      return {authorized: false, reason: 401};
+    case 403:
+      return {authorized: false, reason: 500, message: "signup forbidden" };
     default:
       return {authorized: false, reason: 400, message: "Unknown status code received: " + response.status};
   }
