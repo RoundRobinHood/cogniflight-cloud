@@ -1,4 +1,5 @@
 :root {
+  /*Light mode defaults*/
   --bg: #f8f9fb;
   --card: #fff;
   --text: #0f172a;
@@ -6,6 +7,46 @@
   --border: #e5e7eb;
   --primary: #4f46e5;
   --primary-hover: #4338ca;
+  --shadow: rgba(0, 0, 0, 0.04);
+
+  /* Button-specific */
+  --btn-text-primary: #ffffff;
+  --btn-text-ghost: var(--text);
+  --btn-bg-ghost-hover: #f3f4f6;
+
+  /* Feedback */
+  --error: #dc2626;
+
+  /* Cards & headers */
+  --header-bg: var(--bg);
+  --divider: var(--border);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a;
+    --card: #1f2937;
+    --text: #f3f4f6;
+    --muted: #9ca3af;
+    --border: #374151;
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --shadow: rgba(0, 0, 0, 0.5);
+
+    --btn-text-primary: #f9fafb;
+    --btn-text-ghost: var(--text);
+    --btn-bg-ghost-hover: #1f2937;
+
+    --error: #f87171;
+
+    --header-bg: #1e293b;
+    --divider: #4b5563;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
 }
 
 * {
@@ -40,11 +81,12 @@
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 6px 18px var(--shadow);
 }
 .card-header {
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border);
+  background: var(--header-bg);
 }
 .card-header-row {
   display: flex;
@@ -79,7 +121,7 @@
   color: var(--text);
 }
 .req {
-  color: #dc2626;
+  color: var(--error);
 }
 .input {
   width: 100%;
@@ -87,11 +129,13 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   font-size: 0.95rem;
+  background: var(--card);
+  color: var(--text);
 }
 .input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 .hint {
   font-size: 0.8rem;
@@ -99,7 +143,7 @@
 }
 .error {
   font-size: 0.8rem;
-  color: #dc2626;
+  color: var(--error);
 }
 
 .btn {
@@ -111,7 +155,7 @@
 }
 .btn-primary {
   background: var(--primary);
-  color: white;
+  color: var(--btn-text-primary);
   border-color: transparent;
 }
 .btn-primary:hover {
@@ -119,9 +163,10 @@
 }
 .btn-ghost {
   background: transparent;
+  color: var(--btn-text-ghost);
 }
 .btn-ghost:hover {
-  background: #f3f4f6;
+  background: var(--btn-bg-ghost-hover);
 }
 
 .row {
@@ -160,7 +205,7 @@
 
 .divider {
   height: 1px;
-  background: var(--border);
+  background: var(--divider);
   margin: 0.5rem 0;
 }
 .password-wrap {

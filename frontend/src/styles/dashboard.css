@@ -1,14 +1,30 @@
 :root {
+  /*Light mode*/
   --primary: #1e293b;
   --card: #ffffff;
   --bg: #f0f4f8;
   --accent: #2563eb;
   --danger: #dc2626;
+  --text: #111827;
+  --shadow: rgba(0, 0, 0, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #334155;
+    --card: #1f2937;
+    --bg: #0f172a;
+    --accent: #3b82f6;
+    --danger: #ef4444;
+    --text: #f3f4f6;
+    --shadow: rgba(0, 0, 0, 0.25);
+  }
 }
 
 body {
   margin: 0;
   background-color: var(--bg);
+  color: var(--text);
   font-family: "Segoe UI", sans-serif;
 }
 
@@ -21,6 +37,7 @@ body {
   justify-content: space-between;
   align-items: center;
   background-color: var(--primary);
+  color: var(--text);
   color: white;
   padding: 1rem 2rem;
   border-radius: 8px;
@@ -35,6 +52,7 @@ body {
 
 .vitals-card {
   background-color: var(--card);
+  color: var(--text);
   border-left: 5px solid var(--accent);
   border-radius: 10px;
   padding: 1.2rem;
