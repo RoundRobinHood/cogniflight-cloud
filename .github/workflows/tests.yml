@@ -18,11 +18,8 @@ jobs:
         with:
           go-version: '1.24.2'
 
-      - name: CD to backend
-        run: cd backend
-
-      - name: Install dependencies
-        run: go mod download
-
-      - name: Run tests
-        run: go test ./... -v
+      - name: Test Go backend
+        run: |
+          cd backend
+          go mod download
+          go test ./... -v
