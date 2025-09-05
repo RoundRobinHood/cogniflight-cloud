@@ -16,10 +16,13 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24.2'
+          go-version-file: './backend/go.mod'
+          cache-dependency-path: 'backend/go.sum'
 
-      - name: Test Go backend
-        run: |
-          cd backend
-          go mod download
-          go test ./... -v
+      - name: Install dependencies
+        run: go mod download
+        working-directory: ./backend
+
+      - name: Run Tests
+        run: go test ./... -v
+        working-directory: ./backend
