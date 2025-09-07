@@ -134,10 +134,25 @@ erDiagram
         datetime timestamp PK
         float stressIndex
         float fusionScore
-        HeartRateValues heartRate
-        EnvironmentValues environment
-        EyeValues eye
-        MotionValues motion
+        float heartRate
+        float hrBaselineDeviation
+        float rmssd
+        float heartRateTrend
+        float temperature
+        float humidity
+        float altitude
+        float averageEAR
+        bool eyesClosed
+        float closureDuration
+        int microsleepCount
+        float blinksPerMinute
+        float xAccel
+        float yAccel
+        float zAccel
+        float xRot
+        float yRot
+        float zRot
+        float climbRate
         string flightId FK
     }
 
@@ -657,38 +672,53 @@ function getFleetUtilization() {
 
 ### 3.6 Time-Series Data (InfluxDB Integration)
 
-```go
-// Telemetry data structure for InfluxDB
-type TelemetryPoint struct {
-    Measurement string                 `json:"measurement"`
-    Tags        map[string]string     `json:"tags"`
-    Fields      map[string]interface{} `json:"fields"`
-    Timestamp   time.Time             `json:"timestamp"`
-}
+```python
+# Python ML Engine - InfluxDB telemetry data query for fatigue analysis
+from influxdb_client import InfluxDBClient
 
-// Sample telemetry data points
-func CreateTelemetryPoint(flightId string, data TelemetryMessage) TelemetryPoint {
-    return TelemetryPoint{
-        Measurement: "flight_telemetry",
-        Tags: map[string]string{
-            "flight_id": flightId,
-            "pilot_id":  data.PilotID,
-            "aircraft":  data.TailNumber,
-        },
-        Fields: map[string]interface{}{
-            "stress_index":       data.StressIndex,
-            "fusion_score":       data.FusionScore,
-            "heart_rate":         data.HeartRate.HeartRate,
-            "baseline_deviation": data.HeartRate.BaselineDeviation,
-            "rmssd":             data.HeartRate.RMSSD,
-            "altitude":          data.Environment.Altitude,
-            "airspeed":          data.Environment.Airspeed,
-            "eye_closure":       data.Eye.EyeClosure,
-            "blink_rate":        data.Eye.BlinkRate,
-        },
-        Timestamp: data.Timestamp,
-    }
-}
+def query_pilot_telemetry(client, pilot_id, start_time, end_time):
+    """Query expanded telemetry data for ML analysis"""
+    query = f'''
+    from(bucket:"cogniflight_telemetry")
+      |> range(start: {start_time}, stop: {end_time})
+      |> filter(fn: (r) => r._measurement == "flight_telemetry")
+      |> filter(fn: (r) => r.pilot_id == "{pilot_id}")
+      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+    '''
+    
+    result = client.query_api().query(query=query)
+    telemetry_data = []
+    
+    for table in result:
+        for record in table.records:
+            # All sensor data already expanded in InfluxDB
+            data_point = {
+                'timestamp': record.get_time(),
+                'stress_index': record.values.get('stress_index'),
+                'fusion_score': record.values.get('fusion_score'),
+                'heart_rate': record.values.get('heart_rate'),
+                'hr_baseline_deviation': record.values.get('hr_baseline_deviation'),
+                'rmssd': record.values.get('rmssd'),
+                'heart_rate_trend': record.values.get('heart_rate_trend'),
+                'temperature': record.values.get('temperature'),
+                'humidity': record.values.get('humidity'),
+                'altitude': record.values.get('altitude'),
+                'average_ear': record.values.get('average_ear'),
+                'eyes_closed': record.values.get('eyes_closed'),
+                'closure_duration': record.values.get('closure_duration'),
+                'microsleep_count': record.values.get('microsleep_count'),
+                'blinks_per_minute': record.values.get('blinks_per_minute'),
+                'x_accel': record.values.get('x_accel'),
+                'y_accel': record.values.get('y_accel'),
+                'z_accel': record.values.get('z_accel'),
+                'x_rot': record.values.get('x_rot'),
+                'y_rot': record.values.get('y_rot'),
+                'z_rot': record.values.get('z_rot'),
+                'climb_rate': record.values.get('climb_rate')
+            }
+            telemetry_data.append(data_point)
+    
+    return telemetry_data
 ```
 
 ---
