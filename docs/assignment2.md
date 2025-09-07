@@ -68,9 +68,11 @@ The Cogniflight Cloud database design utilizes **MongoDB's document-based archit
 
 ## 2. Entity-Relationship Diagram (ERD)/Data Model
 
-### 2.1 MongoDB Document Model Overview
+### 2.1 Hybrid Database Model Overview
 
-The Cogniflight Cloud platform implements a hybrid document-relational model using MongoDB collections with established relationships through ObjectID references.
+The Cogniflight Cloud platform implements a **dual-database architecture** combining MongoDB for operational data and InfluxDB for high-frequency telemetry streams.
+
+#### 2.1.1 MongoDB Collections (Operational Data)
 
 ```mermaid
 erDiagram
@@ -129,41 +131,42 @@ erDiagram
         string contentType
         datetime uploadedAt
     }
-    
-    TelemetryData {
-        datetime timestamp PK
-        float stressIndex
-        float fusionScore
-        float heartRate
-        float hrBaselineDeviation
-        float rmssd
-        float heartRateTrend
-        float temperature
-        float humidity
-        float altitude
-        float averageEAR
-        bool eyesClosed
-        float closureDuration
-        int microsleepCount
-        float blinksPerMinute
-        float xAccel
-        float yAccel
-        float zAccel
-        float xRot
-        float yRot
-        float zRot
-        float climbRate
-        string flightId FK
-    }
 
     Users ||--o{ Sessions : "has many"
-    Users ||--o{ Flights : "pilots"
+    Users ||--o{ Flights : "pilots" 
     Users ||--o{ Alerts : "receives"
     Users ||--o| UserImages : "has profile"
     EdgeNodes ||--o{ Flights : "operates"
     EdgeNodes ||--o{ APIKeys : "authenticates with"
-    Flights ||--o{ TelemetryData : "generates"
     Users ||--o{ APIKeys : "manages"
+```
+
+#### 2.1.2 InfluxDB Time-Series Schema (Telemetry Data)
+
+| **Measurement** | **flight_telemetry** |
+|-----------------|---------------------|
+| **Tags** | flight_id, pilot_id, aircraft |
+| **Fields** | All sensor data (21 fields) |
+
+**Expanded Telemetry Fields:**
+- **Core Metrics:** stress_index, fusion_score
+- **Heart Rate Data:** heart_rate, hr_baseline_deviation, rmssd, heart_rate_trend
+- **Environmental:** temperature, humidity, altitude  
+- **Eye Tracking:** average_ear, eyes_closed, closure_duration, microsleep_count, blinks_per_minute
+- **Motion Sensors:** x_accel, y_accel, z_accel, x_rot, y_rot, z_rot, climb_rate
+
+#### 2.1.3 Cross-Database Relationship
+
+```mermaid
+flowchart TD
+    A[MongoDB: Flights Collection] -->|flight_id| B[InfluxDB: TelemetryData]
+    B --> C[Python ML Engine]
+    C --> D[MongoDB: Alerts Collection]
+    
+    style A fill:#4DB33D,stroke:#2E7D32,color:#fff
+    style B fill:#22ADF6,stroke:#1976D2,color:#fff
+    style C fill:#FF9800,stroke:#F57C00,color:#fff
+    style D fill:#4DB33D,stroke:#2E7D32,color:#fff
 ```
 
 ### 2.2 Collection Relationships Matrix
