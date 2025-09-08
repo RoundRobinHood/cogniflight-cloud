@@ -20,5 +20,6 @@ var ErrSessionNotExist = errors.New("Session does not exist")
 
 type SessionStore interface {
 	CreateSession(UserID primitive.ObjectID, Role Role, ctx context.Context) (*Session, error)
+	DeleteSession(SessID string, ctx context.Context) (*Session, error)
 	GetSession(SessID string, ctx context.Context) (*Session, error)
 }

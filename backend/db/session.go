@@ -47,3 +47,17 @@ func (s DBSessionStore) CreateSession(UserID primitive.ObjectID, Role types.Role
 
 	return &session, nil
 }
+
+func (s DBSessionStore) DeleteSession(SessID string, ctx context.Context) (*types.Session, error) {
+	var deleted types.Session
+	err := s.Col.FindOneAndDelete(ctx, bson.M{"sess_id": SessID}).Decode(&deleted)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, types.ErrSessionNotExist
+		} else {
+			return nil, err
+		}
+	}
+
+	return &deleted, nil
+}

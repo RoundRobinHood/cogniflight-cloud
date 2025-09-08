@@ -66,7 +66,8 @@ func TestUserAuthMiddleware(t *testing.T) {
 
 func TestKeyAuthMiddleware(t *testing.T) {
 	keyStore := testutil.FakeAPIKeyStore{}
-	keyStr, _, err := keyStore.CreateKey(context.Background())
+	id := primitive.NewObjectID()
+	keyStr, _, err := keyStore.CreateKey(&id, context.Background())
 	if err != nil {
 		t.Fatalf("keyStore returned err: %v", err)
 	}
