@@ -161,12 +161,23 @@ func (s *FakeSessionStore) CreateSession(UserID primitive.ObjectID, Role types.R
 	}, nil
 }
 
-func (s FakeSessionStore) GetSession(SessID string, ctx context.Context) (*types.Session, error) {
+func (s *FakeSessionStore) GetSession(SessID string, ctx context.Context) (*types.Session, error) {
 	session, ok := s.Sessions[SessID]
 
 	if !ok {
 		return nil, types.ErrSessionNotExist
 	} else {
+		return &session, nil
+	}
+}
+
+func (s *FakeSessionStore) DeleteSession(SessID string, ctx context.Context) (*types.Session, error) {
+	session, ok := s.Sessions[SessID]
+
+	if !ok {
+		return nil, types.ErrSessionNotExist
+	} else {
+		delete(s.Sessions, SessID)
 		return &session, nil
 	}
 }
