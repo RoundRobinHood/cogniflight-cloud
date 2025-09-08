@@ -32,7 +32,7 @@ The Cogniflight Cloud platform operates under strict aviation safety protocols a
 | Rule ID | Business Rule Description | Data Impact |
 |---------|--------------------------|-------------|
 | BR001 | **User Authentication**: Every system user must have a unique email address and be assigned one of three roles (Pilot, ATC, System Administrator) | Users collection with unique email constraint |
-| BR002 | **Pilot Certification**: Users with 'pilot' role must maintain valid certification information including license numbers and medical certificates | PilotInfo embedded document in Users |
+| BR002 | **Pilot Certification**: Users with 'pilot' role must maintain valid certification information including license numbers | PilotInfo embedded document in Users |
 | BR003 | **Edge Node Registration**: Each aircraft/edge device must be uniquely registered with tail number identification before telemetry ingestion | EdgeNodes collection with unique plane identification |
 | BR004 | **Flight Session Integrity**: Every flight must be associated with exactly one pilot and one edge node, with defined start time and duration | Flights collection with foreign key relationships |
 | BR005 | **Telemetry Data Continuity**: Real-time telemetry data must be timestamped and linked to active flight sessions for fatigue analysis | Time-series data in InfluxDB with flight correlation |
@@ -242,7 +242,6 @@ db.createCollection("users", {
                bsonType: "object",
                properties: {
                   licenseNumber: { bsonType: "string" },
-                  medicalCertificate: { bsonType: "string" },
                   certificationExpiry: { bsonType: "date" },
                   flightHours: { bsonType: "int" }
                }
@@ -372,7 +371,6 @@ db.users.insertMany([
       role: "pilot",
       pilotInfo: {
          licenseNumber: "ATP-123456",
-         medicalCertificate: "1st-Class-789012",
          certificationExpiry: new Date("2026-03-15"),
          flightHours: 5420
       }
