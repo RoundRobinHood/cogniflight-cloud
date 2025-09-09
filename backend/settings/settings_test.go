@@ -80,10 +80,10 @@ func TestSettingsEndpoint(t *testing.T) {
 		w := testutil.FakeRequest(t, r, "PATCH",
 			`{
 			"email": "nono@yahoo.com",
-			"pilotInfo": {
-				"environmentPreferences": {
-					"cabinTemperaturePreferences": {
-						"toleranceRange": 10
+			"pilot_info": {
+				"environment_preferences": {
+					"cabin_temperature_preferences": {
+						"tolerance_range": 10
 					}
 				}
 			}
