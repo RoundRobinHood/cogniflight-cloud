@@ -10,12 +10,12 @@ import (
 )
 
 type UserImage struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	UserID    primitive.ObjectID `bson:"user"`
-	FileID    primitive.ObjectID `bson:"file"`
-	Filename  string             `bson:"filename"`
-	Mimetype  string             `bson:"mimetype"`
-	CreatedAt time.Time          `bson:"createdAt"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+	UserID    primitive.ObjectID `bson:"user" json:"user"`
+	FileID    primitive.ObjectID `bson:"file" json:"file"`
+	Filename  string             `bson:"filename" json:"filename"`
+	Mimetype  string             `bson:"mimetype" json:"mimetype"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 }
 
 var ErrUserImageNotExist = errors.New("User image does not exist")

@@ -9,11 +9,12 @@ import (
 )
 
 type Session struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	SessID    string             `bson:"sess_id"`
-	UserID    primitive.ObjectID `bson:"userID"`
-	Role      Role               `bson:"role"`
-	CreatedAt time.Time          `bson:"createdAt"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+	SessID    string             `bson:"sess_id" json:"sess_id"`
+	UserID    primitive.ObjectID `bson:"user_id" json:"user_id"`
+	Role      Role               `bson:"role" json:"role"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	ExpiresAt time.Time          `bson:"expires_at" json:"expires_at"`
 }
 
 var ErrSessionNotExist = errors.New("Session does not exist")

@@ -7,9 +7,9 @@ import (
 )
 
 type Flight struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty"`
-	EdgeNode primitive.ObjectID `bson:"edgeID"`
-	Pilot    primitive.ObjectID `bson:"pilotID"`
-	Start    time.Time          `bson:"startTime"`
-	Duration time.Duration      `bson:"duration"`
+	ID       primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+	EdgeNode primitive.ObjectID `bson:"edge_id" json:"edge_id"`
+	Pilot    primitive.ObjectID `bson:"pilot_id" json:"pilot_id"`
+	Start    time.Time          `bson:"start_time" json:"start_time"`
+	Duration time.Duration      `bson:"duration" json:"duration"`
 }

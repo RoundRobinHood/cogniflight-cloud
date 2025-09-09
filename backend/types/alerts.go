@@ -7,11 +7,12 @@ import (
 )
 
 type Alert struct {
-	PilotID   primitive.ObjectID `json:"pilot_id"`
-	Timestamp time.Time          `json:"timestamp"`
+	ID        primitive.ObjectID `bson:"_id" json:"_id"`
+	PilotID   primitive.ObjectID `bson:"pilot_id" json:"pilot_id"`
+	Timestamp time.Time          `bson:"timestamp" json:"timestamp"`
 
-	FusionScore    float64 `json:"fusion_score"`
-	Interpretation string  `json:"interpretation"`
+	FusionScore    float64 `bson:"fusion_score" json:"fusion_score"`
+	Interpretation string  `bson:"interpretation" json:"interpretation"`
 
-	UserExplanation string `json:"user_explanation"`
+	UserExplanation string `bson:"user_explanation" json:"user_explanation"`
 }

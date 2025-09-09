@@ -12,12 +12,12 @@ const (
 )
 
 type ContextItem struct {
-	Type              ContextItemType `json:"type"`
-	Role              string          `json:"role,omitempty"`
-	CallID            string          `json:"call_id,omitempty"`
-	FunctionOutput    any             `json:"output,omitempty"`
-	FunctionArguments string          `json:"arguments,omitempty"`
-	Content           string          `json:"content,omitempty"`
+	Type              ContextItemType `bson:"type" json:"type"`
+	Role              string          `bson:"role,omitempty" json:"role,omitempty"`
+	CallID            string          `bson:"call_id,omitempty" json:"call_id,omitempty"`
+	FunctionOutput    any             `bson:"output,omitempty" json:"output,omitempty"`
+	FunctionArguments string          `bson:"arguments,omitempty" json:"arguments,omitempty"`
+	Content           string          `bson:"content,omitempty" json:"content,omitempty"`
 }
 
 type Function interface {

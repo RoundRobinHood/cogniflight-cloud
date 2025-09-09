@@ -83,31 +83,31 @@ erDiagram
         string phone
         string pwd
         Role role
-        PilotInfo pilotInfo
-        ObjectID profileImage FK
-        datetime createdAt
+        *PilotInfo pilot_info
+        *ObjectID profile_image FK
+        datetime created_at
     }
     
     Sessions {
         ObjectID _id PK
-        ObjectID userID FK
+        ObjectID user_id FK
         string sess_id
         Role role
-        datetime createdAt
-        datetime expiresAt
+        datetime created_at
+        datetime expires_at
     }
     
     EdgeNodes {
         ObjectID _id PK
-        PlaneInfo planeInfo
+        PlaneInfo plane_info
     }
     
     Flights {
         ObjectID _id PK
-        ObjectID edgeNode FK
+        ObjectID edge_node FK
         ObjectID pilot FK
         datetime start
-        duration duration
+        *long duration
     }
     
     Alerts {
@@ -121,12 +121,11 @@ erDiagram
     
     APIKeys {
         ObjectID _id PK
-        ObjectID edgeNode FK
+        *ObjectID edge_node FK
         binary salt
-        int hashIterations
-        binary keyStr
-        datetime createdAt
-        boolean active
+        int hash_iterations
+        binary key
+        datetime created_at
     }
     
     UserImages {
@@ -135,7 +134,7 @@ erDiagram
         ObjectID file FK
         string filename
         string mimetype
-        datetime createdAt
+        datetime created_at
     }
 
     Users ||--o{ Sessions : "has many"
@@ -220,7 +219,7 @@ db.createCollection("users", {
    validator: {
       $jsonSchema: {
          bsonType: "object",
-         required: ["name", "email", "password", "role"],
+         required: ["name", "email", "pwd", "role"],
          properties: {
             name: {
                bsonType: "string",
@@ -243,15 +242,15 @@ db.createCollection("users", {
                enum: ["pilot", "atc", "sysadmin"],
                description: "User role - must be one of enum values"
             },
-            pilotInfo: {
+            pilot_info: {
                bsonType: "object",
                properties: {
-                  licenseNumber: { bsonType: "string" },
-                  certificationExpiry: { bsonType: "date" },
-                  flightHours: { bsonType: "int" }
+                  license_number: { bsonType: "string" },
+                  certification_expiry: { bsonType: "date" },
+                  flight_hours: { bsonType: "int" }
                }
             },
-            profileImage: {
+            profile_image: {
                bsonType: "objectId",
                description: "Reference to GridFS file"
             }
@@ -268,9 +267,9 @@ db.createCollection("flights", {
    validator: {
       $jsonSchema: {
          bsonType: "object",
-         required: ["edgeNode", "pilot", "start", "duration"],
+         required: ["edge_node", "pilot", "start", "duration"],
          properties: {
-            edgeNode: {
+            edge_node: {
                bsonType: "objectId",
                description: "Reference to EdgeNodes collection"
             },
@@ -374,10 +373,10 @@ db.users.insertMany([
       phone: "27537629581",
       pwd: "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
       role: "pilot",
-      pilotInfo: {
-         licenseNumber: "ATP-123456",
-         certificationExpiry: new Date("2026-03-15"),
-         flightHours: 5420
+      pilot_info: {
+         license_number: "ATP-123456",
+         certification_expiry: new Date("2026-03-15"),
+         flight_hours: 5420
       }
    },
    {
@@ -403,16 +402,16 @@ db.users.insertMany([
 // Sample Edge Nodes (Aircraft)
 db.edge_nodes.insertMany([
    {
-      planeInfo: {
-         tailNumber: "N12345",
+      plane_info: {
+         tail_number: "N12345",
          manufacturer: "Cessna",
          model: "172",
          year: 2020
       }
    },
    {
-      planeInfo: {
-         tailNumber: "N67890", 
+      plane_info: {
+         tail_number: "N67890", 
          manufacturer: "Piper",
          model: "Cherokee",
          year: 2018
@@ -477,9 +476,9 @@ function createUser(userData) {
       name: userData.name,
       email: userData.email,
       phone: userData.phone, 
-      pwd: userData.hashedPassword,
+      pwd: userData.hashed_pwd,
       role: userData.role,
-      pilotInfo: userData.pilotInfo || null,
+      pilot_info: userData.pilot_info || null,
       createdAt: new Date()
    });
 }
@@ -487,10 +486,10 @@ function createUser(userData) {
 // Create Flight Record  
 function createFlight(flightData) {
    return db.flights.insertOne({
-      edgeNode: ObjectId(flightData.edgeNodeId),
-      pilot: ObjectId(flightData.pilotId),
-      start: new Date(flightData.startTime),
-      duration: NumberLong(flightData.durationMs),
+      edge_node: ObjectId(flightData.edge_node_id),
+      pilot: ObjectId(flightData.pilot_id),
+      start: new Date(flightData.start_time),
+      duration: NumberLong(flightData.duration_ms),
       createdAt: new Date()
    });
 }
@@ -533,7 +532,7 @@ function getFlightDetails(flightId) {
       {
          $lookup: {
             from: "edge_nodes",
-            localField: "edgeNode",
+            localField: "edge_node",
             foreignField: "_id", 
             as: "aircraftInfo"
          }
@@ -553,7 +552,7 @@ function updateUserProfile(userId, updateData) {
    
    if (updateData.name) updateDoc.name = updateData.name;
    if (updateData.phone) updateDoc.phone = updateData.phone;
-   if (updateData.pilotInfo) updateDoc.pilotInfo = updateData.pilotInfo;
+   if (updateData.pilot_info) updateDoc.pilot_info = updateData.pilot_info;
    
    updateDoc.updatedAt = new Date();
    
@@ -657,7 +656,7 @@ function getFleetUtilization() {
       {
          $lookup: {
             from: "edge_nodes",
-            localField: "edgeNode",
+            localField: "edge_node",
             foreignField: "_id",
             as: "aircraft"
          }
@@ -665,7 +664,7 @@ function getFleetUtilization() {
       { $unwind: "$aircraft" },
       {
          $group: {
-            _id: "$aircraft.planeInfo.tailNumber",
+            _id: "$aircraft.plane_info.tail_number",
             totalFlights: { $sum: 1 },
             totalFlightTime: { $sum: "$duration" },
             avgFlightDuration: { $avg: "$duration" }
