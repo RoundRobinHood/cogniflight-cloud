@@ -13,8 +13,9 @@ function Home() {
 
   const role = user.role;
   const name = user.name;
-  const isAdmin = role === "admin";
+  const isAdmin = role === "sysadmin";
   const isPilot = role === "pilot";
+  const isUser = role === "atc";
   console.log("authStatus:", authStatus);
 
   return (
