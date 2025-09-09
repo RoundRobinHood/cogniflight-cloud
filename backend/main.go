@@ -134,6 +134,11 @@ func main() {
 	r.Use(jlogging.Middleware())
 
 	r.POST("/login", auth.Login(userStore, sessionStore))
+	r.POST("/logout", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
+		types.RoleSysAdmin: {},
+		types.RoleATC:      {},
+		types.RolePilot:    {},
+	}), auth.Logout(sessionStore))
 	r.POST("/signup-tokens", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{types.RoleSysAdmin: {}}), auth.CreateSignupToken(signupTokenStore))
 	r.POST("/signup", auth.Signup(userStore, signupTokenStore, sessionStore))
 	r.GET("/whoami", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{

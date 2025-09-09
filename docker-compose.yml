@@ -1,6 +1,8 @@
 services:
 
   influxdb:
+    networks:
+      - "${NETWORK:-web}"
     image: influxdb:2.7
     restart: unless-stopped
     ports:
@@ -18,6 +20,8 @@ services:
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:-mytoken}
 
   telegraf:
+    networks:
+      - "${NETWORK:-web}"
     image: telegraf:1.34
     restart: unless-stopped
     volumes:
@@ -26,6 +30,7 @@ services:
       - receive_mqtt
     environment:
       MQTT_URL: "${TELEGRAF_MQTT_URL:-ssl://${MQTT_DOMAIN:-mosquitto}:8883}"
+      SERVER_DOMAIN: "${SERVER_DOMAIN:-mosquitto}"
       INSECURE_SKIP_VERIFY: "${INSECURE_SKIP_VERIFY_MQTT:-true}"
 
       INFLUX_URL: ${INFLUXDB_URL:-http://influxdb:8086}
@@ -36,20 +41,27 @@ services:
       - influxdb
 
   mosquitto:
+    networks:
+      - "${NETWORK:-web}"
     image: eclipse-mosquitto:2.0-openssl
+    user: root
+    entrypoint: >
+      sh -c 'mkdir -p /mosquitto/certs && cp /mosquitto/inject-certs/* /mosquitto/certs && chown -R mosquitto:mosquitto /mosquitto/certs && exec su mosquitto -s /bin/sh -c "mosquitto -c /mosquitto/config/mosquitto.conf"'
     restart: unless-stopped
     volumes:
       - ./mosquitto/config:/mosquitto/config:ro
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
-      - "${TLS_CERTFILE_PATH:-${TLS_CERT_DIR:-./self-signed-certs/}${TLS_CERTFILE:-fullchain.pem}}:/mosquitto/certs/fullchain.pem:ro"
-      - "${TLS_KEYFILE_PATH:-${TLS_CERT_DIR:-./self-signed-certs/}${TLS_KEYFILE:-privkey.pem}}:/mosquitto/certs/privkey.pem:ro"
+      - "${TLS_CERTFILE_PATH:-${TLS_CERT_DIR:-./self-signed-certs/}${TLS_CERTFILE:-fullchain.pem}}:/mosquitto/inject-certs/fullchain.pem:ro"
+      - "${TLS_KEYFILE_PATH:-${TLS_CERT_DIR:-./self-signed-certs/}${TLS_KEYFILE:-privkey.pem}}:/mosquitto/inject-certs/privkey.pem:ro"
     profiles:
       - mqtt-broker
     ports:
       - "${MQTTS_PORT:-8883}:8883"
 
   mongo:
+    networks:
+      - "${NETWORK:-web}"
     image: mongo:8.0
     restart: unless-stopped
     environment:
@@ -80,6 +92,8 @@ services:
       - ./sockets:/sockets
 
   backend:
+    networks:
+      - "${NETWORK:-web}"
     build: ./backend
     restart: unless-stopped
     environment:
@@ -97,6 +111,18 @@ services:
       TRUSTED_PROXIES: "${TRUSTED_PROXIES:-frontend}"
 
       ML_SOCK_FILE: "/sockets/ml-engine.sock"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`${SERVER_DOMAIN:-localhost}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.entrypoints=${TLS_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.routers.backend.tls.certresolver=${TLS_CERTRESOLVER:-myresolver}"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+
+      # 🪄 Path rewrite middleware
+      - "traefik.http.middlewares.strip-api-prefix.stripPrefix.prefixes=/api"
+      - "traefik.http.routers.backend.middlewares=strip-api-prefix"
+
     depends_on:
       - ml-engine
     ports:
@@ -113,6 +139,8 @@ services:
       - ./sockets:/sockets
 
   frontend:
+    networks:
+      - "${NETWORK:-web}"
     build: 
       context: ./frontend
       target: "${ENV:-development}"
@@ -133,4 +161,15 @@ services:
         - action: sync
           path: ./frontend
           target: /app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`${SERVER_DOMAIN:-localhost}`)"
+      - "traefik.http.routers.frontend.entrypoints=${TLS_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.tls.certresolver=${TLS_CERTRESOLVER:-myresolver}"
+      - "traefik.http.services.frontend.loadbalancer.server.port=1024"
 
+networks:
+  web:
+    name: "${NETWORK:-web}"
+    external: "${NETWORK_EXTERNAL:-false}"

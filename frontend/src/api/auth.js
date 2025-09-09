@@ -146,3 +146,33 @@ export async function Signup({ name, phone, email, pwd, tokStr }) {
       return {authorized: false, reason: 400, message: "Unknown status code received: " + response.status};
   }
 }
+
+export async function Logout() {
+  let response;
+  let response_body;
+  try {
+    response = await fetch(paths.logout, {
+      method: "POST",
+    });
+    let text = await response.text();
+    if(text.length != 0) {
+      response_body = JSON.parse(text);
+    } else {
+      response_body = {};
+    }
+  } catch(err) {
+    console.error("Failed to send logout request:", err);
+    return {reason: err};
+  }
+
+  switch(response.status) {
+    case 200:
+      return {reason: 200};
+    case 400:
+      return {reason: 500, message: "Logout 400"};
+    case 500:
+      return {reason: 500, message: "Server error: " + response_body.error ?? "internal error"};
+    default:
+      return {reason: 400, message: `Unknown status code received: ${response.status}`};
+  }
+}
