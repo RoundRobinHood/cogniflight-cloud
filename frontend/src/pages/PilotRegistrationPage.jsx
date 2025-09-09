@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import PilotRegistrationForm from "../components/forms/PilotRegistrationForm";
-import { useTokenStore } from "../services/tokenStore";
 
 //If token is valid PilotRegistrationForm will open with seeded data:
 export default function PilotRegistrationPage() {

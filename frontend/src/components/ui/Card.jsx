@@ -1,5 +1,5 @@
 import React from "react";
-import "../../styles/PilotOnboarding.css";
+import "../../styles/forms.css";
 
 export const Card = ({ children, className = "" }) => (
   <div className={`card ${className}`}>{children}</div>

@@ -1,5 +1,5 @@
 import React from "react";
-import "../../styles/PilotOnboarding.css";
+import "../../styles/forms.css";
 
 export const Input = ({ className = "", ...props }) => (
   <input className={`input ${className}`} {...props} />

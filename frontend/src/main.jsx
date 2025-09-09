@@ -3,7 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import "./styles/dashboard.css";
-import "./styles/PilotOnboarding.css";
+import "./styles/forms.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Root from "./Root.jsx";
 import { WhoAmI } from "./api/auth.js";
@@ -14,7 +14,6 @@ import GenerateToken from "./pages/GenerateToken.jsx";
 import ManagePilots from "./pages/ManagePilots.jsx";
 import PilotProfile from "./pages/PilotProfile.jsx";
 import PilotRegistrationPage from "./pages/PilotRegistrationPage.jsx";
-import { TokenStoreProvider } from "./services/tokenStore.jsx";
 
 let router = createBrowserRouter([
   {
@@ -59,8 +58,6 @@ let router = createBrowserRouter([
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <TokenStoreProvider>
       <RouterProvider router={router} />
-    </TokenStoreProvider>
   </StrictMode>
 );

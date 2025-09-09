@@ -1,5 +1,5 @@
 import React from "react";
-import "../../styles/PilotOnboarding.css";
+import "../../styles/forms.css";
 
 export const Button = ({ children, className = "", ...props }) => (
   <button className={`btn btn-primary ${className}`} {...props}>
