@@ -81,7 +81,7 @@ erDiagram
         string name
         string email UK
         string phone
-        string password
+        string pwd
         Role role
         PilotInfo pilotInfo
         ObjectID profileImage FK
@@ -90,7 +90,9 @@ erDiagram
     
     Sessions {
         ObjectID _id PK
-        ObjectID userId FK
+        ObjectID userID FK
+        string sess_id
+        Role role
         datetime createdAt
         datetime expiresAt
     }
@@ -110,36 +112,38 @@ erDiagram
     
     Alerts {
         ObjectID _id PK
-        ObjectID pilotId FK
+        ObjectID pilot_id FK
         datetime timestamp
-        float fusionScore
+        float fusion_score
         string interpretation
-        string userExplanation
+        string user_explanation
     }
     
     APIKeys {
         ObjectID _id PK
-        ObjectID edgeNodeId FK
-        string keyValue
+        ObjectID edgeNode FK
+        binary salt
+        int hashIterations
+        binary keyStr
         datetime createdAt
         boolean active
     }
     
     UserImages {
         ObjectID _id PK
-        binary imageData
+        ObjectID user FK
+        ObjectID file FK
         string filename
-        string contentType
+        string mimetype
         datetime createdAt
     }
 
     Users ||--o{ Sessions : "has many"
     Users ||--o{ Flights : "pilots" 
-    Users ||--o{ Alerts : "receives"
-    Users ||--o| UserImages : "has profile"
+    Users ||--o{ Alerts : "pilot receives"
+    Users ||--o| UserImages : "upload images & has profile image"
     EdgeNodes ||--o{ Flights : "operates"
     EdgeNodes ||--o{ APIKeys : "authenticates with"
-    Users ||--o{ APIKeys : "manages"
 ```
 
 #### 2.1.2 InfluxDB Time-Series Schema (Telemetry Data)
