@@ -235,7 +235,7 @@ db.createCollection("users", {
                bsonType: "string",
                description: "User phone number"
             },
-            password: {
+            pwd: {
                bsonType: "string",
                description: "Hashed password - required"
             },
@@ -300,9 +300,9 @@ db.createCollection("alerts", {
    validator: {
       $jsonSchema: {
          bsonType: "object",
-         required: ["pilotId", "timestamp", "fusionScore"],
+         required: ["pilot_id", "timestamp", "fusion_score"],
          properties: {
-            pilotId: {
+            pilot_id: {
                bsonType: "objectId",
                description: "Reference to Users collection"
             },
@@ -310,7 +310,7 @@ db.createCollection("alerts", {
                bsonType: "date",
                description: "Alert generation timestamp"
             },
-            fusionScore: {
+            fusion_score: {
                bsonType: "double",
                minimum: 0.0,
                maximum: 1.0,
@@ -320,7 +320,7 @@ db.createCollection("alerts", {
                bsonType: "string",
                description: "Alert interpretation message"
             },
-            userExplanation: {
+            user_explanation: {
                bsonType: "string",
                description: "User-provided context"
             }
@@ -371,8 +371,8 @@ db.users.insertMany([
    {
       name: "Captain John Smith",
       email: "john.smith@cogniflight.com", 
-      phone: "+1-555-0123",
-      password: "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
+      phone: "27537629581",
+      pwd: "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
       role: "pilot",
       pilotInfo: {
          licenseNumber: "ATP-123456",
@@ -383,15 +383,15 @@ db.users.insertMany([
    {
       name: "Sarah Johnson",
       email: "sarah.johnson@atc.com",
-      phone: "+1-555-0456", 
-      password: "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
+      phone: "27859183749", 
+      pwd: "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
       role: "atc"
    },
    {
       name: "Admin User",
       email: "admin@cogniflight.com",
-      phone: "+1-555-0789",
-      password: "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", 
+      phone: "27885094831",
+      pwd: "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", 
       role: "sysadmin"
    }
 ])
@@ -450,18 +450,18 @@ db.flights.insertMany([
 // Sample Alerts
 db.alerts.insertMany([
    {
-      pilotId: pilot1,
+      pilot_id: pilot1,
       timestamp: new Date("2025-01-15T11:45:00Z"),
-      fusionScore: 0.75,
+      fusion_score: 0.75,
       interpretation: "Elevated fatigue levels detected",
-      userExplanation: "Long duty period, recommend break"
+      user_explanation: "Long duty period, recommend break"
    },
    {
-      pilotId: pilot1,
+      pilot_id: pilot1,
       timestamp: new Date("2025-01-16T15:30:00Z"), 
-      fusionScore: 0.82,
+      fusion_score: 0.82,
       interpretation: "High fatigue risk - immediate attention required",
-      userExplanation: "Extended flight in challenging weather conditions"
+      user_explanation: "Extended flight in challenging weather conditions"
    }
 ])
 ```
@@ -477,7 +477,7 @@ function createUser(userData) {
       name: userData.name,
       email: userData.email,
       phone: userData.phone, 
-      password: userData.hashedPassword,
+      pwd: userData.hashedPassword,
       role: userData.role,
       pilotInfo: userData.pilotInfo || null,
       createdAt: new Date()
@@ -642,8 +642,8 @@ function getPilotFatigueAnalytics(pilotId, startDate, endDate) {
                month: { $month: "$timestamp" }, 
                day: { $dayOfMonth: "$timestamp" }
             },
-            avgFusionScore: { $avg: "$fusionScore" },
-            maxFusionScore: { $max: "$fusionScore" },
+            avgFusionScore: { $avg: "$fusion_score" },
+            maxFusionScore: { $max: "$fusion_score" },
             alertCount: { $sum: 1 }
          }
       },
