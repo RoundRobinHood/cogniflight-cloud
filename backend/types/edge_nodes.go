@@ -8,7 +8,7 @@ import (
 )
 
 type PlaneInfo struct {
-	TailNr       string `bson:"tail_number" json:"tail_number" binding:"required"`
+	TailNr       string `bson:"tail_nr" json:"tail_nr" binding:"required"`
 	Manufacturer string `bson:"manufacturer" json:"manufacturer" binding:"required"`
 	Model        string `bson:"model" json:"model" binding:"required"`
 	Year         int    `bson:"year" json:"year" binding:"required"`

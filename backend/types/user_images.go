@@ -11,7 +11,7 @@ import (
 
 type UserImage struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
-	UserID    primitive.ObjectID `bson:"user" json:"user"`
+	UserID    primitive.ObjectID `bson:"user_id" json:"user_id"`
 	FileID    primitive.ObjectID `bson:"file" json:"file"`
 	Filename  string             `bson:"filename" json:"filename"`
 	Mimetype  string             `bson:"mimetype" json:"mimetype"`

@@ -84,7 +84,7 @@ erDiagram
         string pwd
         Role role
         *PilotInfo pilot_info
-        *ObjectID profile_image FK
+        *ObjectID profile_image_id FK
         datetime created_at
     }
     
@@ -104,8 +104,8 @@ erDiagram
     
     Flights {
         ObjectID _id PK
-        ObjectID edge_node FK
-        ObjectID pilot FK
+        ObjectID edge_id FK
+        ObjectID pilot_id FK
         datetime start
         *long duration
     }
@@ -121,7 +121,7 @@ erDiagram
     
     APIKeys {
         ObjectID _id PK
-        *ObjectID edge_node FK
+        *ObjectID edge_id FK
         binary salt
         int hash_iterations
         binary key
@@ -130,8 +130,8 @@ erDiagram
     
     UserImages {
         ObjectID _id PK
-        ObjectID user FK
-        ObjectID file FK
+        ObjectID user_id FK
+        ObjectID file
         string filename
         string mimetype
         datetime created_at
@@ -177,13 +177,13 @@ flowchart TD
 
 | Parent Collection | Child Collection | Relationship Type | Foreign Key | Constraint |
 |------------------|------------------|-------------------|-------------|------------|
-| Users | Sessions | One-to-Many | sessions.userId | CASCADE DELETE |
-| Users | Flights | One-to-Many | flights.pilot | RESTRICT DELETE |
-| Users | Alerts | One-to-Many | alerts.pilotId | RESTRICT DELETE |
-| Users | UserImages | One-to-One | users.profileImage | SET NULL |
-| EdgeNodes | Flights | One-to-Many | flights.edgeNode | RESTRICT DELETE |
-| EdgeNodes | APIKeys | One-to-Many | apiKeys.edgeNodeId | CASCADE DELETE |
-| Flights | TelemetryData | One-to-Many | telemetryData.flightId | CASCADE DELETE |
+| Users | Sessions | One-to-Many | sessions.user_id | CASCADE DELETE |
+| Users | Flights | One-to-Many | flights.pilot_id | RESTRICT DELETE |
+| Users | Alerts | One-to-Many | alerts.pilot_id | RESTRICT DELETE |
+| Users | UserImages | One-to-One | users.profile_image_id | SET NULL |
+| EdgeNodes | Flights | One-to-Many | flights.edge_id | RESTRICT DELETE |
+| EdgeNodes | APIKeys | One-to-Many | apiKeys.edge_id | CASCADE DELETE |
+| Flights | TelemetryData | One-to-Many | telemetryData.flight_id | CASCADE DELETE |
 
 ### 2.3 Integrity Principles Enforcement
 
@@ -250,7 +250,7 @@ db.createCollection("users", {
                   flight_hours: { bsonType: "int" }
                }
             },
-            profile_image: {
+            profile_image_id: {
                bsonType: "objectId",
                description: "Reference to GridFS file"
             }
@@ -267,13 +267,13 @@ db.createCollection("flights", {
    validator: {
       $jsonSchema: {
          bsonType: "object",
-         required: ["edge_node", "pilot", "start", "duration"],
+         required: ["edge_id", "pilot_id", "start", "duration"],
          properties: {
-            edge_node: {
+            edge_id: {
                bsonType: "objectId",
                description: "Reference to EdgeNodes collection"
             },
-            pilot: {
+            pilot_id: {
                bsonType: "objectId", 
                description: "Reference to Users collection"
             },
@@ -335,29 +335,27 @@ db.createCollection("alerts", {
 // Users Collection Indexes
 db.users.createIndex({ "email": 1 }, { unique: true })
 db.users.createIndex({ "role": 1 })
-db.users.createIndex({ "pilotInfo.licenseNumber": 1 }, { sparse: true })
+db.users.createIndex({ "pilot_info.licenseNumber": 1 }, { sparse: true })
 
 // Sessions Collection Indexes  
-db.sessions.createIndex({ "userId": 1 })
-db.sessions.createIndex({ "expiresAt": 1 }, { expireAfterSeconds: 0 })
+db.sessions.createIndex({ "user_id": 1 })
+db.sessions.createIndex({ "expires_at": 1 }, { expireAfterSeconds: 0 })
 
 // Flights Collection Indexes
 db.flights.createIndex({ "pilot": 1, "start": -1 })
-db.flights.createIndex({ "edgeNode": 1 })
+db.flights.createIndex({ "edge_id": 1 })
 db.flights.createIndex({ "start": -1 })
 
 // Alerts Collection Indexes
-db.alerts.createIndex({ "pilotId": 1, "timestamp": -1 })
-db.alerts.createIndex({ "fusionScore": -1 })
+db.alerts.createIndex({ "pilot_id": 1, "timestamp": -1 })
+db.alerts.createIndex({ "fusion_score": -1 })
 db.alerts.createIndex({ "timestamp": -1 })
 
 // EdgeNodes Collection Indexes
-db.edge_nodes.createIndex({ "planeInfo.tailNumber": 1 }, { unique: true })
+db.edge_nodes.createIndex({ "plane_info.tail_nr": 1 }, { unique: true })
 
 // APIKeys Collection Indexes
-db.api_keys.createIndex({ "edgeNodeId": 1 })
-db.api_keys.createIndex({ "keyValue": 1 }, { unique: true })
-db.api_keys.createIndex({ "active": 1 })
+db.api_keys.createIndex({ "edge_id": 1 })
 ```
 
 ### 3.3 Sample Data Population
@@ -403,7 +401,7 @@ db.users.insertMany([
 db.edge_nodes.insertMany([
    {
       plane_info: {
-         tail_number: "N12345",
+         tail_nr: "N12345",
          manufacturer: "Cessna",
          model: "172",
          year: 2020
@@ -411,7 +409,7 @@ db.edge_nodes.insertMany([
    },
    {
       plane_info: {
-         tail_number: "N67890", 
+         tail_nr: "N67890", 
          manufacturer: "Piper",
          model: "Cherokee",
          year: 2018
@@ -425,18 +423,18 @@ db.edge_nodes.insertMany([
 ```javascript
 // Sample Flight Data
 var pilot1 = db.users.findOne({email: "john.smith@cogniflight.com"})._id;
-var edge1 = db.edge_nodes.findOne({"planeInfo.tailNumber": "N12345"})._id;
+var edge1 = db.edge_nodes.findOne({"plane_info.tail_nr": "N12345"})._id;
 
 db.flights.insertMany([
    {
-      edgeNode: edge1,
-      pilot: pilot1,
+      edge_node: edge1,
+      pilot_id: pilot1,
       start: new Date("2025-01-15T10:30:00Z"),
       duration: NumberLong(7200000) // 2 hours in milliseconds
    },
    {
-      edgeNode: edge1, 
-      pilot: pilot1,
+      edge_node: edge1, 
+      pilot_id: pilot1,
       start: new Date("2025-01-16T14:15:00Z"),
       duration: NumberLong(5400000) // 1.5 hours in milliseconds
    }
@@ -479,18 +477,18 @@ function createUser(userData) {
       pwd: userData.hashed_pwd,
       role: userData.role,
       pilot_info: userData.pilot_info || null,
-      createdAt: new Date()
+      created_at: new Date()
    });
 }
 
 // Create Flight Record  
 function createFlight(flightData) {
    return db.flights.insertOne({
-      edge_node: ObjectId(flightData.edge_node_id),
-      pilot: ObjectId(flightData.pilot_id),
+      edge_id: ObjectId(flightData.edge_node_id),
+      pilot_id: ObjectId(flightData.pilot_id),
       start: new Date(flightData.start_time),
       duration: NumberLong(flightData.duration_ms),
-      createdAt: new Date()
+      created_at: new Date()
    });
 }
 ```
@@ -506,14 +504,14 @@ function getUserByEmail(email) {
 // Get Pilot's Flight History
 function getPilotFlights(pilotId) {
    return db.flights.find({ 
-      pilot: ObjectId(pilotId) 
+      pilot_id: ObjectId(pilotId) 
    }).sort({ start: -1 }).toArray();
 }
 
 // Get Recent Alerts for Pilot
 function getPilotAlerts(pilotId, limit = 10) {
    return db.alerts.find({
-      pilotId: ObjectId(pilotId)
+      pilot_id: ObjectId(pilotId)
    }).sort({ timestamp: -1 }).limit(limit).toArray();
 }
 
@@ -524,20 +522,20 @@ function getFlightDetails(flightId) {
       {
          $lookup: {
             from: "users",
-            localField: "pilot", 
+            localField: "pilot_id", 
             foreignField: "_id",
-            as: "pilotInfo"
+            as: "pilot_info"
          }
       },
       {
          $lookup: {
-            from: "edge_nodes",
-            localField: "edge_node",
+            from: "EdgeNodes",
+            localField: "edge_id",
             foreignField: "_id", 
             as: "aircraftInfo"
          }
       },
-      { $unwind: "$pilotInfo" },
+      { $unwind: "$pilot_info" },
       { $unwind: "$aircraftInfo" }
    ]).toArray();
 }
@@ -554,8 +552,6 @@ function updateUserProfile(userId, updateData) {
    if (updateData.phone) updateDoc.phone = updateData.phone;
    if (updateData.pilot_info) updateDoc.pilot_info = updateData.pilot_info;
    
-   updateDoc.updatedAt = new Date();
-   
    return db.users.updateOne(
       { _id: ObjectId(userId) },
       { $set: updateDoc }
@@ -569,7 +565,6 @@ function updateFlightDuration(flightId, newDuration) {
       { 
          $set: { 
             duration: NumberLong(newDuration),
-            updatedAt: new Date()
          }
       }
    );
@@ -585,7 +580,7 @@ function deleteUser(userId) {
    
    // First delete associated sessions
    result.sessionsDeleted = db.sessions.deleteMany({ 
-      userId: ObjectId(userId) 
+      user_id: ObjectId(userId) 
    });
    
    // Delete user
@@ -627,7 +622,7 @@ function getPilotFatigueAnalytics(pilotId, startDate, endDate) {
    return db.alerts.aggregate([
       {
          $match: {
-            pilotId: ObjectId(pilotId),
+            pilot_id: ObjectId(pilotId),
             timestamp: {
                $gte: new Date(startDate),
                $lte: new Date(endDate)
@@ -664,7 +659,7 @@ function getFleetUtilization() {
       { $unwind: "$aircraft" },
       {
          $group: {
-            _id: "$aircraft.plane_info.tail_number",
+            _id: "$aircraft.plane_info.tail_nr",
             totalFlights: { $sum: 1 },
             totalFlightTime: { $sum: "$duration" },
             avgFlightDuration: { $avg: "$duration" }

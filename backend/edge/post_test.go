@@ -42,7 +42,7 @@ func TestCreateEdgeNode(t *testing.T) {
 	})
 
 	t.Run("Valid request", func(t *testing.T) {
-		w := testutil.FakeRequest(t, r, "POST", `{"plane_info": {"tail_number": "N12345", "manufacturer": "Cessna", "model": "172", "year": 2020}}`, "/edge-nodes", nil)
+		w := testutil.FakeRequest(t, r, "POST", `{"plane_info": {"tail_nr": "N12345", "manufacturer": "Cessna", "model": "172", "year": 2020}}`, "/edge-nodes", nil)
 
 		if code := w.Result().StatusCode; code != 201 {
 			fmt.Println(jlogging.TestLogStr)

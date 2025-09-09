@@ -12,7 +12,7 @@ type APIKey struct {
 	Salt           primitive.Binary    `bson:"salt" json:"salt"`
 	HashIterations int                 `bson:"hash_iterations" json:"hash_iterations"`
 	Key            primitive.Binary    `bson:"key" json:"key"`
-	EdgeID         *primitive.ObjectID `bson:"edge_node,omitempty" json:"edge_node,omitempty"`
+	EdgeID         *primitive.ObjectID `bson:"edge_id,omitempty" json:"edge_id,omitempty"`
 }
 
 var ErrKeyNotExist = errors.New("API key does not exist")

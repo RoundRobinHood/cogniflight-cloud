@@ -57,7 +57,7 @@ type User struct {
 	Phone        string              `bson:"phone" json:"phone"`
 	Pwd          string              `bson:"pwd" json:"pwd"`
 	Role         Role                `bson:"role" json:"role"`
-	ProfileImage *primitive.ObjectID `bson:"profile_image,omitempty" json:"profile_image,omitempty"`
+	ProfileImage *primitive.ObjectID `bson:"profile_image_id,omitempty" json:"profile_image_id,omitempty"`
 	PilotInfo    *PilotInfo          `bson:"pilot_info,omitempty" json:"pilot_info,omitempty"`
 	CreatedAt    time.Time           `bson:"created_at" json:"created_at"`
 }
