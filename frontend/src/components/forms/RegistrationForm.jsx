@@ -4,12 +4,11 @@ import { Button } from "../ui/Button";
 import { Field, Input, Divider } from "../ui/Input";
 import PasswordInput from "../ui/PasswordInput";
 
-
 const validateEmail = (email) => /.+@.+\..+/.test(email);
 const validateRequired = (v) =>
   v?.toString().trim().length ? null : "Required";
 
-export default function PilotRegistrationForm({ seed, onComplete }) {
+export default function RegistrationForm({ seed, onComplete }) {
   const [form, setForm] = useState({
     name: seed.name,
     surname: seed.surname,

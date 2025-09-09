@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import PilotRegistrationForm from "../components/forms/PilotRegistrationForm";
+import RegistrationForm from "../components/forms/RegistrationForm";
 
-//If token is valid PilotRegistrationForm will open with seeded data:
-export default function PilotRegistrationPage() {
+//If token is valid RegistrationForm will open with seeded data:
+export default function RegistrationPage() {
   const [params] = useSearchParams();
   const token = useMemo(() => params.get("token"), [params]);
   const tokenStore = useTokenStore();
@@ -28,12 +28,12 @@ export default function PilotRegistrationPage() {
   return (
     <div className="page container">
       <header className="page-header">
-        <h1 className="page-title">Pilot Registration</h1>
+        <h1 className="page-title">Registration</h1>
         <p className="page-subtitle">
           Please complete your details and create your login credentials.
         </p>
       </header>
-      <PilotRegistrationForm seed={seed} onComplete={onComplete} />
+      <RegistrationForm seed={seed} onComplete={onComplete} />
     </div>
   );
 }

@@ -90,7 +90,7 @@ export default function AdminTokenForm({ onTokenReady }) {
     <Card>
       <CardHeader
         title="Generate Registration Token"
-        subtitle="Admins issue a one-time token. User receives link via email to open their registration form."
+        subtitle="Admins issue a one-time token. User receives link via email or WhatsApp to open their registration form."
         icon={"🔐"}
       />
       <CardBody>

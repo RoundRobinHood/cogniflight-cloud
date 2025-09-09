@@ -13,7 +13,7 @@ import PilotDashboard from "./pages/PilotDashboard.jsx";
 import GenerateToken from "./pages/GenerateToken.jsx";
 import ManagePilots from "./pages/ManagePilots.jsx";
 import PilotProfile from "./pages/PilotProfile.jsx";
-import PilotRegistrationPage from "./pages/PilotRegistrationPage.jsx";
+import RegistrationPage from "./pages/RegistrationPage.jsx";
 
 let router = createBrowserRouter([
   {
@@ -46,10 +46,10 @@ let router = createBrowserRouter([
   //Create path to Ground Control Dashboard here:
   //{},
 
-  //Through link in email
+  //Through link in email/WhatsApp
   {
     path: "/register/new",
-    Component: PilotRegistrationPage,
+    Component: RegistrationPage,
   },
   //pilot portal pages (require "pilot" authorisation)
   { path: "pilot/profile", loader: WhoAmI, Component: PilotProfile },
@@ -58,6 +58,6 @@ let router = createBrowserRouter([
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-      <RouterProvider router={router} />
+    <RouterProvider router={router} />
   </StrictMode>
 );
