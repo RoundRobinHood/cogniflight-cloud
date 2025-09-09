@@ -85,6 +85,7 @@ erDiagram
         Role role
         PilotInfo pilotInfo
         ObjectID profileImage FK
+        datetime createdAt
     }
     
     Sessions {
@@ -129,7 +130,7 @@ erDiagram
         binary imageData
         string filename
         string contentType
-        datetime uploadedAt
+        datetime createdAt
     }
 
     Users ||--o{ Sessions : "has many"
