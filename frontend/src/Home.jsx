@@ -20,9 +20,7 @@ function Home() {
 
   return (
     <>
-      <h1>
-        Welcome to the {role} dashboard, {name}!
-      </h1>
+      <h1>Welcome to CogniFlight, {name}!</h1>
 
       {/*Pilot-side (available to pilots and admins*/}
       {(isPilot || isAdmin) && (
