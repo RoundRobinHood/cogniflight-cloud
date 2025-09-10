@@ -3,7 +3,7 @@ import AdminTokenForm from "../components/forms/AdminTokenForm";
 
 export default function GenerateToken() {
   const onTokenReady = (token, data) => {
-    alert(`Token issued: ${token}\n(Sent to user)`);
+    alert(`Token issued: ${token}\n(Link sent to user)`);
   };
 
   return (
@@ -11,7 +11,7 @@ export default function GenerateToken() {
       <header className="page-header">
         <h1 className="page-title">Admin Issue Token</h1>
         <p className="page-subtitle">
-          Create and send a one-time registration token for a new user.
+          Create and send a one-time registration link to new user.
         </p>
       </header>
       <AdminTokenForm onTokenReady={onTokenReady} />

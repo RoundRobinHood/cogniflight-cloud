@@ -4,13 +4,12 @@ import { Button } from "../ui/Button";
 import { Field, Input } from "../ui/Input";
 import { CreateSignupToken } from "../../api/auth";
 
-const validateEmail = (email) => /.+@.+\..+/.test(email);
 const validateRequired = (v) =>
   v?.toString().trim().length ? null : "Required";
 
 function validateContact(contact) {
   const isEmail = contact.includes("@"); //to check if input has @ to indicate email entered
-  const isPhone = /^\d+$/.test(contact); //to check if string is made of only digits to indicate phone number
+  const isPhone = /^\d+$/.test(contact); //to check if input is made of only digits to indicate phone number
 
   if (isEmail) {
     const emailExpression = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -89,7 +88,7 @@ export default function AdminTokenForm({ onTokenReady }) {
   return (
     <Card>
       <CardHeader
-        title="Generate Registration Token"
+        title="Generate Registration Link"
         subtitle="Admins issue a one-time token. User receives link via email or WhatsApp to open their registration form."
         icon={"🔐"}
       />
@@ -154,10 +153,10 @@ export default function AdminTokenForm({ onTokenReady }) {
             ) : null}
           </div>
 
-          <p className="muted mt-1">
+          {/* <p className="muted mt-1">
             Registration link with token sent to:{" "}
-            <span className="mono">{form.contact}</span>.
-          </p>
+            <span className="mono">{form.contact}</span>
+          </p> */}
         </form>
       </CardBody>
     </Card>

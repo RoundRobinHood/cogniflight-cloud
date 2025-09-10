@@ -12,7 +12,7 @@ import Login from "./Login.jsx";
 import PilotDashboard from "./pages/PilotDashboard.jsx";
 import GenerateToken from "./pages/GenerateToken.jsx";
 import ManagePilots from "./pages/ManagePilots.jsx";
-import PilotProfile from "./pages/PilotProfile.jsx";
+import UserProfile from "./pages/UserProfile.jsx";
 import RegistrationPage from "./pages/RegistrationPage.jsx";
 
 let router = createBrowserRouter([
@@ -32,6 +32,8 @@ let router = createBrowserRouter([
     Component: Login,
   },
 
+  { path: "/user/profile", loader: WhoAmI, Component: UserProfile },
+
   //admin pages (requires "administrative" authorisation)
   {
     path: "admin/generate-token",
@@ -39,7 +41,7 @@ let router = createBrowserRouter([
     Component: GenerateToken,
   },
   {
-    path: "admin/manage-pilots",
+    path: "/admin/manage-pilots",
     loader: WhoAmI,
     Component: ManagePilots,
   },
@@ -52,8 +54,7 @@ let router = createBrowserRouter([
     Component: RegistrationPage,
   },
   //pilot portal pages (require "pilot" authorisation)
-  { path: "pilot/profile", loader: WhoAmI, Component: PilotProfile },
-  { path: "pilot/dashboard", loader: WhoAmI, Component: PilotDashboard },
+  { path: "/pilot/dashboard", loader: WhoAmI, Component: PilotDashboard },
 ]);
 
 createRoot(document.getElementById("root")).render(

@@ -15,12 +15,12 @@ function Home() {
   const name = user.name;
   const isAdmin = role === "sysadmin";
   const isPilot = role === "pilot";
-  const isUser = role === "atc";
+  const isATC = role === "atc";
   console.log("authStatus:", authStatus);
 
   return (
     <>
-      <h1>Welcome to Cogniflight, {name}!</h1>
+      <h1>Welcome to Cogniflight Cloud Platform, {name}!</h1>
 
       {/*Pilot-side (available to pilots and admins*/}
       {(isPilot || isAdmin) && (
@@ -28,7 +28,7 @@ function Home() {
           <h3>Pilot</h3>
           <ul>
             <li>
-              <Link to="/pilot/profile">Manage Profile</Link>
+              <Link to="/user/profile">Manage Profile</Link>
             </li>
             <li>
               <Link to="/pilot/dashboard">View Dashboard</Link>
@@ -36,6 +36,23 @@ function Home() {
           </ul>
         </section>
       )}
+      {/*ATC-side (available to ground control and admins*/}
+      {(isAdmin || isATC) && (
+        <section style={{ marginTop: "1rem" }}>
+          <h3>Air Traffic Controller</h3>
+          <ul>
+            <li>
+              <Link to="/user/profile">Manage Profile</Link>
+            </li>
+            {/*Point this to ground control dashboard, once code is integrated. 
+            
+            <li>
+              <Link to="/atc/dashboard">View Ground Control Dashboard</Link>
+            </li> */}
+          </ul>
+        </section>
+      )}
+
       {/* Admin-only */}
       {isAdmin && (
         <section style={{ marginTop: "1rem" }}>
@@ -46,6 +63,9 @@ function Home() {
             </li>
             <li>
               <Link to="/admin/manage-pilots">Manage Pilots</Link>
+            </li>
+            <li>
+              <Link to="/user/profile">Manage Profile</Link>
             </li>
           </ul>
         </section>
