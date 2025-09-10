@@ -43,7 +43,7 @@ services:
   mosquitto:
     networks:
       - "${NETWORK:-web}"
-    image: eclipse-mosquitto:2.0-openssl
+    image: iegomez/mosquitto-go-auth:3.0.0-mosquitto_2.0.18
     user: root
     entrypoint: >
       sh -c 'mkdir -p /mosquitto/certs && cp /mosquitto/inject-certs/* /mosquitto/certs && chown -R mosquitto:mosquitto /mosquitto/certs && exec su mosquitto -s /bin/sh -c "mosquitto -c /mosquitto/config/mosquitto.conf"'
