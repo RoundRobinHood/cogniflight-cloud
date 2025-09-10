@@ -158,6 +158,7 @@ func main() {
 		types.RoleATC:      {},
 		types.RolePilot:    {},
 	}), images.UploadImage(imageStore))
+	r.POST("/check-api-key", keys.CheckKey(keyStore))
 
 	server := &http.Server{
 		Addr:    ":8080",
