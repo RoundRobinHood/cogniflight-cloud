@@ -50,7 +50,22 @@ body {
   gap: 20px;
 }
 
-.vitals-card {
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.login-card {
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+  min-height: 300px;
+  height: auto; /*adjustable to content*/
+}
+
+.card.vitals-card {
   background-color: var(--card);
   color: var(--text);
   border-left: 5px solid var(--accent);
@@ -60,8 +75,8 @@ body {
   text-align: center;
 }
 
-.alert-card {
-  border-left-color: var(--danger);
+.card.alert-card {
+  border-left: 5px solid var(--danger);
 }
 
 .vitals-card h3 {
@@ -70,7 +85,7 @@ body {
   font-size: 1.1rem;
 }
 
-.vitals-card alert {
+.vitals-card .alert {
   color: var(--danger);
   font-weight: bold;
   margin-top: 10px;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLoaderData, useParams, useNavigate } from "react-router-dom";
+import "../styles/forms.css";
 
 //replace with real API call
 async function fetchUserProfile(userId) {
@@ -112,17 +113,22 @@ export default function UserProfile() {
       {loggedInUser.role === "sysadmin" && !userId && (
         <div className="admin-edit box">
           <h3>Edit Another User</h3>
-          <label>Enter User ID</label>
-          <input
-            type="text"
-            value={adminTargetId}
-            onChange={(e) => {
-              setAdminTargetId(e.target.value);
-              setAdminError(""); //clears error when typing another ID}
-            }}
-            placeholder="pil0015"
-          />
+          <br></br>
+          <div className="field">
+            <label className="label">Enter User ID</label>
+            <input
+              className="input"
+              type="text"
+              value={adminTargetId}
+              onChange={(e) => {
+                setAdminTargetId(e.target.value);
+                setAdminError(""); //clears error when typing another ID}
+              }}
+              placeholder="pil0015"
+            />
+          </div>
           <button
+            className="btn btn-primary"
             type="button"
             onClick={async () => {
               if (!adminTargetId.trim()) {
@@ -158,65 +164,83 @@ export default function UserProfile() {
         className="grid gap-lg"
         style={{ maxWidth: "600px" }}
       >
-        <label>Name</label>
-        <input
-          value={form.name}
-          onChange={(e) => set("name", e.target.value)}
-          required
-        />
-
-        <label>Surname</label>
-        <input
-          value={form.surname}
-          onChange={(e) => set("surname", e.target.value)}
-          required
-        />
-
-        <label>Email</label>
-        <input
-          type="email"
-          value={form.email}
-          onChange={(e) => set("email", e.target.value)}
-          required
-        />
-
-        <label>Cellphone</label>
-        <input
-          type="tel"
-          value={form.cellphone}
-          onChange={(e) => set("cellphone", e.target.value)}
-          required
-        />
+        <div className="field">
+          <label className="label">Name</label>
+          <input
+            className="input"
+            value={form.name}
+            onChange={(e) => set("name", e.target.value)}
+            required
+          />
+        </div>
+        <div className="field">
+          <label className="label">Surname</label>
+          <input
+            className="input"
+            value={form.surname}
+            onChange={(e) => set("surname", e.target.value)}
+            required
+          />
+        </div>
+        <div className="field">
+          <label className="label">Email</label>
+          <input
+            className="input"
+            type="email"
+            value={form.email}
+            onChange={(e) => set("email", e.target.value)}
+            required
+          />
+        </div>
+        <div className="field">
+          <label className="label">Cellphone</label>
+          <input
+            className="input"
+            type="tel"
+            value={form.cellphone}
+            onChange={(e) => set("cellphone", e.target.value)}
+            required
+          />
+        </div>
         {/*Pilot-only fields*/}
 
         {targetUser?.role === "pilot" && (
           <>
-            <label>License No</label>
-            <input
-              value={form.licenseNo}
-              onChange={(e) => set("licenseNo", e.target.value)}
-              required
-            />
-
-            <label>Height (cm)</label>
-            <input
-              type="number"
-              value={form.height}
-              onChange={(e) => set("height", e.target.value)}
-              required
-            />
-
-            <label>Weight (kg)</label>
-            <input
-              type="number"
-              value={form.weight}
-              onChange={(e) => set("weight", e.target.value)}
-              required
-            />
+            <div className="field">
+              <label className="label">License No</label>
+              <input
+                className="input"
+                value={form.licenseNo}
+                onChange={(e) => set("licenseNo", e.target.value)}
+                required
+              />
+            </div>
+            <div className="field">
+              <label className="label">Height (cm)</label>
+              <input
+                className="input"
+                type="number"
+                value={form.height}
+                onChange={(e) => set("height", e.target.value)}
+                required
+              />
+            </div>
+            <div className="field">
+              <label className="label">Weight (kg)</label>
+              <input
+                className="input"
+                type="number"
+                value={form.weight}
+                onChange={(e) => set("weight", e.target.value)}
+                required
+              />
+            </div>
           </>
         )}
 
-        <button type="submit">Save Changes</button>
+        <button className="btn btn-primary" type="submit">
+          Save Changes
+        </button>
       </form>
     </div>
   );
