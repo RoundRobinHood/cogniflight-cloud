@@ -163,6 +163,8 @@ func main() {
 		types.RoleATC:      {},
 		types.RolePilot:    {},
 	}), images.UploadImage(imageStore))
+	r.POST("/check-api-key", keys.CheckKey(keyStore))
+	r.POST("/hi", func(c *gin.Context) { c.String(200, "hello") })
 
 	server := &http.Server{
 		Addr:    ":8080",
