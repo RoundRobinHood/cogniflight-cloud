@@ -32,6 +32,7 @@ services:
       MQTT_URL: "${TELEGRAF_MQTT_URL:-ssl://${MQTT_DOMAIN:-mosquitto}:8883}"
       SERVER_DOMAIN: "${SERVER_DOMAIN:-mosquitto}"
       INSECURE_SKIP_VERIFY: "${INSECURE_SKIP_VERIFY_MQTT:-true}"
+      MQTT_KEY: "${MQTT_KEY:-mqttpass}"
 
       INFLUX_URL: ${INFLUXDB_URL:-http://influxdb:8086}
       INFLUX_TOKEN: ${INFLUXDB_TOKEN:-mytoken}
@@ -111,6 +112,8 @@ services:
       TRUSTED_PROXIES: "${TRUSTED_PROXIES:-frontend}"
 
       ML_SOCK_FILE: "/sockets/ml-engine.sock"
+
+      MQTT_KEY: "${MQTT_KEY:-mqttpass}"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`${SERVER_DOMAIN:-localhost}`) && PathPrefix(`/api`)"
