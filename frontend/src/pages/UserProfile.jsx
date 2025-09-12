@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLoaderData, useParams } from "react-router-dom";
+import { useLoaderData, useParams, useNavigate } from "react-router-dom";
 
 //replace with real API call
 async function fetchUserProfile(userId) {
@@ -31,9 +31,12 @@ export default function UserProfile() {
   const authStatus = useLoaderData(); // Comes from WhoAmI loader in main.jsx
   const loggedInUser = authStatus.user;
   const { userId } = useParams(); //for admin editing
+  const navigate = useNavigate();
   const [targetUser, setTargetUser] = useState(null);
   const [form, setForm] = useState(null);
   const [message, setMessage] = useState("");
+  const [adminTargetId, setAdminTargetId] = useState("");
+  const [adminError, setAdminError] = useState("");
 
   //Load profile
   useEffect(() => {
@@ -104,6 +107,52 @@ export default function UserProfile() {
     <div className="page container">
       <h2>Manage Profile</h2>
       {message && <p style={{ color: "green" }}>{message}</p>}
+
+      {/* Admin only: Enter another user's ID */}
+      {loggedInUser.role === "sysadmin" && !userId && (
+        <div className="admin-edit box">
+          <h3>Edit Another User</h3>
+          <label>Enter User ID</label>
+          <input
+            type="text"
+            value={adminTargetId}
+            onChange={(e) => {
+              setAdminTargetId(e.target.value);
+              setAdminError(""); //clears error when typing another ID}
+            }}
+            placeholder="pil0015"
+          />
+          <button
+            type="button"
+            onClick={async () => {
+              if (!adminTargetId.trim()) {
+                setAdminError("Please enter a user ID.");
+                return;
+              }
+
+              try {
+                //test fetch
+                const testUser = await fetchUserProfile(adminTargetId);
+                if (!testUser) {
+                  setAdminError("User not found.");
+                  return;
+                }
+                navigate(`/user/${adminTargetId}/profile`);
+              } catch (err) {
+                console.error(err);
+                setAdminError(
+                  "Error checking user ID. Please try again later."
+                );
+              }
+            }}
+          >
+            Edit User
+          </button>
+
+          {adminError && <p style={{ color: "red" }}>{adminError}</p>}
+        </div>
+      )}
+
       <form
         onSubmit={submit}
         className="grid gap-lg"
