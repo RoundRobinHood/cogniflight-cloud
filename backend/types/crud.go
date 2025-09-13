@@ -7,6 +7,18 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type HTTPError struct {
+	ErrorCode int
+	Err       error
+}
+
+func HTTPWraps(err error, code int) *HTTPError {
+	return &HTTPError{
+		ErrorCode: code,
+		Err:       err,
+	}
+}
+
 var ErrRepositoryItemNotFound = errors.New("Item not found in repository")
 
 type ListOptions[F any] struct {
@@ -16,21 +28,18 @@ type ListOptions[F any] struct {
 }
 
 type Repository[Input, Update, Output, Filter any] interface {
-	// Listing functions
-	ValidateFilter(filter Filter, ctx context.Context) error
-	List(opts ListOptions[Filter], ctx context.Context) ([]Output, error)
+	// Listing
+	List(opts ListOptions[Filter], ctx context.Context) ([]Output, *HTTPError)
 
 	// Get by ID
-	GetItem(ID primitive.ObjectID, ctx context.Context) (Output, error)
+	GetItem(ID primitive.ObjectID, ctx context.Context) (Output, *HTTPError)
 
 	// Posting functions
-	ValidateInput(input Input, ctx context.Context) error
-	Create(input Input, ctx context.Context) (Output, error)
+	Create(input Input, ctx context.Context) (Output, *HTTPError)
 
 	// Patching functions
-	ValidateUpdate(update Update, ctx context.Context) error
-	Update(update Update, ctx context.Context) (Output, error)
+	Update(ID primitive.ObjectID, update Update, ctx context.Context) (Output, *HTTPError)
 
 	// Deleting functions
-	Delete(ID primitive.ObjectID, ctx context.Context) (Output, error)
+	Delete(ID primitive.ObjectID, ctx context.Context) (Output, *HTTPError)
 }

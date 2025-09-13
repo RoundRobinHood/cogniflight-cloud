@@ -143,12 +143,13 @@ func (s *FakeSessionStore) CreateSession(UserID primitive.ObjectID, Role types.R
 		s.Sessions = map[string]types.Session{}
 	}
 	ID := primitive.NewObjectID()
+	createdAt := time.Now()
 	s.Sessions[sessID] = types.Session{
 		ID:        ID,
 		SessID:    sessID,
 		UserID:    UserID,
 		Role:      Role,
-		CreatedAt: time.Now(),
+		CreatedAt: createdAt,
 	}
 
 	s.SessID = sessID
@@ -157,7 +158,7 @@ func (s *FakeSessionStore) CreateSession(UserID primitive.ObjectID, Role types.R
 		SessID:    sessID,
 		UserID:    UserID,
 		Role:      Role,
-		CreatedAt: time.Now(),
+		CreatedAt: createdAt,
 	}, nil
 }
 
