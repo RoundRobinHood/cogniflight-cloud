@@ -27,19 +27,30 @@ type ListOptions[F any] struct {
 	Filter   F
 }
 
-type Repository[Input, Update, Output, Filter any] interface {
-	// Listing
+type Listable[Output, Filter any] interface {
 	List(opts ListOptions[Filter], ctx context.Context) ([]Output, *HTTPError)
+}
 
-	// Get by ID
+type IDGettable[Output any] interface {
 	GetItem(ID primitive.ObjectID, ctx context.Context) (Output, *HTTPError)
+}
 
-	// Posting functions
+type Creatable[Input, Output any] interface {
 	Create(input Input, ctx context.Context) (Output, *HTTPError)
+}
 
-	// Patching functions
+type IDUpdatable[Update, Output any] interface {
 	Update(ID primitive.ObjectID, update Update, ctx context.Context) (Output, *HTTPError)
+}
 
-	// Deleting functions
+type IDDeleteable[Output any] interface {
 	Delete(ID primitive.ObjectID, ctx context.Context) (Output, *HTTPError)
+}
+
+type Repository[Input, Update, Output, Filter any] interface {
+	Listable[Output, Filter]
+	IDGettable[Output]
+	Creatable[Input, Output]
+	IDUpdatable[Update, Output]
+	IDDeleteable[Output]
 }
