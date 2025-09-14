@@ -547,33 +547,6 @@ The CogniFlight Cloud class design supports SCRUM implementation through:
 
 ---
 
-## Appendix A: Technology Justification
-
-| Technology | Selection Reason |
-|------------|-----------------|
-| **Go** | High performance, concurrent processing, strong typing |
-| **MongoDB** | Flexible schema, document storage, horizontal scaling |
-| **InfluxDB** | Optimized for time-series data, real-time analytics |
-| **React** | Component-based UI, virtual DOM, large ecosystem |
-| **Python** | ML libraries, scientific computing, data analysis |
-| **Docker** | Container orchestration, environment consistency |
-
----
-
-## Appendix B: Team Contribution Matrix
-
-| Team Member | Role | Primary Responsibility | Classes Owned |
-|-------------|------|----------------------|---------------|
-| Jeremia Fourie | Product Owner | Requirements, User Stories | User, Session |
-| Jason Bond | Scrum Master | Process, Integration | Alert, Notification |
-| Brian Felgate | Backend Dev | Go Services | Flight, EdgeNode |
-| Jayden Crosson | Frontend Dev | React Dashboard | UI Components |
-| Susanna Hoffmann | Frontend Dev | Data Visualization | Charts, Reports |
-| Jeremy Kahora | ML Dev | Fatigue Analysis | TelemetryProcessor |
-| Janco Nieuwoudt | ML Dev | Prediction Models | MLEngine |
-
----
-
 **Document Version:** 1.0  
 **Last Updated:** September 2025  
 **Status:** Final Submission for Project Task 1  
