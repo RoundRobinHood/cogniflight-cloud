@@ -55,25 +55,26 @@ After comprehensive evaluation of various Agile methodologies against the CogniF
 
 ### Core Business Entities for CogniFlight Cloud
 
-| Entity | Purpose | Business Requirement |
-|--------|---------|---------------------|
-| **Pilot** | Primary system user who flies aircraft and generates telemetry data | BR001: User authentication, BR002: Pilot certification |
-| **ATC (Air Traffic Controller)** | Supervisory role monitoring multiple pilots and flights | BR001: User authentication, BR010: Role-based access |
-| **Flight** | Core activity unit tracking a pilot's flight session | BR004: Flight session integrity |
-| **Telemetry Data** | Real-time sensor information collected during flights | BR005: Telemetry data continuity |
-| **Alert** | System-generated fatigue warnings based on ML analysis | BR006: Alert generation |
-| **Edge Node/Aircraft** | Physical device/plane generating telemetry data | BR003: Edge node registration |
-| **System Administrator** | Platform management and configuration role | BR001: User authentication, BR010: Role-based access |
+| Entity | Collection | Purpose | Business Requirement |
+|--------|------------|---------|---------------------|
+| **User** | users | Base entity for all system users with role differentiation | BR001: User authentication |
+| **├─ Pilot (role)** | users | User with 'pilot' role who flies aircraft | BR002: Pilot certification |
+| **├─ ATC (role)** | users | User with 'atc' role monitoring multiple pilots | BR010: Role-based access |
+| **└─ SysAdmin (role)** | users | User with 'sysadmin' role for platform management | BR010: Role-based access |
+| **Flight** | flights | Core activity unit tracking a pilot's flight session | BR004: Flight session integrity |
+| **Alert** | alerts | System-generated fatigue warnings based on ML analysis | BR006: Alert generation |
+| **EdgeNode** | edge_nodes | Physical device/plane generating telemetry data | BR003: Edge node registration |
+| **TelemetryData** | InfluxDB | Time-series sensor data collected during flights | BR005: Telemetry data continuity |
 
 ### Domain-Specific Supporting Classes
 
 | Class | Purpose | Business Rule |
 |-------|---------|---------------|
-| **Session** | Manages user authentication | BR001: Secure login/logout |
+| **Session** | Manages user authentication | BR007: Session management |
 | **APIKey** | Edge device authentication | BR008: API security |
-| **UserImage** | Profile management | BR009: Binary data storage |
-| **PlaneInfo** | Aircraft metadata | BR003: Edge node registration |
-| **PilotInfo** | Certification tracking | BR002: Pilot certification |
+| **UserImage** | Profile management (GridFS) | BR009: File storage |
+| **PlaneInfo** | Aircraft metadata (embedded in EdgeNode) | BR003: Edge node registration |
+| **PilotInfo** | Certification tracking (embedded in User) | BR002: Pilot certification |
 
 ---
 
@@ -84,94 +85,74 @@ After comprehensive evaluation of various Agile methodologies against the CogniF
 ```mermaid
 classDiagram
     class User {
-        -ObjectID id
-        -string name
-        -string email
-        -string phone
-        -string password
-        -Role role
-        -ObjectID profileImage
-        -PilotInfo pilotInfo
-        -DateTime createdAt
-        +authenticate() bool
-        +updateProfile() void
-        +getRolePermissions() Permission[]
+        -ObjectID ID
+        -string Name
+        -string Email
+        -string Phone
+        -string Pwd
+        -Role Role
+        -ObjectID ProfileImage
+        -PilotInfo PilotInfo
+        -DateTime CreatedAt
     }
 
     class PilotInfo {
-        -float64[][] faceEmbeddings
-        -string licenseNr
-        -DateTime certificateExpiry
-        -float64 flightHours
-        -Map baseline
-        -PilotEnvPref environmentPref
-        +isValid() bool
-        +updateBaseline() void
+        -float64[][] FaceEmbeddings
+        -string LicenseNr
+        -DateTime CertificateExpiry
+        -float64 FlightHours
+        -Map Baseline
+        -PilotEnvPref EnvironmentPref
     }
 
     class PilotEnvPref {
-        -string noiseSensitivity
-        -string lightSensitivity
-        -PilotCabinTempPref cabinTempPref
-        +checkEnvironment() bool
+        -string NoiseSensitivity
+        -string LightSensitivity
+        -PilotCabinTempPref CabinTempPref
     }
 
     class EdgeNode {
-        -ObjectID id
-        -PlaneInfo planeInfo
-        +register() bool
-        +generateAPIKey() string
-        +sendTelemetry() void
+        -ObjectID ID
+        -PlaneInfo PlaneInfo
     }
 
     class PlaneInfo {
-        -string tailNr
-        -string manufacturer
-        -string model
-        -int year
-        +validate() bool
+        -string TailNr
+        -string Manufacturer
+        -string Model
+        -int Year
     }
 
     class Flight {
-        -ObjectID id
-        -ObjectID edgeId
-        -ObjectID pilotId
-        -DateTime start
-        -Duration duration
-        +startFlight() void
-        +endFlight() void
-        +calculateDuration() Duration
+        -ObjectID ID
+        -ObjectID EdgeID
+        -ObjectID PilotID
+        -DateTime Start
+        -Duration Duration
     }
 
     class Alert {
-        -ObjectID id
-        -ObjectID pilotId
-        -DateTime timestamp
-        -float64 fusionScore
-        -string interpretation
-        -string userExplanation
-        +generateAlert() void
-        +notify() void
+        -ObjectID ID
+        -ObjectID PilotID
+        -DateTime Timestamp
+        -float64 FusionScore
+        -string Interpretation
+        -string UserExplanation
     }
 
     class Session {
-        -ObjectID id
-        -ObjectID userId
-        -DateTime createdAt
-        -DateTime expiresAt
-        +isValid() bool
-        +refresh() void
-        +terminate() void
+        -ObjectID ID
+        -ObjectID UserID
+        -DateTime CreatedAt
+        -DateTime ExpiresAt
     }
 
     class APIKey {
-        -ObjectID id
-        -ObjectID edgeNodeId
-        -string keyValue
-        -DateTime createdAt
-        -bool active
-        +validate() bool
-        +deactivate() void
+        -ObjectID ID
+        -ObjectID EdgeNodeID
+        -string KeyValue
+        -DateTime CreatedAt
+        -bool Active
     }
 
     User "1" --o "0..1" PilotInfo : contains
@@ -299,12 +280,13 @@ graph TB
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| **Backend** | Go 1.21+ | High-performance API services |
+| **Backend** | Go 1.21+ | High-performance API endpoints |
 | **Frontend** | React 18 + Vite | Interactive dashboard |
-| **ML Engine** | Python 3.11 | Fatigue analysis algorithms |
-| **Database** | MongoDB 7.0 | Operational data storage |
+| **ML Engine** | Python 3.11+ | Fatigue analysis algorithms |
+| **Database** | MongoDB 8.0 | Operational data storage |
 | **Time-Series** | InfluxDB 2.7 | Telemetry data storage |
-| **Message Broker** | Mosquitto MQTT | Real-time data streaming |
+| **Message Broker** | Mosquitto 2.0 | Real-time MQTT data streaming |
+| **Metrics Collection** | Telegraf 1.34 | Data pipeline processing |
 | **Containerization** | Docker Compose | Service orchestration |
 
 ### 4.2 Go Backend Implementation Structure
@@ -378,12 +360,20 @@ cogniflight-cloud/
 
 ## 5. Class Relationships Analysis
 
-### 5.1 Inheritance Relationships
+### 5.1 Inheritance Relationships (Interface Implementation)
 
-| Base Class | Derived Classes | Type | Purpose |
-|------------|----------------|------|---------|
-| **User** | Pilot, ATC, SysAdmin | Role-based specialization | Different user types with specific permissions |
-| **TelemetryData** | HeartRate, Environment, Eye, Motion | Composition | Sensor data categorization |
+| Interface | Implementing Types | Purpose |
+|-----------|-------------------|---------|
+| **UserStore** | MongoDB User Repository | User data persistence |
+| **EdgeNodeStore** | MongoDB Edge Repository | Edge node management |
+| **io.Writer** | Custom loggers | Standard output interface |
+| **http.Handler** | API endpoint handlers | HTTP request processing |
+
+| Base Type | Embedded Types | Relationship |
+|-----------|---------------|-------------|
+| **User** | PilotInfo (conditional) | Composition based on role |
+| **EdgeNode** | PlaneInfo | Embedded struct |
+| **TelemetryMessage** | HeartRateValues, EnvironmentValues, EyeValues, MotionValues | Embedded structs |
 
 ### 5.2 Association Relationships
 
@@ -408,13 +398,13 @@ cogniflight-cloud/
 
 ```mermaid
 graph LR
-    subgraph "Service Dependencies"
-        AUTH[AuthService] --> USER[UserStore]
-        PILOT[PilotService] --> USER
-        EDGE[EdgeService] --> NODE[NodeStore]
-        ALERT[AlertService] --> PILOT
-        ML[MLEngine] --> TELEMETRY[TelemetryStore]
-        ML --> ALERT
+    subgraph "Module Dependencies"
+        AUTH[Auth Module] --> USER[UserStore]
+        PILOT[Pilot Module] --> USER
+        EDGE[Edge Module] --> NODE[EdgeNodeStore]
+        ALERT[Alert Module] --> ALERTSTORE[AlertStore]
+        ML[ML Engine] --> INFLUX[InfluxDB]
+        ML --> ALERTSTORE
     end
 ```
 
@@ -439,15 +429,15 @@ graph LR
 | Technique | Implementation | Impact |
 |-----------|---------------|--------|
 | **Indexing** | MongoDB compound indexes | <300ms query response |
-| **Caching** | Redis session cache | Reduced DB load |
 | **Connection Pooling** | Database connections | Improved throughput |
 | **Async Processing** | Go routines | Concurrent operations |
+| **Time-Series Optimization** | InfluxDB retention policies | Efficient data storage |
 
 ### 7.2 Security Implementation
 
 | Security Layer | Implementation | Protection |
 |----------------|---------------|------------|
-| **Authentication** | JWT + Sessions | Identity verification |
+| **Authentication** | Session ID Cookies | Identity verification |
 | **Authorization** | RBAC | Access control |
 | **Encryption** | TLS/HTTPS | Data in transit |
 | **Hashing** | bcrypt | Password storage |
@@ -474,14 +464,13 @@ type UserStore interface {
     GetByID(id primitive.ObjectID) (*User, error)
     GetByEmail(email string) (*User, error)
     Update(id primitive.ObjectID, update *UserUpdate) error
-    Delete(id primitive.ObjectID) error
+    DeleteUserByID(id primitive.ObjectID) error
 }
 
 // EdgeNodeStore interface - specialized operations
 type EdgeNodeStore interface {
-    GetNodeByID(ID primitive.ObjectID) (*EdgeNode, error)
-    CreateEdgeNode(planeInfo PlaneInfo) (*EdgeNode, error)
-    GenerateAPIKey(nodeID primitive.ObjectID) (*APIKey, error)
+    GetNodeByID(ID primitive.ObjectID, ctx context.Context) (*EdgeNode, error)
+    CreateEdgeNode(planeInfo PlaneInfo, ctx context.Context) (*EdgeNode, error)
 }
 ```
 
@@ -503,7 +492,7 @@ type EdgeNodeStore interface {
 
 ```go
 // Example: Alert generation logic
-func (a *AlertService) GenerateAlert(telemetry *TelemetryMessage) (*Alert, error) {
+func (a *AlertStore) GenerateAlert(telemetry *TelemetryMessage) (*Alert, error) {
     if telemetry.FusionScore > 0.7 { // BR006: Threshold
         alert := &Alert{
             PilotID:        telemetry.PilotID,
@@ -511,7 +500,7 @@ func (a *AlertService) GenerateAlert(telemetry *TelemetryMessage) (*Alert, error
             FusionScore:    telemetry.FusionScore,
             Interpretation: a.interpretScore(telemetry.FusionScore),
         }
-        return a.store.Create(alert)
+        return a.Create(alert)
     }
     return nil, nil
 }
@@ -544,6 +533,33 @@ The CogniFlight Cloud class design supports SCRUM implementation through:
 - **Clear Interfaces**: Well-defined contracts between aviation services
 - **Incremental Enhancement**: Base classes allow telemetry feature addition
 - **Test-Driven Design**: Interfaces enable mocking and testing of flight systems
+
+---
+
+## Appendix A: Technology Justification
+
+| Technology | Selection Reason |
+|------------|-----------------|
+| **Go** | High performance, concurrent processing, strong typing |
+| **MongoDB** | Flexible schema, document storage, horizontal scaling |
+| **InfluxDB** | Optimized for time-series data, real-time analytics |
+| **React** | Component-based UI, virtual DOM, large ecosystem |
+| **Python** | ML libraries, scientific computing, data analysis |
+| **Docker** | Container orchestration, environment consistency |
+
+---
+
+## Appendix B: Team Contribution Matrix
+
+| Team Member | Role | Primary Responsibility | Classes Owned |
+|-------------|------|----------------------|---------------|
+| Jeremia Fourie | Product Owner | Requirements, User Stories | User, Session |
+| Jason Bond | Scrum Master | Process, Integration | Alert, Notification |
+| Brian Felgate | Backend Dev | Go Services | Flight, EdgeNode |
+| Jayden Crosson | Frontend Dev | React Dashboard | UI Components |
+| Susanna Hoffmann | Frontend Dev | Data Visualization | Charts, Reports |
+| Jeremy Kahora | ML Dev | Fatigue Analysis | TelemetryProcessor |
+| Janco Nieuwoudt | ML Dev | Prediction Models | MLEngine |
 
 ---
 
