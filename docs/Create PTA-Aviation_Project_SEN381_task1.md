@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-This document presents the comprehensive class and UML definition for the **CogniFlight Cloud Platform**, a sophisticated aviation telemetry analytics system. We have evaluated and selected **SCRUM** as the most appropriate Agile methodology and designed a robust object-oriented architecture that transforms the CampusLearn™ e-learning requirements into a specialized aviation safety ecosystem.
+This document presents the comprehensive class and UML definition for the **CogniFlight Cloud Platform**, a sophisticated aviation telemetry analytics system designed to monitor pilot fatigue and enhance flight safety through real-time data analysis. We have evaluated and selected **SCRUM** as the most appropriate Agile methodology and designed a robust object-oriented architecture for our cloud-based aviation safety platform.
 
 ---
 
@@ -53,19 +53,19 @@ After comprehensive evaluation of various Agile methodologies against the CogniF
 
 ## 2. Business Classes Identification
 
-### Core Business Entities Mapping
+### Core Business Entities for CogniFlight Cloud
 
-| Original Requirement (CampusLearn) | CogniFlight Cloud Implementation | Justification |
-|-------------------------------------|-----------------------------------|---------------|
-| **Student** | **Pilot** | Primary system user generating telemetry data |
-| **Tutor** | **ATC (Air Traffic Controller)** | Supervisory role monitoring multiple pilots |
-| **Topic** | **Flight** | Core activity unit being tracked |
-| **Learning Material** | **Telemetry Data** | Information being processed and analyzed |
-| **Assessment** | **Alert** | System evaluation of pilot performance |
-| **Course** | **Edge Node/Aircraft** | Container for related activities |
-| **Administrator** | **System Administrator** | System management role |
+| Entity | Purpose | Business Requirement |
+|--------|---------|---------------------|
+| **Pilot** | Primary system user who flies aircraft and generates telemetry data | BR001: User authentication, BR002: Pilot certification |
+| **ATC (Air Traffic Controller)** | Supervisory role monitoring multiple pilots and flights | BR001: User authentication, BR010: Role-based access |
+| **Flight** | Core activity unit tracking a pilot's flight session | BR004: Flight session integrity |
+| **Telemetry Data** | Real-time sensor information collected during flights | BR005: Telemetry data continuity |
+| **Alert** | System-generated fatigue warnings based on ML analysis | BR006: Alert generation |
+| **Edge Node/Aircraft** | Physical device/plane generating telemetry data | BR003: Edge node registration |
+| **System Administrator** | Platform management and configuration role | BR001: User authentication, BR010: Role-based access |
 
-### Additional Domain-Specific Classes
+### Domain-Specific Supporting Classes
 
 | Class | Purpose | Business Rule |
 |-------|---------|---------------|
@@ -531,19 +531,46 @@ func (a *AlertService) GenerateAlert(telemetry *TelemetryMessage) (*Alert, error
 
 ### 10.2 Key Design Strengths
 
-1. **Clear Separation of Concerns**: Distinct layers for presentation, business logic, and data
-2. **Scalable Architecture**: Microservices design with Docker containerization
-3. **Type Safety**: Strong typing in Go backend with comprehensive validation
-4. **Performance Optimized**: Indexed queries, connection pooling, async processing
-5. **Security First**: Multi-layer security with authentication, authorization, and encryption
+1. **Aviation-Focused Architecture**: Purpose-built for telemetry processing and fatigue analysis
+2. **Real-Time Data Processing**: MQTT/InfluxDB integration for high-frequency sensor data
+3. **Type Safety**: Strong typing in Go backend with aviation-specific validation rules
+4. **Performance Optimized**: Time-series database for efficient telemetry storage
+5. **Safety-Critical Security**: Multi-layer authentication for pilot data protection
 
 ### 10.3 Alignment with Agile Methodology
 
-The class design supports SCRUM implementation through:
-- **Modular Components**: Independent services for parallel development
-- **Clear Interfaces**: Well-defined contracts between services
-- **Incremental Enhancement**: Base classes allow feature addition
-- **Test-Driven Design**: Interfaces enable mocking and testing
+The CogniFlight Cloud class design supports SCRUM implementation through:
+- **Modular Components**: Independent services (Backend, ML Engine, Frontend) for parallel development
+- **Clear Interfaces**: Well-defined contracts between aviation services
+- **Incremental Enhancement**: Base classes allow telemetry feature addition
+- **Test-Driven Design**: Interfaces enable mocking and testing of flight systems
+
+---
+
+## Appendix A: Technology Justification
+
+| Technology | Selection Reason |
+|------------|-----------------|
+| **Go** | High performance, concurrent processing, strong typing |
+| **MongoDB** | Flexible schema, document storage, horizontal scaling |
+| **InfluxDB** | Optimized for time-series data, real-time analytics |
+| **React** | Component-based UI, virtual DOM, large ecosystem |
+| **Python** | ML libraries, scientific computing, data analysis |
+| **Docker** | Container orchestration, environment consistency |
+
+---
+
+## Appendix B: Team Contribution Matrix
+
+| Team Member | Role | Primary Responsibility | Classes Owned |
+|-------------|------|----------------------|---------------|
+| Jeremia Fourie | Product Owner | Requirements, User Stories | User, Session |
+| Jason Bond | Scrum Master | Process, Integration | Alert, Notification |
+| Brian Felgate | Backend Dev | Go Services | Flight, EdgeNode |
+| Jayden Crosson | Frontend Dev | React Dashboard | UI Components |
+| Susanna Hoffmann | Frontend Dev | Data Visualization | Charts, Reports |
+| Jeremy Kahora | ML Dev | Fatigue Analysis | TelemetryProcessor |
+| Janco Nieuwoudt | ML Dev | Prediction Models | MLEngine |
 
 ---
 
