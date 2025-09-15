@@ -52,7 +52,7 @@ func Signup(u types.UserStore, s types.SignupTokenStore, sess types.SessionStore
 		var req struct {
 			Name   string `json:"name" binding:"required"`
 			Pwd    string `json:"pwd" binding:"required"`
-			TokStr string `json:"tokStr" binding:"required"`
+			TokStr string `json:"tok_str" binding:"required"`
 			Email  string `json:"email"`
 			Phone  string `json:"phone"`
 		}
