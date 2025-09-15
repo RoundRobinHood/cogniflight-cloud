@@ -42,7 +42,7 @@ func CreateSignupToken(s types.SignupTokenStore) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(201, gin.H{"tokStr": tok.TokStr})
+		c.JSON(201, gin.H{"tok_str": tok.TokStr})
 	}
 }
 
