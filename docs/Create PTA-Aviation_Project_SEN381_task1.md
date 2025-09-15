@@ -58,7 +58,7 @@ After comprehensive evaluation of various Agile methodologies against the CogniF
 | Entity | Collection | Purpose | Business Requirement |
 |--------|------------|---------|---------------------|
 | **User** | users | Base entity for all system users with role differentiation | BR001: User authentication |
-| **├─ Pilot (role)** | users | User with 'pilot' role who flies aircraft | BR002: Pilot certification |
+| **├─ Pilot (role)** | users | User with 'pilot' role who flies aircraft | BR002: Pilot certification, BR010: Role-based access |
 | **├─ ATC (role)** | users | User with 'atc' role monitoring multiple pilots | BR010: Role-based access |
 | **└─ SysAdmin (role)** | users | User with 'sysadmin' role for platform management | BR010: Role-based access |
 | **Flight** | flights | Core activity unit tracking a pilot's flight session | BR004: Flight session integrity |
@@ -173,9 +173,6 @@ classDiagram
         -DateTime timestamp
         -float64 stressIndex
         -float64 fusionScore
-        +process() void
-        +validate() bool
-        +store() void
     }
 
     class HeartRateValues {
@@ -183,14 +180,12 @@ classDiagram
         -float64 hrBaselineDeviation
         -float64 rmssd
         -float64 heartRateTrend
-        +analyze() FatigueLevel
     }
 
     class EnvironmentValues {
         -float64 temperature
         -float64 humidity
         -float64 altitude
-        +checkThresholds() bool
     }
 
     class EyeValues {
@@ -199,7 +194,6 @@ classDiagram
         -float64 closureDuration
         -int microsleepCount
         -float64 blinksPerMinute
-        +detectFatigue() bool
     }
 
     class MotionValues {
@@ -210,7 +204,6 @@ classDiagram
         -float64 yRot
         -float64 zRot
         -float64 climbRate
-        +detectAnomalies() bool
     }
 
     TelemetryMessage *-- HeartRateValues
@@ -219,57 +212,164 @@ classDiagram
     TelemetryMessage *-- MotionValues
 ```
 
-### 3.3 System Architecture Overview
+### 3.3 Store interfaces & implementation
+```mermaid
+classDiagram
+    direction LR
+
+    class UserStore {
+        <<interface>>
+        +GetUserByEmail(email string, ctx context.Context) *User, error
+        +GetUserByID(ID primitive.ObjectID, ctx context.Context) *User, error
+        +CreateUser(User User, ctx context.Context) *User, error
+        +UpdateUser(ID primitive.ObjectID, update UserUpdate, ctx context.Context) *User, error
+    }
+
+    class SessionStore {
+        <<interface>>
+        +CreateSession(UserID primitive.ObjectID, Role Role, ctx context.Context) *Session, error
+        +DeleteSession(SessID string, ctx context.Context) *Session, error
+        +GetSession(SessID string, ctx context.Context) *Session, error
+    }
+
+    class APIKeyStore {
+        <<interface>>
+        +Authenticate(APIKey string, ctx context.Context) *APIKey, error
+        +ListKeys(page, pageSize int, ctx context.Context) []APIKey, error
+        +GetKey(ID primitive.ObjectID, ctx context.Context) *APIKey, error
+        +CreateKey(edgeID *primitive.ObjectID, ctx context.Context) string, *APIKey, error
+        +DeleteKey(ID primitive.ObjectID, ctx context.Context) *APIKey, error
+    }
+
+    class FakeUserStore {
+        -Users map[string]User
+        -CreateCalled bool
+        -Created *User
+        +GetUserByEmail(email string, ctx context.Context) *User, error
+        +GetUserByID(ID primitive.ObjectID, ctx context.Context) *User, error
+        +CreateUser(User User, ctx context.Context) *User, error
+        +UpdateUser(ID primitive.ObjectID, update UserUpdate, ctx context.Context) *User, error
+    }
+
+    class DBUserStore {
+        -Col *mongo.Collection
+        +GetUserByEmail(email string, ctx context.Context) *User, error
+        +GetUserByID(ID primitive.ObjectID, ctx context.Context) *User, error
+        +CreateUser(User User, ctx context.Context) *User, error
+        +UpdateUser(ID primitive.ObjectID, update UserUpdate, ctx context.Context) *User, error
+    }
+
+    class FakeSessionStore {
+        -Sessions map[string]Session
+        -CreateCalled bool
+        -UserID primitive.ObjectID
+        -Role Role
+        -SessID string
+        +CreateSession(UserID primitive.ObjectID, Role Role, ctx context.Context) *Session, error
+        +DeleteSession(SessID string, ctx context.Context) *Session, error
+        +GetSession(SessID string, ctx context.Context) *Session, error
+    }
+
+    class DBSessionStore {
+        -Col *mongo.Collection
+        +CreateSession(UserID primitive.ObjectID, Role Role, ctx context.Context) *Session, error
+        +DeleteSession(SessID string, ctx context.Context) *Session, error
+        +GetSession(SessID string, ctx context.Context) *Session, error
+    }
+
+    class FakeAPIKeyStore {
+        -Keys map[primitive.ObjectID]APIKey
+        +Authenticate(APIKey string, ctx context.Context) *APIKey, error
+        +ListKeys(page, pageSize int, ctx context.Context) []APIKey, error
+        +GetKey(ID primitive.ObjectID, ctx context.Context) *APIKey, error
+        +CreateKey(edgeID *primitive.ObjectID, ctx context.Context) string, *APIKey, error
+        +DeleteKey(ID primitive.ObjectID, ctx context.Context) *APIKey, error
+    }
+
+    class DBAPIKeyStore {
+        -Col *mongo.Collection
+        +Authenticate(APIKey string, ctx context.Context) *APIKey, error
+        +ListKeys(page, pageSize int, ctx context.Context) []APIKey, error
+        +GetKey(ID primitive.ObjectID, ctx context.Context) *APIKey, error
+        +CreateKey(edgeID *primitive.ObjectID, ctx context.Context) string, *APIKey, error
+        +DeleteKey(ID primitive.ObjectID, ctx context.Context) *APIKey, error
+    }
+
+    UserStore <|.. FakeUserStore
+    UserStore <|.. DBUserStore
+    SessionStore <|.. FakeSessionStore
+    SessionStore <|.. DBSessionStore
+    APIKeyStore <|.. FakeAPIKeyStore
+    APIKeyStore <|.. DBAPIKeyStore
+```
+
+### 3.4 System Architecture Overview
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer"
-        RC[React Components]
-        API[API Client]
+    subgraph "External Connections"
+        WEB[Web Browser<br/>Users]
+        EDGE[Edge Nodes<br/>Aircraft Devices]
     end
     
-    subgraph "Backend Services"
-        AUTH[Auth Service]
-        PILOT[Pilot Service]
-        EDGE[Edge Service]
-        ALERT[Alert Service]
+    subgraph "Frontend"
+        RC[React Dashboard<br/>Vite Dev Server]
     end
     
-    subgraph "Data Layer"
-        MONGO[(MongoDB)]
-        INFLUX[(InfluxDB)]
-        GRIDFS[(GridFS)]
+    subgraph "Backend Container - Go"
+        API[REST API Endpoints<br/>/login /signup /whoami<br/>/settings /pilots/:id<br/>/edge-nodes /api-keys<br/>/my/images]
+        STORES[Store Interfaces<br/>UserStore<br/>EdgeNodeStore<br/>AlertStore]
+        SOCKET[Unix Socket<br/>JSON-RPC Client]
     end
     
-    subgraph "ML Engine"
-        ML[Python ML Service]
-        FATIGUE[Fatigue Analyzer]
+    subgraph "ML Engine Container - Python"
+        MLSOCKET[Unix Socket Server<br/>../ml-engine/test.sock]
+        MODEL[Fatigue Analysis<br/>ML Models]
+        PROCESSOR[Telemetry<br/>Processor]
     end
     
-    subgraph "Message Layer"
-        MQTT[MQTT Broker]
-        TELEGRAF[Telegraf]
+    subgraph "Message Pipeline"
+        MQTT[Mosquitto 2.0<br/>Port 1883<br/>allow_anonymous: true]
+        TELEGRAF[Telegraf 1.34<br/>MQTT Consumer<br/>InfluxDB Writer]
     end
     
-    RC --> API
-    API --> AUTH
-    API --> PILOT
-    API --> EDGE
-    API --> ALERT
+    subgraph "Data Persistence"
+        MONGO[(MongoDB 8.0<br/>Collections:<br/>users, sessions<br/>flights, alerts<br/>edge_nodes<br/>api_keys)]
+        INFLUX[(InfluxDB 2.7<br/>Measurements:<br/>flight_telemetry)]
+        GRIDFS[(GridFS<br/>user_images)]
+    end
+
+    WEB -->|HTTPS| TRAEFIK
+
+    TRAEFIK -->|Static pages<br/>/| RC
+    TRAEFIK -->|REST API<br/>/api| API
+
     
-    AUTH --> MONGO
-    PILOT --> MONGO
-    EDGE --> MONGO
-    ALERT --> MONGO
-    PILOT --> GRIDFS
+    EDGE -->|MQTTS<br/>Port 8883| MQTT
+    EDGE -->|HTTPS + API Key| TRAEFIK
     
-    EDGE --> MQTT
-    MQTT --> TELEGRAF
-    TELEGRAF --> INFLUX
+    API --> STORES
+    STORES -->|CRUD Ops| MONGO
+    STORES -->|Image Storage| GRIDFS
     
-    INFLUX --> ML
-    ML --> FATIGUE
-    FATIGUE --> ALERT
+    API -->|JSON-RPC| SOCKET
+    SOCKET -.->|Unix Socket| MLSOCKET
+    MLSOCKET --> MODEL
+    MODEL --> PROCESSOR
+    
+    MQTT -->|Subscribe| TELEGRAF
+    TELEGRAF -->|Write| INFLUX
+    
+    PROCESSOR -->|Query| INFLUX
+    MODEL -->|Return result| API
+    
+    style WEB fill:#e1f5fe
+    style EDGE fill:#fff3e0
+    style RC fill:#e8f5e9
+    style API fill:#fff9c4
+    style MQTT fill:#fce4ec
+    style INFLUX fill:#e0f2f1
+    style MONGO fill:#f3e5f5
 ```
 
 ---
@@ -280,9 +380,9 @@ graph TB
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| **Backend** | Go 1.21+ | High-performance API endpoints |
-| **Frontend** | React 18 + Vite | Interactive dashboard |
-| **ML Engine** | Python 3.11+ | Fatigue analysis algorithms |
+| **Backend** | Go 1.24.2 | High-performance API endpoints |
+| **Frontend** | React 19.1 + Vite | Interactive dashboard |
+| **ML Engine** | Python 3.12.3+ | Fatigue analysis algorithms |
 | **Database** | MongoDB 8.0 | Operational data storage |
 | **Time-Series** | InfluxDB 2.7 | Telemetry data storage |
 | **Message Broker** | Mosquitto 2.0 | Real-time MQTT data streaming |
@@ -330,30 +430,46 @@ type Alert struct {
 ```
 cogniflight-cloud/
 ├── backend/
-│   ├── types/           # Type definitions
-│   │   ├── user.go
-│   │   ├── flight.go
-│   │   ├── alerts.go
-│   │   ├── edge_nodes.go
-│   │   ├── telemetry.go
-│   │   ├── session.go
-│   │   └── api_keys.go
-│   ├── auth/           # Authentication service
-│   ├── pilot/          # Pilot management
-│   ├── edge/           # Edge node service
-│   ├── db/             # Database layer
-│   └── main.go         # Entry point
+│   ├── types/              # Type definitions
+│   │   ├── user.go         # User, PilotInfo, Role types
+│   │   ├── flight.go       # Flight struct
+│   │   ├── alerts.go       # Alert struct
+│   │   ├── edge_nodes.go   # EdgeNode, PlaneInfo types
+│   │   ├── telemetry.go    # TelemetryMessage, sensor values
+│   │   ├── session.go      # Session management
+│   │   ├── api_keys.go     # APIKey struct
+│   │   ├── tokens.go       # Token types
+│   │   ├── chatbot.go      # Chatbot types
+│   │   ├── user_images.go  # Image handling
+│   │   └── optional_fields.go # Optional field helpers
+│   ├── auth/               # Authentication module
+│   ├── pilot/              # Pilot CRUD operations
+│   ├── edge/               # Edge node management
+│   ├── keys/               # API key management
+│   ├── images/             # Image upload handling
+│   ├── settings/           # User settings
+│   ├── db/                 # MongoDB connection
+│   ├── util/               # Utility functions
+│   ├── testutil/           # Test utilities
+│   └── main.go             # Entry point, RPC setup
 ├── frontend/
 │   ├── src/
-│   │   ├── api/        # API client
-│   │   ├── components/ # React components
-│   │   └── assets/     # Static resources
+│   │   ├── api/            # API client
+│   │   ├── assets/         # Static resources
+│   │   ├── Home.jsx        # Home component
+│   │   ├── Login.jsx       # Login component
+│   │   └── Root.jsx        # Root component
 │   └── package.json
 ├── ml-engine/
-│   ├── models/         # ML models
-│   ├── processors/     # Data processors
-│   └── main.py
-└── docker-compose.yml  # Container orchestration
+│   ├── models/             # ML models
+│   ├── processors/         # Data processors
+│   └── main.py             # Unix socket server
+├── mosquitto/
+│   └── config/
+│       └── mosquitto.conf  # MQTT configuration
+├── self-signed-certs/      # Development certificates
+├── telegraf.conf           # Telegraf configuration
+└── docker-compose.yml      # Container orchestration
 ```
 
 ---
@@ -364,10 +480,9 @@ cogniflight-cloud/
 
 | Interface | Implementing Types | Purpose |
 |-----------|-------------------|---------|
-| **UserStore** | MongoDB User Repository | User data persistence |
-| **EdgeNodeStore** | MongoDB Edge Repository | Edge node management |
-| **io.Writer** | Custom loggers | Standard output interface |
-| **http.Handler** | API endpoint handlers | HTTP request processing |
+| **UserStore** | FakeUserStore, DBUserStore | User data persistence |
+| **EdgeNodeStore** | FakeEdgeNodeStore, DBEdgeNodeStore | Edge node management |
+| **SessionStore** | FakeSessionStore, DBSessionStore | User session management |
 
 | Base Type | Embedded Types | Relationship |
 |-----------|---------------|-------------|
@@ -392,7 +507,6 @@ cogniflight-cloud/
 |-----------|-----------|------|-----------|
 | User | PilotInfo | Composition | Dependent |
 | EdgeNode | PlaneInfo | Composition | Dependent |
-| TelemetryMessage | Sensor Values | Aggregation | Independent |
 
 ### 5.4 Dependency Relationships
 
@@ -460,11 +574,11 @@ graph LR
 ```go
 // UserStore interface - minimal required methods
 type UserStore interface {
-    Create(user *User) error
-    GetByID(id primitive.ObjectID) (*User, error)
-    GetByEmail(email string) (*User, error)
-    Update(id primitive.ObjectID, update *UserUpdate) error
-    DeleteUserByID(id primitive.ObjectID) error
+    GetUserByEmail(email string, ctx context.Context) (*User, error)
+    GetUserByID(ID primitive.ObjectID, ctx context.Context) (*User, error)
+    CreateUser(User User, ctx context.Context) (*User, error)
+    UpdateUser(ID primitive.ObjectID, update *UserUpdate, ctx context.Context) (*User, error)
+    DeleteUserByID(id primitive.ObjectID, ctx context.Context) (*User, error)
 }
 
 // EdgeNodeStore interface - specialized operations
@@ -553,12 +667,12 @@ The CogniFlight Cloud class design supports SCRUM implementation through:
 
 | Team Member | Role | Primary Responsibility | Classes Owned |
 |-------------|------|----------------------|---------------|
-| Jeremia Fourie | Product Owner | Requirements, User Stories | User, Session |
-| Jason Bond | Scrum Master | Process, Integration | Alert, Notification |
+| Jeremia Fourie | Product Owner | Requirements, User Stories | None |
+| Jason Bond | Scrum Master | Process, Integration | None |
 | Brian Felgate | Backend Dev | Go Services | Flight, EdgeNode |
 | Jayden Crosson | Frontend Dev | React Dashboard | UI Components |
 | Susanna Hoffmann | Frontend Dev | Data Visualization | Charts, Reports |
-| Jeremy Kahora | ML Dev | Fatigue Analysis | TelemetryProcessor |
+| Jeremy Kahora | ML Dev | Fatigue Analysis | MLEngine |
 | Janco Nieuwoudt | ML Dev | Prediction Models | MLEngine |
 
 ---
