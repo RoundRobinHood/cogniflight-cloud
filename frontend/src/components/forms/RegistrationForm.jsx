@@ -8,7 +8,7 @@ const validateEmail = (email) => /.+@.+\..+/.test(email);
 const validateRequired = (v) =>
   v?.toString().trim().length ? null : "Required";
 
-export default function RegistrationForm({ seed, onComplete }) {
+export default function RegistrationForm({ seed ={}, onComplete }) {
   const [form, setForm] = useState({
     name: seed.name,
     surname: seed.surname,
