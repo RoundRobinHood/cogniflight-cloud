@@ -7,7 +7,7 @@ import (
 )
 
 type Alert struct {
-	ID        primitive.ObjectID `bson:"_id" json:"_id"`
+	ID        primitive.ObjectID `bson:"_id" json:"id"`
 	PilotID   primitive.ObjectID `bson:"pilot_id" json:"pilot_id"`
 	Timestamp time.Time          `bson:"timestamp" json:"timestamp"`
 

@@ -9,7 +9,7 @@ import (
 )
 
 type SignupToken struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	TokStr    string             `bson:"tok_str" json:"tok_str"`
 	Email     string             `bson:"email" json:"email"`
 	Phone     string             `bson:"phone" json:"phone"`

@@ -8,7 +8,7 @@ import (
 )
 
 type APIKey struct {
-	ID             primitive.ObjectID  `bson:"_id,omitempty" json:"_id,omitempty"`
+	ID             primitive.ObjectID  `bson:"_id,omitempty" json:"id,omitempty"`
 	Salt           primitive.Binary    `bson:"salt" json:"salt"`
 	HashIterations int                 `bson:"hash_iterations" json:"hash_iterations"`
 	Key            primitive.Binary    `bson:"key" json:"key"`
