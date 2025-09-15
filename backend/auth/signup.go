@@ -17,7 +17,7 @@ func CreateSignupToken(s types.SignupTokenStore) gin.HandlerFunc {
 			Email     string           `json:"email"`
 			Phone     string           `json:"phone"`
 			Role      types.Role       `json:"role" binding:"required"`
-			PilotInfo *types.PilotInfo `json:"pilotInfo"`
+			PilotInfo *types.PilotInfo `json:"pilot_info"`
 		}
 
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -52,7 +52,7 @@ func Signup(u types.UserStore, s types.SignupTokenStore, sess types.SessionStore
 		var req struct {
 			Name   string `json:"name" binding:"required"`
 			Pwd    string `json:"pwd" binding:"required"`
-			TokStr string `json:"tokStr" binding:"required"`
+			TokStr string `json:"tok_str" binding:"required"`
 			Email  string `json:"email"`
 			Phone  string `json:"phone"`
 		}

@@ -14,7 +14,7 @@ func CreateAPIKey(k types.APIKeyStore, n types.EdgeNodeStore) gin.HandlerFunc {
 		l := jlogging.MustGet(c)
 
 		var req struct {
-			EdgeID *primitive.ObjectID `json:"edgeNode" binding:"required"`
+			EdgeID *primitive.ObjectID `json:"edge_id" binding:"required"`
 		}
 
 		if err := c.ShouldBindJSON(&req); err != nil {
