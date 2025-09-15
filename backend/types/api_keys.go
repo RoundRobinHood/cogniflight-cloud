@@ -8,11 +8,11 @@ import (
 )
 
 type APIKey struct {
-	ID             primitive.ObjectID  `bson:"_id,omitempty"`
-	Salt           primitive.Binary    `bson:"salt"`
-	HashIterations int                 `bson:"hashIterations"`
-	Key            primitive.Binary    `bson:"keyStr"`
-	EdgeID         *primitive.ObjectID `bson:"edgeNode,omitempty"`
+	ID             primitive.ObjectID  `bson:"_id,omitempty" json:"id,omitempty"`
+	Salt           primitive.Binary    `bson:"salt" json:"salt"`
+	HashIterations int                 `bson:"hash_iterations" json:"hash_iterations"`
+	Key            primitive.Binary    `bson:"key" json:"key"`
+	EdgeID         *primitive.ObjectID `bson:"edge_id,omitempty" json:"edge_id,omitempty"`
 }
 
 var ErrKeyNotExist = errors.New("API key does not exist")

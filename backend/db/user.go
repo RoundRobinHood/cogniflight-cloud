@@ -66,43 +66,46 @@ func (s DBUserStore) UpdateUser(ID primitive.ObjectID, update types.UserUpdate, 
 	}
 	if update.PilotInfo.Provided {
 		if update.PilotInfo.Value == nil {
-			unset["pilotInfo"] = 1
+			unset["pilot_info"] = 1
 		} else {
 			beforeLen := len(set)
 			pilotInfo := *update.PilotInfo.Value
 			if pilotInfo.LicenseNr != "" {
-				set["pilotInfo.licenseNr"] = pilotInfo.LicenseNr
+				set["pilot_info.license_nr"] = pilotInfo.LicenseNr
 			}
 			if pilotInfo.FlightHours.Provided {
-				set["pilotInfo.flightHours"] = pilotInfo.FlightHours.Value
+				set["pilot_info.flight_hours"] = pilotInfo.FlightHours.Value
+			}
+			if pilotInfo.CertificateExpiry.Provided {
+				set["pilot_info.certification_expiry"] = pilotInfo.CertificateExpiry
 			}
 			if pilotInfo.Baseline.Provided {
 				if pilotInfo.Baseline.Value == nil {
-					unset["pilotInfo.baseline"] = 1
+					unset["pilot_info.baseline"] = 1
 				} else {
 					if len(pilotInfo.Baseline.Value) == 0 {
-						set["pilotInfo.baseline"] = bson.M{}
+						set["pilot_info.baseline"] = bson.M{}
 					} else {
 						for key, val := range pilotInfo.Baseline.Value {
-							set["pilotInfo.baseline."+key] = val
+							set["pilot_info.baseline."+key] = val
 						}
 					}
 				}
 			}
 			if pilotInfo.EnvironmentPref.CabinTempPref.OptimalTemp.Provided {
-				set["pilotInfo.environmentPreferences.cabinTemperaturePreferences.optimalTemperature"] = pilotInfo.EnvironmentPref.CabinTempPref.OptimalTemp.Value
+				set["pilot_info.environment_preferences.cabin_temperature_preferences.optimal_temperature"] = pilotInfo.EnvironmentPref.CabinTempPref.OptimalTemp.Value
 			}
 			if pilotInfo.EnvironmentPref.CabinTempPref.ToleranceRange.Provided {
-				set["pilotInfo.environmentPreferences.cabinTemperaturePreferences.toleranceRange"] = pilotInfo.EnvironmentPref.CabinTempPref.ToleranceRange.Value
+				set["pilot_info.environment_preferences.cabin_temperature_preferences.tolerance_range"] = pilotInfo.EnvironmentPref.CabinTempPref.ToleranceRange.Value
 			}
 			if pilotInfo.EnvironmentPref.NoiseSensitivity != "" {
-				set["pilotInfo.environmentPreferences.noiseSensitivity"] = pilotInfo.EnvironmentPref.NoiseSensitivity
+				set["pilot_info.environment_preferences.noise_sensitivity"] = pilotInfo.EnvironmentPref.NoiseSensitivity
 			}
 			if pilotInfo.EnvironmentPref.LightSensitivity != "" {
-				set["pilotInfo.environmentPreferences.lightSensitivity"] = pilotInfo.EnvironmentPref.LightSensitivity
+				set["pilot_info.environment_preferences.light_sensitivity"] = pilotInfo.EnvironmentPref.LightSensitivity
 			}
 			if len(set) == beforeLen {
-				set["pilotInfo"] = bson.M{}
+				set["pilot_info"] = bson.M{}
 			}
 		}
 	}

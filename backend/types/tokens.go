@@ -9,14 +9,14 @@ import (
 )
 
 type SignupToken struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	TokStr    string             `bson:"tokStr"`
-	Email     string             `bson:"email"`
-	Phone     string             `bson:"phone"`
-	Role      Role               `bson:"role"`
-	PilotInfo *PilotInfo         `bson:"pilotInfo"`
-	CreatedAt time.Time          `bson:"createdAt"`
-	Expires   time.Time          `bson:"expires"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	TokStr    string             `bson:"tok_str" json:"tok_str"`
+	Email     string             `bson:"email" json:"email"`
+	Phone     string             `bson:"phone" json:"phone"`
+	Role      Role               `bson:"role" json:"role"`
+	PilotInfo *PilotInfo         `bson:"pilot_info" json:"pilot_info"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	Expires   time.Time          `bson:"expires" json:"expires"`
 }
 
 var ErrSignupTokenNotExist = errors.New("Signup token does not exist")
