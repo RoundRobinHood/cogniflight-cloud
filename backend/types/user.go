@@ -37,10 +37,11 @@ type PilotInfo struct {
 }
 
 type PilotInfoUpdate struct {
-	LicenseNr       string                        `json:"license_nr" bson:"license_nr,omitempty"`
-	FlightHours     OptionalField[float64]        `json:"flight_hours" bson:"flight_hours,omitempty"`
-	Baseline        OptionalField[map[string]any] `json:"baseline" bson:"baseline,omitempty"`
-	EnvironmentPref struct {
+	LicenseNr         string                        `json:"license_nr" bson:"license_nr,omitempty"`
+	FlightHours       OptionalField[float64]        `json:"flight_hours" bson:"flight_hours,omitempty"`
+	CertificateExpiry OptionalField[time.Time]      `json:"certification_expiry" bson:"certification_expiry,omitempty"`
+	Baseline          OptionalField[map[string]any] `json:"baseline" bson:"baseline,omitempty"`
+	EnvironmentPref   struct {
 		CabinTempPref struct {
 			OptimalTemp    OptionalField[float64] `json:"optimal_temperature" bson:"optimal_temperature,omitempty"`
 			ToleranceRange OptionalField[float64] `json:"tolerance_range" bson:"tolerance_range"`

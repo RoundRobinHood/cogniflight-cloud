@@ -13,6 +13,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestSettingsEndpoint(t *testing.T) {
@@ -25,15 +26,17 @@ func TestSettingsEndpoint(t *testing.T) {
 	}
 
 	user, err := userStore.CreateUser(types.User{
+		ID:    primitive.NewObjectID(),
 		Name:  "Piet",
 		Email: "example@gmail.com",
 		Phone: "981239812",
 		Pwd:   hashed,
 		Role:  types.RolePilot,
 		PilotInfo: &types.PilotInfo{
-			LicenseNr:   "JJ98398343",
-			FlightHours: 53,
-			Baseline:    nil,
+			LicenseNr:         "JJ98398343",
+			FlightHours:       53,
+			Baseline:          nil,
+			CertificateExpiry: time.Now().Add(-time.Second),
 			EnvironmentPref: types.PilotEnvPref{
 				NoiseSensitivity: "medium",
 				LightSensitivity: "low",
@@ -73,6 +76,38 @@ func TestSettingsEndpoint(t *testing.T) {
 		if w.Result().StatusCode != 403 {
 			fmt.Println(jlogging.TestLogStr)
 			t.Errorf("Wrong StatusCode, want 403, have: %d", w.Result().StatusCode)
+		}
+	})
+
+	t.Run("New certificate expiry", func(t *testing.T) {
+		newTime := time.Now()
+		bodyObj := map[string]any{"pilot_info": map[string]any{"certification_expiry": newTime}}
+		body, err := json.Marshal(bodyObj)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		w := testutil.FakeRequest(t, r, "PATCH", string(body), "/settings", map[string]string{"Cookie": "sessid=" + sess.SessID})
+
+		if w.Result().StatusCode != 200 {
+			fmt.Println(jlogging.TestLogStr)
+			t.Errorf("Wrong StatusCode, want 200 have: %d", w.Result().StatusCode)
+		}
+
+		bytes, err := io.ReadAll(w.Result().Body)
+		if err != nil {
+			t.Errorf("Body read error: %v", err)
+		} else {
+			var newUser types.User
+			if err := json.Unmarshal(bytes, &newUser); err != nil {
+				t.Errorf("Response JSON invalid. Err: %v\nResponse: %s", err, string(bytes))
+				return
+			}
+
+			if !newUser.PilotInfo.CertificateExpiry.Equal(newTime) {
+				fmt.Println(jlogging.TestLogStr)
+				t.Errorf("Wrong certificate expiry, want: %v, have: %v", newTime, newUser.PilotInfo.CertificateExpiry)
+			}
 		}
 	})
 
