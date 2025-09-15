@@ -133,7 +133,7 @@ export async function CreateSignupToken({ phone, email, role }) {
   switch (response.status) {
     case 200:
     case 201:
-      return { token: response_body.tokStr, reason: response.status };
+      return {token: response_body.tok_str, reason: 201};
     case 400:
       return {
         authorized: false,
@@ -153,7 +153,7 @@ export async function CreateSignupToken({ phone, email, role }) {
   }
 }
 
-export async function Signup({ name, phone, email, pwd, tokStr }) {
+export async function Signup({ name, phone, email, pwd, tok_str }) {
   let response;
   let response_body;
   try {
@@ -162,7 +162,7 @@ export async function Signup({ name, phone, email, pwd, tokStr }) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, phone, email, pwd, tokStr }),
+      body: JSON.stringify({ name, phone, email, pwd, tok_str }),
     });
     let text = await response.text();
     if (text.length != 0) {
