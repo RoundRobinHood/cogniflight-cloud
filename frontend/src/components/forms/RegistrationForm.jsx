@@ -8,7 +8,7 @@ const validateEmail = (email) => /.+@.+\..+/.test(email);
 const validateRequired = (v) =>
   v?.toString().trim().length ? null : "Required";
 
-export default function RegistrationForm({ seed ={}, onComplete }) {
+export default function RegistrationForm({ seed = {}, onComplete }) {
   const [form, setForm] = useState({
     name: seed.name,
     surname: seed.surname,
@@ -71,6 +71,16 @@ export default function RegistrationForm({ seed ={}, onComplete }) {
     e.preventDefault();
     if (!validate()) return;
     onComplete?.({ ...form });
+
+    //maps form fields to api's expected field names.
+    const dataToSend = {
+      name: form.name,
+      surname: form.surname,
+      email: form.email,
+      phone: form.cellphone,
+      pwd: form.password,
+    };
+    onComplete?.(dataToSend);
   };
 
   return (

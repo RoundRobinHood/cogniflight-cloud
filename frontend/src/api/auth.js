@@ -111,6 +111,7 @@ export async function Login({ email, pwd }) {
 export async function CreateSignupToken({ phone, email, role }) {
   let response;
   let response_body;
+  let text = "";
   try {
     response = await fetch(paths.signup.create_token, {
       method: "POST",
@@ -119,9 +120,15 @@ export async function CreateSignupToken({ phone, email, role }) {
       },
       body: JSON.stringify({ email, phone, role }),
     });
-    let text = await response.text();
+    text = await response.text();
     if (text.length != 0) {
       response_body = JSON.parse(text);
+      console.log(
+        "CreateSignupToken raw response:",
+        text,
+        "status:",
+        response.status
+      );
     } else {
       response_body = {};
     }
@@ -133,7 +140,10 @@ export async function CreateSignupToken({ phone, email, role }) {
   switch (response.status) {
     case 200:
     case 201:
-      return {token: response_body.tok_str, reason: 201};
+      return {
+        token: response_body.tokStr || response_body.tok_str,
+        reason: response.status,
+      };
     case 400:
       return {
         authorized: false,

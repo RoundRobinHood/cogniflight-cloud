@@ -11,7 +11,7 @@ export default function RegistrationPage() {
 
   const onComplete = async (profile) => {
     try {
-      const result = await Signup({ ...profile, tokStr: token });
+      const result = await Signup({ ...profile, tok_str: token });
       if (result.authorized) {
         alert("Registration complete! You may now proceed to logging in.");
         navigate("/login");

@@ -6,7 +6,7 @@ export default function GenerateToken() {
 
   const onTokenReady = (token, data) => {
     //Build registration link
-    const caseUrl = window.location.origin; //this returns base url-  http://LocalHost:1024
+    const baseUrl = window.location.origin; //this returns base url-  http://LocalHost:1024
     const registrationLink = `${baseUrl}/register/new?token=${token}`;
     setLink(registrationLink);
 
