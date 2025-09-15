@@ -77,18 +77,18 @@ func TestCreateSignupToken(t *testing.T) {
 			`{"role": "pilot"}`,
 
 			// Other roles can't have pilotInfo
-			`{"email": "example@gmail.com", "role": "sysadmin", "pilotInfo": {
-				"faceEmbeddings": [],
-				"licenseNr": "JJ38471",
-				"flightHours": 100,
+			`{"email": "example@gmail.com", "role": "sysadmin", "pilot_info": {
+				"face_embeddings": [],
+				"license_nr": "JJ38471",
+				"flight_hours": 100,
 				"baseline": {},
-				"environmentPreferences": {
-					"cabinTemperaturePreferences": {
-						"optimalTemperature": 26,
-						"toleranceRange": 5
+				"environment_preferences": {
+					"cabin_temperature_preferences": {
+						"optimal_temperature": 26,
+						"tolerance_range": 5
 					},
-					"noiseSensitivity": "high",
-					"lightSensitivity": "low"
+					"noise_sensitivity": "high",
+					"light_sensitivity": "low"
 				}
 			}}`,
 		}
@@ -114,18 +114,18 @@ func TestCreateSignupToken(t *testing.T) {
 				"email": "example@gmail.com", 
 				"phone": "271738749839", 
 				"role": "pilot",
-				"pilotInfo": {
-					"faceEmbeddings": [],
-					"licenseNr": "JJ38471",
-					"flightHours": 100,
+				"pilot_info": {
+					"face_embeddings": [],
+					"license_nr": "JJ38471",
+					"flight_hours": 100,
 					"baseline": {},
-					"environmentPreferences": {
-						"cabinTemperaturePreferences": {
-							"optimalTemperature": 26,
-							"toleranceRange": 5
+					"environment_preferences": {
+						"cabin_temperature_preferences": {
+							"optimal_temperature": 26,
+							"tolerance_range": 5
 						},
-						"noiseSensitivity": "high",
-						"lightSensitivity": "low"
+						"noise_sensitivity": "high",
+						"light_sensitivity": "low"
 					}
 				}
 			}`,
@@ -177,7 +177,7 @@ func TestSignup(t *testing.T) {
 	})
 
 	t.Run("No pwd is 400", func(t *testing.T) {
-		body := fmt.Sprintf(`{"tokStr": "%s"}`, pilotTok.TokStr)
+		body := fmt.Sprintf(`{"tok_str": "%s"}`, pilotTok.TokStr)
 		w := testutil.FakeRequest(t, r, "POST", body, "/signup", nil)
 
 		if w.Result().StatusCode != 400 {
@@ -186,7 +186,7 @@ func TestSignup(t *testing.T) {
 	})
 
 	t.Run("Valid request", func(t *testing.T) {
-		body := fmt.Sprintf(`{"tokStr": "%s", "pwd": "123pizza", "name": "John Doe"}`, pilotTok.TokStr)
+		body := fmt.Sprintf(`{"tok_str": "%s", "pwd": "123pizza", "name": "John Doe"}`, pilotTok.TokStr)
 		w := testutil.FakeRequest(t, r, "POST", body, "/signup", nil)
 
 		if w.Result().StatusCode != 201 {
@@ -214,7 +214,7 @@ func TestSignup(t *testing.T) {
 	})
 
 	t.Run("Wrong token string", func(t *testing.T) {
-		body := `{"tokStr": "wrong", "pwd": "123pizza", "name": "John Doe"}`
+		body := `{"tok_str": "wrong", "pwd": "123pizza", "name": "John Doe"}`
 		w := testutil.FakeRequest(t, r, "POST", body, "/signup", nil)
 
 		if w.Result().StatusCode != 401 {

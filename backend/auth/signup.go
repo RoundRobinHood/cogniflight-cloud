@@ -17,7 +17,7 @@ func CreateSignupToken(s types.SignupTokenStore) gin.HandlerFunc {
 			Email     string           `json:"email"`
 			Phone     string           `json:"phone"`
 			Role      types.Role       `json:"role" binding:"required"`
-			PilotInfo *types.PilotInfo `json:"pilotInfo"`
+			PilotInfo *types.PilotInfo `json:"pilot_info"`
 		}
 
 		if err := c.ShouldBindJSON(&req); err != nil {
