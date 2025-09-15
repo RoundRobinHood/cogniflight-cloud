@@ -223,53 +223,66 @@ classDiagram
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer"
-        RC[React Components]
-        API[API Client]
+    subgraph "External Connections"
+        WEB[Web Browser<br/>Users]
+        EDGE[Edge Nodes<br/>Aircraft Devices]
     end
     
-    subgraph "Backend Services"
-        AUTH[Auth Service]
-        PILOT[Pilot Service]
-        EDGE[Edge Service]
-        ALERT[Alert Service]
+    subgraph "Frontend"
+        RC[React Dashboard<br/>Vite Dev Server]
     end
     
-    subgraph "Data Layer"
-        MONGO[(MongoDB)]
-        INFLUX[(InfluxDB)]
-        GRIDFS[(GridFS)]
+    subgraph "Backend Container - Go"
+        API[REST API Endpoints<br/>/login /signup /whoami<br/>/settings /pilots/:id<br/>/edge-nodes /api-keys<br/>/my/images]
+        STORES[Store Interfaces<br/>UserStore<br/>EdgeNodeStore<br/>AlertStore]
+        SOCKET[Unix Socket<br/>JSON-RPC Client]
     end
     
-    subgraph "ML Engine"
-        ML[Python ML Service]
-        FATIGUE[Fatigue Analyzer]
+    subgraph "ML Engine Container - Python"
+        MLSOCKET[Unix Socket Server<br/>../ml-engine/test.sock]
+        MODEL[Fatigue Analysis<br/>ML Models]
+        PROCESSOR[Telemetry<br/>Processor]
     end
     
-    subgraph "Message Layer"
-        MQTT[MQTT Broker]
-        TELEGRAF[Telegraf]
+    subgraph "Message Pipeline"
+        MQTT[Mosquitto 2.0<br/>Port 1883<br/>allow_anonymous: true]
+        TELEGRAF[Telegraf 1.34<br/>MQTT Consumer<br/>InfluxDB Writer]
     end
     
-    RC --> API
-    API --> AUTH
-    API --> PILOT
-    API --> EDGE
-    API --> ALERT
+    subgraph "Data Persistence"
+        MONGO[(MongoDB 8.0<br/>Collections:<br/>users, sessions<br/>flights, alerts<br/>edge_nodes<br/>api_keys)]
+        INFLUX[(InfluxDB 2.7<br/>Measurements:<br/>flight_telemetry)]
+        GRIDFS[(GridFS<br/>user_images)]
+    end
     
-    AUTH --> MONGO
-    PILOT --> MONGO
-    EDGE --> MONGO
-    ALERT --> MONGO
-    PILOT --> GRIDFS
+    WEB -->|HTTPS<br/>Port 3000| RC
+    RC -->|HTTPS<br/>Port 8080| API
     
-    EDGE --> MQTT
-    MQTT --> TELEGRAF
-    TELEGRAF --> INFLUX
+    EDGE -->|MQTT<br/>Port 1883| MQTT
+    EDGE -->|HTTPS + API Key<br/>Port 8080| API
     
-    INFLUX --> ML
-    ML --> FATIGUE
-    FATIGUE --> ALERT
+    API --> STORES
+    STORES -->|CRUD Ops| MONGO
+    STORES -->|Image Storage| GRIDFS
+    
+    API -->|JSON-RPC| SOCKET
+    SOCKET -.->|Unix Socket| MLSOCKET
+    MLSOCKET --> MODEL
+    MODEL --> PROCESSOR
+    
+    MQTT -->|Subscribe| TELEGRAF
+    TELEGRAF -->|Write| INFLUX
+    
+    PROCESSOR -->|Query| INFLUX
+    MODEL -->|Create Alerts| MONGO
+    
+    style WEB fill:#e1f5fe
+    style EDGE fill:#fff3e0
+    style RC fill:#e8f5e9
+    style API fill:#fff9c4
+    style MQTT fill:#fce4ec
+    style INFLUX fill:#e0f2f1
+    style MONGO fill:#f3e5f5
 ```
 
 ---
@@ -330,30 +343,46 @@ type Alert struct {
 ```
 cogniflight-cloud/
 ├── backend/
-│   ├── types/           # Type definitions
-│   │   ├── user.go
-│   │   ├── flight.go
-│   │   ├── alerts.go
-│   │   ├── edge_nodes.go
-│   │   ├── telemetry.go
-│   │   ├── session.go
-│   │   └── api_keys.go
-│   ├── auth/           # Authentication service
-│   ├── pilot/          # Pilot management
-│   ├── edge/           # Edge node service
-│   ├── db/             # Database layer
-│   └── main.go         # Entry point
+│   ├── types/              # Type definitions
+│   │   ├── user.go         # User, PilotInfo, Role types
+│   │   ├── flight.go       # Flight struct
+│   │   ├── alerts.go       # Alert struct
+│   │   ├── edge_nodes.go   # EdgeNode, PlaneInfo types
+│   │   ├── telemetry.go    # TelemetryMessage, sensor values
+│   │   ├── session.go      # Session management
+│   │   ├── api_keys.go     # APIKey struct
+│   │   ├── tokens.go       # Token types
+│   │   ├── chatbot.go      # Chatbot types
+│   │   ├── user_images.go  # Image handling
+│   │   └── optional_fields.go # Optional field helpers
+│   ├── auth/               # Authentication module
+│   ├── pilot/              # Pilot CRUD operations
+│   ├── edge/               # Edge node management
+│   ├── keys/               # API key management
+│   ├── images/             # Image upload handling
+│   ├── settings/           # User settings
+│   ├── db/                 # MongoDB connection
+│   ├── util/               # Utility functions
+│   ├── testutil/           # Test utilities
+│   └── main.go             # Entry point, RPC setup
 ├── frontend/
 │   ├── src/
-│   │   ├── api/        # API client
-│   │   ├── components/ # React components
-│   │   └── assets/     # Static resources
+│   │   ├── api/            # API client
+│   │   ├── assets/         # Static resources
+│   │   ├── Home.jsx        # Home component
+│   │   ├── Login.jsx       # Login component
+│   │   └── Root.jsx        # Root component
 │   └── package.json
 ├── ml-engine/
-│   ├── models/         # ML models
-│   ├── processors/     # Data processors
-│   └── main.py
-└── docker-compose.yml  # Container orchestration
+│   ├── models/             # ML models
+│   ├── processors/         # Data processors
+│   └── main.py             # Unix socket server
+├── mosquitto/
+│   └── config/
+│       └── mosquitto.conf  # MQTT configuration
+├── self-signed-certs/      # Development certificates
+├── telegraf.conf           # Telegraf configuration
+└── docker-compose.yml      # Container orchestration
 ```
 
 ---
