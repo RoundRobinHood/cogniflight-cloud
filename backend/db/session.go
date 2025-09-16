@@ -39,6 +39,7 @@ func (s DBSessionStore) CreateSession(UserID primitive.ObjectID, Role types.Role
 		UserID:    UserID,
 		SessID:    sessID,
 		Role:      Role,
+		ExpiresAt: time.Now().Add(time.Hour * 2),
 		CreatedAt: time.Now(),
 	}
 

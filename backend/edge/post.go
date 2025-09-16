@@ -10,11 +10,12 @@ func CreateEdgeNode(n types.EdgeNodeStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		l := jlogging.MustGet(c)
 		var req struct {
-			PlaneInfo *types.PlaneInfo `binding:"required" json:"planeInfo"`
+			PlaneInfo *types.PlaneInfo `binding:"required" json:"plane_info"`
 		}
 
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
+			l.Set("error", err.Error())
 			return
 		}
 

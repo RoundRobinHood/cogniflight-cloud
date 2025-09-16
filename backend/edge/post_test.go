@@ -33,7 +33,7 @@ func TestCreateEdgeNode(t *testing.T) {
 			t.Errorf("Wrong StatusCode, want 400 got %d", code)
 		}
 
-		w = testutil.FakeRequest(t, r, "POST", `{"planeInfo": {}}`, "/edge-nodes", nil)
+		w = testutil.FakeRequest(t, r, "POST", `{"plane_info": {}}`, "/edge-nodes", nil)
 
 		if code := w.Result().StatusCode; code != 400 {
 			fmt.Println(jlogging.TestLogStr)
@@ -42,7 +42,7 @@ func TestCreateEdgeNode(t *testing.T) {
 	})
 
 	t.Run("Valid request", func(t *testing.T) {
-		w := testutil.FakeRequest(t, r, "POST", `{"planeInfo": {"tailNumber": "jj"}}`, "/edge-nodes", nil)
+		w := testutil.FakeRequest(t, r, "POST", `{"plane_info": {"tail_nr": "N12345", "manufacturer": "Cessna", "model": "172", "year": 2020}}`, "/edge-nodes", nil)
 
 		if code := w.Result().StatusCode; code != 201 {
 			fmt.Println(jlogging.TestLogStr)
@@ -61,8 +61,8 @@ func TestCreateEdgeNode(t *testing.T) {
 			if err := json.Unmarshal(bytes, &resp); err != nil {
 				t.Errorf("Invalid JSON response: %v\nBody: %s", err, string(bytes))
 			} else {
-				if resp.PlaneInfo.TailNr != "jj" {
-					t.Errorf("Expected TailNr to be %q, got %q", "jj", resp.PlaneInfo.TailNr)
+				if resp.PlaneInfo.TailNr != "N12345" {
+					t.Errorf("Expected TailNr to be %q, got %q", "N12345", resp.PlaneInfo.TailNr)
 				}
 			}
 		}

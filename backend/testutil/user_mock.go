@@ -97,6 +97,9 @@ func (s *FakeUserStore) UpdateUser(ID primitive.ObjectID, update types.UserUpdat
 						if updated.FlightHours.Provided {
 							user.PilotInfo.FlightHours = updated.FlightHours.Value
 						}
+						if updated.CertificateExpiry.Provided {
+							user.PilotInfo.CertificateExpiry = updated.CertificateExpiry.Value
+						}
 						if updated.Baseline.Provided {
 							user.PilotInfo.Baseline = updated.Baseline.Value
 						}
@@ -143,23 +146,19 @@ func (s *FakeSessionStore) CreateSession(UserID primitive.ObjectID, Role types.R
 		s.Sessions = map[string]types.Session{}
 	}
 	ID := primitive.NewObjectID()
-	createdAt := time.Now()
-	s.Sessions[sessID] = types.Session{
+	sess := types.Session{
 		ID:        ID,
 		SessID:    sessID,
 		UserID:    UserID,
 		Role:      Role,
-		CreatedAt: createdAt,
+		ExpiresAt: time.Now().Add(time.Hour * 2),
+		CreatedAt: time.Now(),
 	}
 
+	s.Sessions[sessID] = sess
+
 	s.SessID = sessID
-	return &types.Session{
-		ID:        ID,
-		SessID:    sessID,
-		UserID:    UserID,
-		Role:      Role,
-		CreatedAt: createdAt,
-	}, nil
+	return &sess, nil
 }
 
 func (s *FakeSessionStore) GetSession(SessID string, ctx context.Context) (*types.Session, error) {

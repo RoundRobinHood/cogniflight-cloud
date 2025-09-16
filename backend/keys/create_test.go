@@ -40,7 +40,7 @@ func TestCreateKey(t *testing.T) {
 	})
 
 	t.Run("Wrong edgeNode", func(t *testing.T) {
-		body := fmt.Sprintf(`{"edgeNode": "%s"}`, primitive.NewObjectID().Hex())
+		body := fmt.Sprintf(`{"edge_id": "%s"}`, primitive.NewObjectID().Hex())
 		w := testutil.FakeRequest(t, r, "POST", body, "/api-keys", nil)
 
 		if code := w.Result().StatusCode; code != 409 {
@@ -49,7 +49,7 @@ func TestCreateKey(t *testing.T) {
 	})
 
 	t.Run("Valid EdgeNode API key", func(t *testing.T) {
-		body := fmt.Sprintf(`{"edgeNode": "%s"}`, node.ID.Hex())
+		body := fmt.Sprintf(`{"edge_id": "%s"}`, node.ID.Hex())
 		w := testutil.FakeRequest(t, r, "POST", body, "/api-keys", nil)
 
 		if code := w.Result().StatusCode; code != 201 {
