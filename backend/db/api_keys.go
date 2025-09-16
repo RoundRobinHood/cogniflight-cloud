@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type DBAPIKeyStore struct {
@@ -62,6 +63,48 @@ func (s DBAPIKeyStore) Authenticate(APIKey string, ctx context.Context) (*types.
 	}
 }
 
+func (s DBAPIKeyStore) ListKeys(page, pageSize int, ctx context.Context) ([]types.APIKey, error) {
+	cur, err := s.Col.Find(ctx, bson.M{},
+		options.Find().
+			SetSkip(int64((page-1)*pageSize)).
+			SetLimit(int64(pageSize)).
+			SetSort(bson.D{{Key: "_id", Value: 1}}),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]types.APIKey, 0, pageSize)
+
+	for cur.Next(ctx) {
+		var item types.APIKey
+		if err := cur.Decode(&item); err != nil {
+			return nil, err
+		}
+		result = append(result, item)
+	}
+
+	if cur.Err() != nil {
+		return nil, cur.Err()
+	}
+
+	return result, nil
+}
+
+func (s DBAPIKeyStore) GetKey(ID primitive.ObjectID, ctx context.Context) (*types.APIKey, error) {
+	var result types.APIKey
+	if err := s.Col.FindOne(ctx, bson.M{"_id": ID}).Decode(&result); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, types.ErrKeyNotExist
+		} else {
+			return nil, err
+		}
+	}
+
+	return &result, nil
+}
+
 func (s DBAPIKeyStore) CreateKey(edgeID *primitive.ObjectID, ctx context.Context) (string, *types.APIKey, error) {
 	key, keyObj, err := util.GenerateKey(ctx)
 	if err != nil {
@@ -76,4 +119,17 @@ func (s DBAPIKeyStore) CreateKey(edgeID *primitive.ObjectID, ctx context.Context
 	}
 
 	return fmt.Sprintf("%s-%x", keyObj.ID.Hex(), key), keyObj, nil
+}
+
+func (s DBAPIKeyStore) DeleteKey(ID primitive.ObjectID, ctx context.Context) (*types.APIKey, error) {
+	var result types.APIKey
+	if err := s.Col.FindOneAndDelete(ctx, bson.M{"_id": ID}).Decode(&result); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, types.ErrKeyNotExist
+		} else {
+			return nil, err
+		}
+	}
+
+	return &result, nil
 }

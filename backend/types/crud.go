@@ -28,23 +28,23 @@ type ListOptions[F any] struct {
 }
 
 type Listable[Output, Filter any] interface {
-	List(opts ListOptions[Filter], ctx context.Context) ([]Output, *HTTPError)
+	List(opts ListOptions[Filter], authStatus AuthorizationStatus, ctx context.Context) ([]Output, *HTTPError)
 }
 
 type IDGettable[Output any] interface {
-	GetItem(ID primitive.ObjectID, ctx context.Context) (Output, *HTTPError)
+	GetItem(ID primitive.ObjectID, authStatus AuthorizationStatus, ctx context.Context) (Output, *HTTPError)
 }
 
 type Creatable[Input, Output any] interface {
-	Create(input Input, ctx context.Context) (Output, *HTTPError)
+	Create(input Input, authStatus AuthorizationStatus, ctx context.Context) (Output, *HTTPError)
 }
 
 type IDUpdatable[Update, Output any] interface {
-	Update(ID primitive.ObjectID, update Update, ctx context.Context) (Output, *HTTPError)
+	Update(ID primitive.ObjectID, authStatus AuthorizationStatus, update Update, ctx context.Context) (Output, *HTTPError)
 }
 
 type IDDeleteable[Output any] interface {
-	Delete(ID primitive.ObjectID, ctx context.Context) (Output, *HTTPError)
+	Delete(ID primitive.ObjectID, authStatus AuthorizationStatus, ctx context.Context) (Output, *HTTPError)
 }
 
 type Repository[Input, Update, Output, Filter any] interface {
