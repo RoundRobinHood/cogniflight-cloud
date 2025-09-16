@@ -20,5 +20,8 @@ var ErrKeyInvalid = errors.New("API key is invalid")
 
 type APIKeyStore interface {
 	Authenticate(APIKey string, ctx context.Context) (*APIKey, error)
+	ListKeys(page, pageSize int, ctx context.Context) ([]APIKey, error)
+	GetKey(ID primitive.ObjectID, ctx context.Context) (*APIKey, error)
 	CreateKey(edgeID *primitive.ObjectID, ctx context.Context) (string, *APIKey, error)
+	DeleteKey(ID primitive.ObjectID, ctx context.Context) (*APIKey, error)
 }

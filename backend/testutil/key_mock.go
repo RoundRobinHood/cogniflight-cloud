@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -53,6 +54,27 @@ func (s *FakeAPIKeyStore) Authenticate(APIKey string, ctx context.Context) (*typ
 		} else {
 			return nil, types.ErrKeyNotExist
 		}
+	} else {
+		return nil, types.ErrKeyNotExist
+	}
+}
+
+func (s *FakeAPIKeyStore) ListKeys(page, pageSize int, ctx context.Context) ([]types.APIKey, error) {
+	return nil, errors.New("TODO: implement ListKeys")
+}
+
+func (s *FakeAPIKeyStore) GetKey(ID primitive.ObjectID, ctx context.Context) (*types.APIKey, error) {
+	if key, ok := s.Keys[ID]; !ok {
+		return nil, types.ErrKeyNotExist
+	} else {
+		return &key, nil
+	}
+}
+
+func (s *FakeAPIKeyStore) DeleteKey(ID primitive.ObjectID, ctx context.Context) (*types.APIKey, error) {
+	if key, ok := s.Keys[ID]; ok {
+		delete(s.Keys, ID)
+		return &key, nil
 	} else {
 		return nil, types.ErrKeyNotExist
 	}

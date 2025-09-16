@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/crud"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/edge"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/images"
@@ -154,9 +155,6 @@ func main() {
 	r.POST("/edge-nodes", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
 		types.RoleSysAdmin: {},
 	}), edge.CreateEdgeNode(nodeStore))
-	r.POST("/api-keys", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-	}), keys.CreateAPIKey(keyStore, nodeStore))
 	r.GET("/pilots/:id", auth.KeyAuthMiddleware(keyStore), pilot.FetchPilotByID(userStore))
 	r.POST("/my/images", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
 		types.RoleSysAdmin: {},
@@ -165,6 +163,17 @@ func main() {
 	}), images.UploadImage(imageStore))
 	r.POST("/check-api-key", keys.CheckKey(keyStore))
 	r.POST("/hi", func(c *gin.Context) { c.String(200, "hello") })
+
+	key_group := r.Group("/api-keys/", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
+		types.RoleSysAdmin: {},
+	}))
+
+	key_repo := &keys.KeyRepository{Store: keyStore}
+
+	key_group.GET("", crud.List(key_repo, 10))
+	key_group.GET(":id", crud.Get(key_repo, "id"))
+	key_group.POST("", crud.Create(key_repo))
+	key_group.DELETE(":id", crud.Delete(key_repo, "id"))
 
 	server := &http.Server{
 		Addr:    ":8080",
