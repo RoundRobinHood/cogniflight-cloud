@@ -223,3 +223,36 @@ func TestSignup(t *testing.T) {
 	})
 
 }
+
+func TestGetSignupToken(t *testing.T) {
+	tokenStore := FakeSignupTokenStore{}
+	pilotTok, err := tokenStore.CreateSignupToken("271738749839", "example@gmail.com", types.RolePilot, &types.PilotInfo{}, time.Hour*6, context.Background())
+	if err != nil {
+		t.Fatalf("TokenStore returned err: %v", err)
+	}
+	other_store := FakeSignupTokenStore{}
+	wrong_token, err := other_store.CreateSignupToken("87238712731", "nono@hojoj.com", types.RoleATC, nil, time.Hour*6, context.Background())
+	if err != nil {
+		t.Fatalf("TokenStore returned err: %v", err)
+	}
+
+	r := testutil.InitTestEngine()
+	r.GET("/signup-tokens/:id", GetSignupToken(&tokenStore))
+
+	t.Run("Valid tok_str", func(t *testing.T) {
+		w := testutil.FakeRequest(t, r, "GET", "", "/signup-tokens/"+pilotTok.TokStr, nil)
+
+		if code := w.Result().StatusCode; code != 200 {
+			t.Errorf("Wrong StatusCode: want %d got %d", 200, code)
+		}
+	})
+
+	t.Run("Wrong tok_str", func(t *testing.T) {
+		w := testutil.FakeRequest(t, r, "GET", "", "/signup-tokens/"+wrong_token.TokStr, nil)
+
+		if code := w.Result().StatusCode; code != 404 {
+			t.Errorf("Wrong StatusCode: want %d got %d", 404, code)
+		}
+	})
+
+}

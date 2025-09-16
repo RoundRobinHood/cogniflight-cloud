@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"os"
 	"time"
 
@@ -121,5 +122,25 @@ func Signup(u types.UserStore, s types.SignupTokenStore, sess types.SessionStore
 		c.SetCookie("sessid", session.SessID, 3600, "/", domain, secure_session, true)
 
 		c.Status(201)
+	}
+}
+
+func GetSignupToken(s types.SignupTokenStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		l := jlogging.MustGet(c)
+		tokStr := c.Param("id")
+		l.Set("tok_str", tokStr)
+		if tok, err := s.GetSignupToken(tokStr, c.Request.Context()); err != nil {
+			if errors.Is(err, types.ErrSignupTokenNotExist) {
+				c.Status(404)
+			} else {
+				l.Set("err", err)
+				c.JSON(500, gin.H{"error": "Internal error"})
+			}
+			return
+		} else {
+			c.JSON(200, tok)
+			return
+		}
 	}
 }
