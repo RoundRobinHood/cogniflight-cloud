@@ -141,6 +141,7 @@ func main() {
 		types.RolePilot:    {},
 	}), auth.Logout(sessionStore))
 	r.POST("/signup-tokens", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{types.RoleSysAdmin: {}}), auth.CreateSignupToken(signupTokenStore))
+	r.GET("/signup-tokens/:id", auth.GetSignupToken(signupTokenStore))
 	r.POST("/signup", auth.Signup(userStore, signupTokenStore, sessionStore))
 	r.GET("/whoami", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
 		types.RoleSysAdmin: {},

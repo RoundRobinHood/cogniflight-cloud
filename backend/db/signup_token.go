@@ -17,7 +17,7 @@ type DBSignupTokenStore struct {
 
 func (s DBSignupTokenStore) GetSignupToken(TokStr string, ctx context.Context) (*types.SignupToken, error) {
 	var result types.SignupToken
-	err := s.Col.FindOne(ctx, bson.M{"tokStr": TokStr}).Decode(&result)
+	err := s.Col.FindOne(ctx, bson.M{"tok_str": TokStr}).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, types.ErrSignupTokenNotExist
