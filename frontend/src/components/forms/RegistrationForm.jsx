@@ -78,7 +78,7 @@ export default function RegistrationForm({ seed = {}, onComplete }) {
       surname: form.surname,
       email: form.email,
       phone: form.cellphone,
-      pwd: form.password,
+      Pwd: form.password,
     };
     onComplete?.(dataToSend);
   };
@@ -86,9 +86,7 @@ export default function RegistrationForm({ seed = {}, onComplete }) {
   return (
     <Card>
       <CardHeader
-        title="Pilot Registration"
-        subtitle="Confirm your details and create your login credentials."
-        icon={"🧑‍✈️"}
+        title="Registration Form"
       />
       <CardBody>
         <form onSubmit={submit} className="grid gap-lg">

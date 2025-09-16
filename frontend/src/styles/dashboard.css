@@ -1,3 +1,5 @@
+/* Pilot dashboard styling */
+
 :root {
   /*Light mode*/
   --primary: #1e293b;
@@ -21,15 +23,10 @@
   }
 }
 
-body {
-  margin: 0;
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: "Segoe UI", sans-serif;
-}
-
 .dashboard-wrapper {
   padding: 2rem;
+  background-color: var(--bg);
+  color: var(--text);
 }
 
 .header {
@@ -48,21 +45,6 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 20px;
-}
-
-.login-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-}
-
-.login-card {
-  max-width: 400px;
-  width: 100%;
-  margin: 0 auto;
-  min-height: 300px;
-  height: auto; /*adjustable to content*/
 }
 
 .card.vitals-card {

@@ -23,7 +23,7 @@ export default function GenerateToken() {
   return (
     <div className="page container">
       <header className="page-header">
-        <h1 className="page-title">Admin Issue Token</h1>
+        <h1 className="page-title">Invite New User</h1>
         <p className="page-subtitle">
           Create and send a one-time registration link to new user.
         </p>
@@ -40,12 +40,14 @@ export default function GenerateToken() {
             readOnly
             style={{ width: "100%", marginButtom: "0.5rem" }}
           />
-          <button className="btn btn-primary" onClick={copyToClipboard}>
-            Copy Link
-          </button>
+          <div className="row" style={{ marginTop: "0.5rem" }}>
+            <button className="btn btn-primary" onClick={copyToClipboard}>
+              Copy Link
+            </button>
 
-          {/* TODO: Add WA and email functionality */}
-          <button className="btn btn-primary">Send Link</button>
+            {/* TODO: Add WA and email functionality */}
+            <button className="btn btn-primary">Send Link</button>
+          </div>
         </div>
       )}
     </div>

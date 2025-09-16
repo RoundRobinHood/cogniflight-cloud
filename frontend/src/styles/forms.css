@@ -1,3 +1,5 @@
+/* Styling for all forms */
+
 :root {
   /*Light mode defaults*/
   --bg: #f8f9fb;
@@ -44,37 +46,47 @@
   }
 }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-}
-
-* {
-  box-sizing: border-box;
-}
-
 .page {
   min-height: 100vh;
   background: var(--bg);
-  padding: 2rem 1rem;
+  color: var(--text);
+  padding: 1rem 1rem 2rem;
 }
 .container {
   max-width: 860px;
   margin: 0 auto;
   display: grid;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 .page-header {
   display: grid;
   gap: 0.25rem;
+  margin-bottom: 0.75rem;
 }
 .page-title {
+  margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--text);
 }
 .page-subtitle {
+  margin: 0;
   color: var(--muted);
+}
+
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.login-card {
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+  min-height: 300px;
+  height: auto; /*adjustable to content*/
 }
 
 .card {

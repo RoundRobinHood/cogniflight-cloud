@@ -72,14 +72,16 @@ export default function AdminTokenForm({ onTokenReady }) {
 
       if (!token) {
         //If backend rejected token generation request
-        setErrors({ contact: message || "Failed to generate token." });
+        setErrors({
+          contact: message || "Failed to generate registration link.",
+        });
         return;
       }
 
       setLastToken(token);
       onTokenReady?.(token, { ...form });
     } catch (err) {
-      console.error("Error creating signup token: ", err);
+      console.error("Error creating registration link: ", err);
       setSending(false);
       setErrors({ contact: "Server error, try again later." });
     }
@@ -89,8 +91,7 @@ export default function AdminTokenForm({ onTokenReady }) {
     <Card>
       <CardHeader
         title="Generate Registration Link"
-        subtitle="Admins issue a one-time token. User receives link via email or WhatsApp to open their registration form."
-        icon={"🔐"}
+        subtitle="Fill in form below to invite new user. User receives link via email or WhatsApp to open their registration form."
       />
       <CardBody>
         <form onSubmit={handleSubmit} className="grid gap">
@@ -144,19 +145,9 @@ export default function AdminTokenForm({ onTokenReady }) {
 
           <div className="row gap">
             <Button type="submit" disabled={sending}>
-              {sending ? "Generating…" : "Generate token & send"}
+              {sending ? "Generating…" : "Generate invitation link & send"}
             </Button>
-            {lastToken ? (
-              <span className="note">
-                Token: <span className="mono">{lastToken}</span>
-              </span>
-            ) : null}
           </div>
-
-          {/* <p className="muted mt-1">
-            Registration link with token sent to:{" "}
-            <span className="mono">{form.contact}</span>
-          </p> */}
         </form>
       </CardBody>
     </Card>
