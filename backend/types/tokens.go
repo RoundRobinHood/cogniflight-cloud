@@ -24,4 +24,5 @@ var ErrSignupTokenNotExist = errors.New("Signup token does not exist")
 type SignupTokenStore interface {
 	CreateSignupToken(Phone, Email string, Role Role, PilotInfo *PilotInfo, Expiry time.Duration, ctx context.Context) (*SignupToken, error)
 	GetSignupToken(TokStr string, ctx context.Context) (*SignupToken, error)
+	DeleteSignupToken(TokStr string, ctx context.Context) (*SignupToken, error)
 }

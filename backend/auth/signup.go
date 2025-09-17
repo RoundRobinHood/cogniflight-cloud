@@ -64,10 +64,12 @@ func Signup(u types.UserStore, s types.SignupTokenStore, sess types.SessionStore
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
+			return
 		}
 
-		tok, err := s.GetSignupToken(req.TokStr, c.Request.Context())
+		tok, err := s.DeleteSignupToken(req.TokStr, c.Request.Context())
 		if err != nil {
+			l.Set("err", err)
 			c.Status(401)
 			return
 		}
