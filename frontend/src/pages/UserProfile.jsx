@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLoaderData, useParams, useNavigate } from "react-router-dom";
+import { Card, CardHeader, CardBody } from "../components/ui/Card";
 import "../styles/forms.css";
 
 //replace with real API call
@@ -106,142 +107,154 @@ export default function UserProfile() {
 
   return (
     <div className="page container">
-      <h2>Manage Profile</h2>
-      {message && <p style={{ color: "green" }}>{message}</p>}
+      <header className="page-header">
+        <h1 className="page-title">Manage Profile</h1>
+        <p className="page-subtitle">Edit User Profile</p>
+      </header>
 
-      {/* Admin only: Enter another user's ID */}
-      {loggedInUser.role === "sysadmin" && !userId && (
-        <div className="admin-edit box">
-          <h3>Edit Another User</h3>
-          <br></br>
-          <div className="field">
-            <label className="label">Enter User ID</label>
-            <input
-              className="input"
-              type="text"
-              value={adminTargetId}
-              onChange={(e) => {
-                setAdminTargetId(e.target.value);
-                setAdminError(""); //clears error when typing another ID}
-              }}
-              placeholder="pil0015"
-            />
-          </div>
-          <button
-            className="btn btn-primary"
-            type="button"
-            onClick={async () => {
-              if (!adminTargetId.trim()) {
-                setAdminError("Please enter a user ID.");
-                return;
-              }
+      <Card>
+        <CardHeader
+          title="Profile Details"
+          subtitle="Update the details below and save changes."
+        />
+        <CardBody>
+          {message && <p style={{ color: "green" }}>{message}</p>}
 
-              try {
-                //test fetch
-                const testUser = await fetchUserProfile(adminTargetId);
-                if (!testUser) {
-                  setAdminError("User not found.");
-                  return;
-                }
-                navigate(`/user/${adminTargetId}/profile`);
-              } catch (err) {
-                console.error(err);
-                setAdminError(
-                  "Error checking user ID. Please try again later."
-                );
-              }
-            }}
+          {/* Admin only: Enter another user's ID */}
+          {loggedInUser.role === "sysadmin" && !userId && (
+            <div className="admin-edit box">
+              <h3>Edit Another User</h3>
+              <br></br>
+              <div className="field">
+                <label className="label">Enter User ID</label>
+                <input
+                  className="input"
+                  type="text"
+                  value={adminTargetId}
+                  onChange={(e) => {
+                    setAdminTargetId(e.target.value);
+                    setAdminError(""); //clears error when typing another ID}
+                  }}
+                  placeholder="pil0015"
+                />
+              </div>
+              <button
+                className="btn btn-primary"
+                type="button"
+                onClick={async () => {
+                  if (!adminTargetId.trim()) {
+                    setAdminError("Please enter a user ID.");
+                    return;
+                  }
+
+                  try {
+                    //test fetch
+                    const testUser = await fetchUserProfile(adminTargetId);
+                    if (!testUser) {
+                      setAdminError("User not found.");
+                      return;
+                    }
+                    navigate(`/user/${adminTargetId}/profile`);
+                  } catch (err) {
+                    console.error(err);
+                    setAdminError(
+                      "Error checking user ID. Please try again later."
+                    );
+                  }
+                }}
+              >
+                Edit User
+              </button>
+
+              {adminError && <p style={{ color: "red" }}>{adminError}</p>}
+            </div>
+          )}
+
+          <form
+            onSubmit={submit}
+            className="grid gap-lg"
+            style={{ maxWidth: "600px" }}
           >
-            Edit User
-          </button>
-
-          {adminError && <p style={{ color: "red" }}>{adminError}</p>}
-        </div>
-      )}
-
-      <form
-        onSubmit={submit}
-        className="grid gap-lg"
-        style={{ maxWidth: "600px" }}
-      >
-        <div className="field">
-          <label className="label">Name</label>
-          <input
-            className="input"
-            value={form.name}
-            onChange={(e) => set("name", e.target.value)}
-            required
-          />
-        </div>
-        <div className="field">
-          <label className="label">Surname</label>
-          <input
-            className="input"
-            value={form.surname}
-            onChange={(e) => set("surname", e.target.value)}
-            required
-          />
-        </div>
-        <div className="field">
-          <label className="label">Email</label>
-          <input
-            className="input"
-            type="email"
-            value={form.email}
-            onChange={(e) => set("email", e.target.value)}
-            required
-          />
-        </div>
-        <div className="field">
-          <label className="label">Cellphone</label>
-          <input
-            className="input"
-            type="tel"
-            value={form.cellphone}
-            onChange={(e) => set("cellphone", e.target.value)}
-            required
-          />
-        </div>
-        {/*Pilot-only fields*/}
-
-        {targetUser?.role === "pilot" && (
-          <>
             <div className="field">
-              <label className="label">License No</label>
+              <label className="label">Name</label>
               <input
                 className="input"
-                value={form.licenseNo}
-                onChange={(e) => set("licenseNo", e.target.value)}
+                value={form.name}
+                onChange={(e) => set("name", e.target.value)}
                 required
               />
             </div>
             <div className="field">
-              <label className="label">Height (cm)</label>
+              <label className="label">Surname</label>
               <input
                 className="input"
-                type="number"
-                value={form.height}
-                onChange={(e) => set("height", e.target.value)}
+                value={form.surname}
+                onChange={(e) => set("surname", e.target.value)}
                 required
               />
             </div>
             <div className="field">
-              <label className="label">Weight (kg)</label>
+              <label className="label">Email</label>
               <input
                 className="input"
-                type="number"
-                value={form.weight}
-                onChange={(e) => set("weight", e.target.value)}
+                type="email"
+                value={form.email}
+                onChange={(e) => set("email", e.target.value)}
                 required
               />
             </div>
-          </>
-        )}
+            <div className="field">
+              <label className="label">Cellphone</label>
+              <input
+                className="input"
+                type="tel"
+                value={form.cellphone}
+                onChange={(e) => set("cellphone", e.target.value)}
+                required
+              />
+            </div>
+            {/*Pilot-only fields*/}
 
-        <button className="btn btn-primary" type="submit">
-          Save Changes
-        </button>
-      </form>
+            {targetUser?.role === "pilot" && (
+              <>
+                <div className="field">
+                  <label className="label">License No</label>
+                  <input
+                    className="input"
+                    value={form.licenseNo}
+                    onChange={(e) => set("licenseNo", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label className="label">Height (cm)</label>
+                  <input
+                    className="input"
+                    type="number"
+                    value={form.height}
+                    onChange={(e) => set("height", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label className="label">Weight (kg)</label>
+                  <input
+                    className="input"
+                    type="number"
+                    value={form.weight}
+                    onChange={(e) => set("weight", e.target.value)}
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            <button className="btn btn-primary" type="submit">
+              Save Changes
+            </button>
+          </form>
+        </CardBody>
+      </Card>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Card, CardHeader, CardBody } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Field, Input, Divider } from "../ui/Input";
 import PasswordInput from "../ui/PasswordInput";
+import { Signup } from "../../api/auth";
 
 const validateEmail = (email) => /.+@.+\..+/.test(email);
 const validateRequired = (v) =>
@@ -67,10 +68,9 @@ export default function RegistrationForm({ seed = {}, onComplete }) {
     return Object.keys(e).length === 0;
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-    onComplete?.({ ...form });
 
     //maps form fields to api's expected field names.
     const dataToSend = {
@@ -79,15 +79,34 @@ export default function RegistrationForm({ seed = {}, onComplete }) {
       email: form.email,
       phone: form.cellphone,
       Pwd: form.password,
+      tok_str: tokenFormUrl,
     };
-    onComplete?.(dataToSend);
+    try {
+      const result = await Signup(dataToSend);
+      if (result.authorized) {
+        alert(
+          "Registration complete! Please log in with your email and password."
+        );
+
+        await Logout;
+        //clear session
+        sessionStorage.clear();
+        localStorage.removeItem("authToken");
+        document.cookie = "session=; Max-Age=0";
+
+        navigate("/login");
+      } else {
+        alert(`Registration failed: ${result.message || "Unknown error"}`);
+      }
+    } catch (err) {
+      alert("Server error during registration. Please try again later.");
+      console.log(err);
+    }
   };
 
   return (
     <Card>
-      <CardHeader
-        title="Registration Form"
-      />
+      <CardHeader title="Registration Form" />
       <CardBody>
         <form onSubmit={submit} className="grid gap-lg">
           <div className="grid two-col gap">

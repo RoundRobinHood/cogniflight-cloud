@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import AdminTokenForm from "../components/forms/AdminTokenForm";
+import { Card, CardHeader, CardBody } from "../components/ui/Card";
 
 export default function GenerateToken() {
   const [link, setLink] = useState("");
@@ -25,30 +26,37 @@ export default function GenerateToken() {
       <header className="page-header">
         <h1 className="page-title">Invite New User</h1>
         <p className="page-subtitle">
-          Create and send a one-time registration link to new user.
-        </p>
+          Create and send a one-time registration link to new user.</p>
       </header>
       <AdminTokenForm onTokenReady={onTokenReady} />
 
       {link && (
-        <div style={{ marginTop: "1rem" }}>
-          <label className="label">Registration Link: </label>
-          <input
-            className="input"
-            type="text"
-            value={link}
-            readOnly
-            style={{ width: "100%", marginButtom: "0.5rem" }}
+        <Card className="margin-top">
+          <CardHeader
+            title="Registration Link"
+            subtitle="This link can be copied or sent directly to user."
           />
-          <div className="row" style={{ marginTop: "0.5rem" }}>
-            <button className="btn btn-primary" onClick={copyToClipboard}>
-              Copy Link
-            </button>
+          <CardBody>
+            <label className="label">Registration Link: </label>
+            <input
+              className="input margin-bottom"
+              type="text"
+              value={link}
+              readOnly
+            />
+            <div
+              className="row gap margin-top-small"
+              style={{ marginTop: "0.5rem" }}
+            >
+              <button className="btn btn-primary" onClick={copyToClipboard}>
+                Copy Link
+              </button>
 
-            {/* TODO: Add WA and email functionality */}
-            <button className="btn btn-primary">Send Link</button>
-          </div>
-        </div>
+              {/* TODO: Add WA and email functionality */}
+              <button className="btn btn-primary">Send Link</button>
+            </div>
+          </CardBody>
+        </Card>
       )}
     </div>
   );

@@ -24,8 +24,6 @@ function validateContact(contact) {
 
 export default function AdminTokenForm({ onTokenReady }) {
   const [form, setForm] = useState({
-    name: "",
-    surname: "",
     role: "",
     contact: "",
   });
@@ -39,8 +37,6 @@ export default function AdminTokenForm({ onTokenReady }) {
 
   const validate = () => {
     const e = {};
-    e.name = validateRequired(form.name);
-    e.surname = validateRequired(form.surname);
     e.role = validateRequired(form.role);
     const result = validateContact(form.contact);
     e.contact =
@@ -96,25 +92,6 @@ export default function AdminTokenForm({ onTokenReady }) {
       <CardBody>
         <form onSubmit={handleSubmit} className="grid gap">
           <div className="grid two-col gap">
-            <Field label="Name" htmlFor="adm_name" required error={errors.name}>
-              <Input
-                id="adm_name"
-                value={form.name}
-                onChange={(e) => set("name", e.target.value)}
-              />
-            </Field>
-            <Field
-              label="Surname"
-              htmlFor="adm_surname"
-              required
-              error={errors.surname}
-            >
-              <Input
-                id="adm_surname"
-                value={form.surname}
-                onChange={(e) => set("surname", e.target.value)}
-              />
-            </Field>
             <Field label="Role" htmlFor="adm_role" required error={errors.role}>
               <select
                 id="adm_role"

@@ -50,7 +50,7 @@
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  padding: 1rem 1rem 2rem;
+  padding: 1rem;
 }
 .container {
   max-width: 860px;
@@ -61,12 +61,15 @@
 .page-header {
   display: grid;
   gap: 0.25rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.25rem;
 }
 .page-title {
   margin: 0;
+  padding: 0;
   font-size: 1.5rem;
   font-weight: 600;
+  line-height: 1.2;
+  word-break: break-word;
   color: var(--text);
 }
 .page-subtitle {
@@ -90,6 +93,7 @@
 }
 
 .card {
+  margin-top: 0.5rem;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -121,6 +125,18 @@
 }
 .card-body {
   padding: 1.25rem;
+}
+
+.margin-top {
+  margin-top: 0.75rem;
+}
+
+.margin-top-small {
+  margin-top: 0.25rem;
+}
+
+.margin-bottom {
+  margin-bottom: 0.5rem;
 }
 
 .field {
