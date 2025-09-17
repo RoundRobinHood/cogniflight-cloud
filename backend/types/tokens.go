@@ -16,7 +16,7 @@ type SignupToken struct {
 	Role      Role               `bson:"role" json:"role,omitempty"`
 	PilotInfo *PilotInfo         `bson:"pilot_info" json:"pilot_info,omitempty"`
 	CreatedAt time.Time          `bson:"created_at" json:"created_at,omitzero"`
-	Expires   time.Time          `bson:"expires_at" json:"expires,omitzero"`
+	Expires   time.Time          `bson:"expires_at" json:"expires_at,omitzero"`
 }
 
 var ErrSignupTokenNotExist = errors.New("Signup token does not exist")
