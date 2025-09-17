@@ -188,7 +188,7 @@ db.createCollection("signup_tokens", {
   validator: {
     $jsonSchema: {
       bsonType: "object",
-      required: [ "tok_str", "email", "phone", "role", "pilot_info", "created_at", "expires_at" ],
+      required: [ "tok_str", "role", "created_at", "expires_at" ],
       properties: {
         tok_str: { bsonType: "string" },
         email: {
@@ -207,6 +207,10 @@ db.createCollection("signup_tokens", {
         created_at: { bsonType: "date" },
         expires_at: { bsonType: "date" },
       },
+      anyOf: [
+        { "required": [ "email" ] },
+        { "required": [ "phone" ] },
+      ],
     },
   },
 });

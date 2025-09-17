@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
@@ -35,8 +36,13 @@ func Settings(u types.UserStore) gin.HandlerFunc {
 
 		user, err := u.UpdateUser(sess.UserID, update, c.Request.Context())
 		if err != nil {
-			l.Printf("User update failed: %v", err)
-			c.JSON(500, gin.H{"error": "Internal error"})
+			if db.IsValidationError(err) {
+				l.Set("err", err)
+				c.JSON(400, gin.H{"error": err.Error()})
+			} else {
+				l.Printf("User update failed: %v", err)
+				c.JSON(500, gin.H{"error": "Internal error"})
+			}
 			return
 		}
 

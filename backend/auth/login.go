@@ -38,8 +38,13 @@ func Login(u types.UserStore, s types.SessionStore) gin.HandlerFunc {
 			}
 			domain := os.Getenv("DOMAIN")
 
+			sess, err := s.CreateSession(user.ID, user.Role, c.Request.Context())
+			if err != nil {
+				l.Set("err", err)
+				c.Status(500)
+				return
+			}
 			c.Status(200)
-			sess, _ := s.CreateSession(user.ID, user.Role, c.Request.Context())
 			c.SetCookie("sessid", sess.SessID, 3600, "/", domain, secure_session, true)
 		} else {
 			c.Status(401)

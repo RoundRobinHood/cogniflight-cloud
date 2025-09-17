@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -65,9 +66,16 @@ type KeyCreationInfo struct {
 func (k *KeyRepository) Create(input KeyCreationInfo, authStatus types.AuthorizationStatus, ctx context.Context) (KeyInfo, *types.HTTPError) {
 	var zero KeyInfo
 	if keyStr, key, err := k.Store.CreateKey(input.EdgeID, ctx); err != nil {
-		return zero, &types.HTTPError{
-			ErrorCode: 500,
-			Err:       err,
+		if db.IsValidationError(err) {
+			return zero, &types.HTTPError{
+				ErrorCode: 400,
+				Err:       err,
+			}
+		} else {
+			return zero, &types.HTTPError{
+				ErrorCode: 500,
+				Err:       err,
+			}
 		}
 	} else {
 		return KeyInfo{
