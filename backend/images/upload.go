@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
@@ -53,8 +54,13 @@ func UploadImage(i types.UserImageStore) gin.HandlerFunc {
 		reader := io.MultiReader(bytes.NewReader(head[:n]), src)
 		img, err := i.UploadImage(sess.UserID, primitive.NewObjectID(), fileHeader.Filename, mimetype, reader, c.Request.Context())
 		if err != nil {
-			l.Printf("Failed to upload image: %v", err)
-			c.JSON(500, gin.H{"error": "Internal error"})
+			if db.IsValidationError(err) {
+				l.Set("err", err)
+				c.JSON(400, gin.H{"error": err.Error()})
+			} else {
+				l.Printf("Failed to upload image: %v", err)
+				c.JSON(500, gin.H{"error": "Internal error"})
+			}
 			return
 		}
 

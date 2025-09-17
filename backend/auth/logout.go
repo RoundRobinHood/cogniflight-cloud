@@ -36,6 +36,6 @@ func Logout(s types.SessionStore) gin.HandlerFunc {
 			}
 		}
 
-		c.JSON(200, gin.H{"error": "Internal error"})
+		c.Status(200)
 	}
 }

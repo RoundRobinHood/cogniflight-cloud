@@ -70,6 +70,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PWD:-rootpass}
       MONGO_INITDB_DATABASE: cogniflight
     volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - ./mongo-data:/data/db
     profiles:
       - mongo

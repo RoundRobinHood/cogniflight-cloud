@@ -33,10 +33,10 @@ func TestSettingsEndpoint(t *testing.T) {
 		Pwd:   hashed,
 		Role:  types.RolePilot,
 		PilotInfo: &types.PilotInfo{
-			LicenseNr:         "JJ98398343",
-			FlightHours:       53,
-			Baseline:          nil,
-			CertificateExpiry: time.Now().Add(-time.Second),
+			LicenseNr:          "JJ98398343",
+			InitialFlightHours: 53,
+			Baseline:           nil,
+			CertificateExpiry:  time.Now().Add(-time.Second),
 			EnvironmentPref: types.PilotEnvPref{
 				NoiseSensitivity: "medium",
 				LightSensitivity: "low",

@@ -1,6 +1,7 @@
 package edge
 
 import (
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
@@ -21,8 +22,13 @@ func CreateEdgeNode(n types.EdgeNodeStore) gin.HandlerFunc {
 
 		node, err := n.CreateEdgeNode(*req.PlaneInfo, c.Request.Context())
 		if err != nil {
-			l.Printf("Failed to create edge node: %v", err)
-			c.JSON(500, gin.H{"error": "Internal error"})
+			if db.IsValidationError(err) {
+				l.Set("err", err)
+				c.JSON(400, gin.H{"error": err.Error()})
+			} else {
+				l.Printf("Failed to create edge node: %v", err)
+				c.JSON(500, gin.H{"error": "Internal error"})
+			}
 			return
 		}
 

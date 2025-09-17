@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
@@ -38,8 +39,12 @@ func CreateSignupToken(s types.SignupTokenStore) gin.HandlerFunc {
 
 		tok, err := s.CreateSignupToken(req.Phone, req.Email, req.Role, req.PilotInfo, 6*time.Hour, c.Request.Context())
 		if err != nil {
-			c.JSON(500, gin.H{"error": "Internal error"})
-			l.Printf("Error creating signup token: %v", err)
+			if db.IsValidationError(err) {
+				c.JSON(400, gin.H{"error": err.Error()})
+			} else {
+				c.JSON(500, gin.H{"error": "Internal error"})
+				l.Printf("Error creating signup token: %v", err)
+			}
 			return
 		}
 
@@ -101,8 +106,13 @@ func Signup(u types.UserStore, s types.SignupTokenStore, sess types.SessionStore
 
 		usr, err := u.CreateUser(user, c.Request.Context())
 		if err != nil {
-			c.JSON(500, gin.H{"error": "Internal error"})
-			l.Printf("Error creating user: %v", err)
+			if db.IsValidationError(err) {
+				l.Set("err", err)
+				c.JSON(400, gin.H{"error": err.Error()})
+			} else {
+				c.JSON(500, gin.H{"error": "Internal error"})
+				l.Printf("Error creating user: %v", err)
+			}
 			return
 		}
 

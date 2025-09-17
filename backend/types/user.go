@@ -28,20 +28,20 @@ type PilotEnvPref struct {
 }
 
 type PilotInfo struct {
-	FaceEmbeddings    [][]float64    `bson:"face_embeddings" json:"face_embeddings"`
-	LicenseNr         string         `bson:"license_nr" json:"license_nr"`
-	CertificateExpiry time.Time      `bson:"certification_expiry" json:"certification_expiry"`
-	FlightHours       float64        `bson:"flight_hours" json:"flight_hours"`
-	Baseline          map[string]any `bson:"baseline" json:"baseline"`
-	EnvironmentPref   PilotEnvPref   `bson:"environment_preferences" json:"environment_preferences"`
+	FaceEmbeddings     [][]float64    `bson:"face_embeddings" json:"face_embeddings"`
+	LicenseNr          string         `bson:"license_nr" json:"license_nr"`
+	CertificateExpiry  time.Time      `bson:"certification_expiry" json:"certification_expiry"`
+	InitialFlightHours float64        `bson:"initial_flight_hours" json:"flight_hours"`
+	Baseline           map[string]any `bson:"baseline" json:"baseline"`
+	EnvironmentPref    PilotEnvPref   `bson:"environment_preferences" json:"environment_preferences"`
 }
 
 type PilotInfoUpdate struct {
-	LicenseNr         string                        `json:"license_nr" bson:"license_nr,omitempty"`
-	FlightHours       OptionalField[float64]        `json:"flight_hours" bson:"flight_hours,omitempty"`
-	CertificateExpiry OptionalField[time.Time]      `json:"certification_expiry" bson:"certification_expiry,omitempty"`
-	Baseline          OptionalField[map[string]any] `json:"baseline" bson:"baseline,omitempty"`
-	EnvironmentPref   struct {
+	LicenseNr          string                        `json:"license_nr" bson:"license_nr,omitempty"`
+	InitialFlightHours OptionalField[float64]        `json:"initial_flight_hours" bson:"flight_hours,omitempty"`
+	CertificateExpiry  OptionalField[time.Time]      `json:"certification_expiry" bson:"certification_expiry,omitempty"`
+	Baseline           OptionalField[map[string]any] `json:"baseline" bson:"baseline,omitempty"`
+	EnvironmentPref    struct {
 		CabinTempPref struct {
 			OptimalTemp    OptionalField[float64] `json:"optimal_temperature" bson:"optimal_temperature,omitempty"`
 			ToleranceRange OptionalField[float64] `json:"tolerance_range" bson:"tolerance_range"`
@@ -60,7 +60,7 @@ type User struct {
 	Role         Role                `bson:"role" json:"role"`
 	ProfileImage *primitive.ObjectID `bson:"profile_image_id,omitempty" json:"profile_image_id,omitempty"`
 	PilotInfo    *PilotInfo          `bson:"pilot_info,omitempty" json:"pilot_info,omitempty"`
-	CreatedAt    time.Time           `bson:"created_at" json:"created_at"`
+	CreatedAt    time.Time           `bson:"created_at,omitzero" json:"created_at"`
 }
 
 type UserUpdate struct {
