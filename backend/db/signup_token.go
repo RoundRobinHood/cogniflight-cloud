@@ -53,3 +53,16 @@ func (s DBSignupTokenStore) CreateSignupToken(Phone, Email string, Role types.Ro
 
 	return &tok, nil
 }
+
+func (s DBSignupTokenStore) DeleteSignupToken(TokStr string, ctx context.Context) (*types.SignupToken, error) {
+	var deleted types.SignupToken
+	if err := s.Col.FindOneAndDelete(ctx, bson.M{"tok_str": TokStr}).Decode(&deleted); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, types.ErrSignupTokenNotExist
+		} else {
+			return nil, err
+		}
+	} else {
+		return &deleted, nil
+	}
+}

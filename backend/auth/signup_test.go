@@ -10,6 +10,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/testutil"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
+	"github.com/RoundRobinHood/jlogging"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -17,6 +18,7 @@ type FakeSignupTokenStore struct {
 	Tokens       map[string]types.SignupToken
 	CreateCalled bool
 	Created      *types.SignupToken
+	Deleted      *types.SignupToken
 }
 
 func (s *FakeSignupTokenStore) CreateSignupToken(Phone, Email string, Role types.Role, pilotInfo *types.PilotInfo, Expiry time.Duration, ctx context.Context) (*types.SignupToken, error) {
@@ -54,6 +56,18 @@ func (s *FakeSignupTokenStore) GetSignupToken(TokStr string, ctx context.Context
 	if !ok {
 		return nil, types.ErrSignupTokenNotExist
 	} else {
+		return &tok, nil
+	}
+}
+
+func (s *FakeSignupTokenStore) DeleteSignupToken(TokStr string, ctx context.Context) (*types.SignupToken, error) {
+	tok, ok := s.Tokens[TokStr]
+
+	if !ok {
+		return nil, types.ErrSignupTokenNotExist
+	} else {
+		delete(s.Tokens, TokStr)
+		s.Deleted = &tok
 		return &tok, nil
 	}
 }
@@ -185,34 +199,6 @@ func TestSignup(t *testing.T) {
 		}
 	})
 
-	t.Run("Valid request", func(t *testing.T) {
-		body := fmt.Sprintf(`{"tok_str": "%s", "pwd": "123pizza", "name": "John Doe"}`, pilotTok.TokStr)
-		w := testutil.FakeRequest(t, r, "POST", body, "/signup", nil)
-
-		if w.Result().StatusCode != 201 {
-			t.Errorf("Wrong StatusCode: want %d got %d", 201, w.Result().StatusCode)
-		}
-
-		if !userStore.CreateCalled {
-			t.Error("Expected user to be created")
-		} else if userStore.Created.PilotInfo == nil {
-			t.Error("Expected pilotInfo to be set on pilot user")
-		}
-
-		if !sessionStore.CreateCalled {
-			t.Error("Expected session to be created")
-		}
-
-		if sessionStore.Role != pilotTok.Role {
-			t.Errorf("Wrong role provided to sessStore: have %q want %q", sessionStore.Role, pilotTok.Role)
-		}
-
-		cookie := w.Result().Header.Get("Set-Cookie")
-		if !strings.Contains(cookie, "sessid="+sessionStore.SessID) {
-			t.Errorf("Expected Set-Cookie to contain sessid (set-cookie: %q)", cookie)
-		}
-	})
-
 	t.Run("Wrong token string", func(t *testing.T) {
 		body := `{"tok_str": "wrong", "pwd": "123pizza", "name": "John Doe"}`
 		w := testutil.FakeRequest(t, r, "POST", body, "/signup", nil)
@@ -222,6 +208,49 @@ func TestSignup(t *testing.T) {
 		}
 	})
 
+	t.Run("Valid request", func(t *testing.T) {
+		body := fmt.Sprintf(`{"tok_str": "%s", "pwd": "123pizza", "name": "John Doe"}`, pilotTok.TokStr)
+		w := testutil.FakeRequest(t, r, "POST", body, "/signup", nil)
+		test_failed := false
+
+		if w.Result().StatusCode != 201 {
+			test_failed = true
+			t.Errorf("Wrong StatusCode: want %d got %d", 201, w.Result().StatusCode)
+		}
+
+		if !userStore.CreateCalled {
+			test_failed = true
+			t.Error("Expected user to be created")
+		} else if userStore.Created.PilotInfo == nil {
+			test_failed = true
+			t.Error("Expected pilotInfo to be set on pilot user")
+		}
+
+		if !sessionStore.CreateCalled {
+			test_failed = true
+			t.Error("Expected session to be created")
+		}
+
+		if sessionStore.Role != pilotTok.Role {
+			test_failed = true
+			t.Errorf("Wrong role provided to sessStore: have %q want %q", sessionStore.Role, pilotTok.Role)
+		}
+
+		if tokenStore.Deleted == nil {
+			test_failed = true
+			t.Errorf("Expected delete to be called on tokenStore")
+		}
+
+		cookie := w.Result().Header.Get("Set-Cookie")
+		if !strings.Contains(cookie, "sessid="+sessionStore.SessID) {
+			test_failed = true
+			t.Errorf("Expected Set-Cookie to contain sessid (set-cookie: %q)", cookie)
+		}
+
+		if test_failed {
+			t.Log(jlogging.TestLogStr)
+		}
+	})
 }
 
 func TestGetSignupToken(t *testing.T) {
