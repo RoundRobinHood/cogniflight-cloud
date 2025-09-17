@@ -4,7 +4,7 @@ export async function WhoAmI() {
   let response;
   let response_body;
   try {
-    response = await fetch(paths.whoami, { credentials: "include" });
+    response = await fetch(paths.whoami);
     let text = await response.text();
     if (text.length != 0) {
       response_body = JSON.parse(text);
@@ -67,7 +67,7 @@ export async function WhoAmI() {
   }
 }
 
-export async function Login({ email, Pwd }) {
+export async function Login({ email, pwd }) {
   let response;
   try {
     response = await fetch(paths.login, {
@@ -75,7 +75,7 @@ export async function Login({ email, Pwd }) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, Pwd }),
+      body: JSON.stringify({ email, pwd }),
     });
   } catch (err) {
     console.error("Failed to initialize login request:", err);
@@ -133,7 +133,7 @@ export async function CreateSignupToken({ phone, email, role }) {
   switch (response.status) {
     case 200:
     case 201:
-      return { token: response_body.tok_str, reason: 201 };
+      return {token: response_body.tok_str, reason: 201};
     case 400:
       return {
         authorized: false,
@@ -153,7 +153,7 @@ export async function CreateSignupToken({ phone, email, role }) {
   }
 }
 
-export async function Signup({ name, phone, email, Pwd, tok_str }) {
+export async function Signup({ name, phone, email, pwd, tok_str }) {
   let response;
   let response_body;
   try {
@@ -162,7 +162,7 @@ export async function Signup({ name, phone, email, Pwd, tok_str }) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, phone, email, Pwd, tok_str }),
+      body: JSON.stringify({ name, phone, email, pwd, tok_str }),
     });
     let text = await response.text();
     if (text.length != 0) {
@@ -237,15 +237,15 @@ export async function GetSignupToken(tok_str) {
   let response;
   let response_body;
   try {
-    response = await fetch(paths.signup.tokens + "/" + tok_str);
+    response = await fetch(paths.signup.tokens+'/'+tok_str);
     let text = await response.text();
     if (text.length != 0) {
       response_body = JSON.parse(text);
     } else {
       response_body = {};
     }
-  } catch (err) {
-    console.error("Failed to send GET signup_token request:", err);
+  } catch(err) {
+    console.error("Failed to send GET signup_token request:", err)
     return { reason: err };
   }
 
@@ -256,17 +256,13 @@ export async function GetSignupToken(tok_str) {
       return { reason: 400, message: response_body.error ?? "invalid request" };
     case 200:
       let { id, tok_str, created_at, expires_at, phone, role } = response_body;
-      return {
-        reason: 200,
-        token: {
-          id,
-          tok_str,
-          created_at: new Date(created_at),
-          expires_at: new Date(expires_at),
-          phone,
-          role,
-        },
-      };
+      return { reason: 200, token: {
+        id, tok_str,
+        created_at: new Date(created_at),
+        expires_at: new Date(expires_at),
+        phone,
+        role,
+      }};
     case 500:
       return {
         reason: 500,
