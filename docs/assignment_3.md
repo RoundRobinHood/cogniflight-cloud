@@ -169,3 +169,30 @@ Our architecture is heavily request-response oriented. The only event-driven (me
 
 ### Event-Driven Architecture (EDA)
 **Why not suitable:** Pure event-driven architecture would overcomplicate our synchronous operations like user authentication, API requests, and dashboard queries that require immediate responses. While suitable for telemetry streams, forcing all system interactions into asynchronous events makes simple CRUD operations on pilot profiles unnecessarily complex. Debugging becomes extremely challenging in purely asynchronous systems - critical when investigating aviation incidents that require clear audit trails. The eventual consistency model conflicts with our need for authoritative, immediate responses for safety-critical fusion score alerts. Training our team on complex event sourcing patterns and maintaining event schemas would add unnecessary development overhead. The system would require sophisticated event orchestration and correlation logic that adds complexity without proportional benefits for our mixed workload of real-time streams and traditional request-response operations.
+
+## 6. Conclusion
+
+The Service-Oriented Architecture (SOA) emerges as the optimal architectural choice for the Cogniflight Cloud platform, successfully addressing the complex requirements of real-time aviation safety monitoring while maintaining development pragmatism. Our comprehensive analysis demonstrates that SOA uniquely balances the competing demands of high-frequency telemetry processing, multi-technology integration, and system maintainability.
+
+### Key Architectural Achievements
+
+The chosen SOA design delivers critical capabilities that directly map to our aviation safety requirements:
+
+- **Real-time Performance**: Direct service communication paths enable sub-second fatigue detection from 21 simultaneous sensor streams
+- **Technology Optimization**: Leverages Go for high-performance APIs, Python for ML inference, and specialized databases (MongoDB/InfluxDB) for their respective strengths
+- **Operational Resilience**: Service independence ensures that issues in one component don't cascade to critical safety systems
+- **Regulatory Compliance**: Centralized logging and clear service boundaries facilitate aviation authority audits and incident investigation
+
+### Strategic Advantages Over Alternatives
+
+Our evaluation clearly demonstrates why SOA surpasses other architectural patterns for this specific use case. Unlike the rigid constraints of Layered Architecture or the operational overhead of Microservices, SOA provides the right level of granularity for our team size and project scope. The architecture avoids the cold-start penalties of Serverless systems and the debugging complexity of pure Event-Driven designs, while maintaining the flexibility to incorporate event-driven patterns where beneficial (MQTT telemetry streams).
+
+### Future-Ready Design
+
+The SOA foundation positions Cogniflight Cloud for evolutionary growth. As the platform matures, individual services can be scaled independently, new ML models can be integrated without system-wide changes, and additional aviation safety features can be added as discrete services. The architecture's inherent flexibility allows for potential migration to microservices for specific high-load components if future scale demands it, without requiring a complete system redesign.
+
+### Implementation Confidence
+
+With clearly defined service boundaries, standardized communication protocols (REST, MQTT, Unix sockets), and comprehensive Docker orchestration, the architecture provides a clear implementation roadmap. The design patterns embedded within (Repository, Factory, Observer, Strategy, Singleton) ensure consistent development practices across the distributed team.
+
+This architectural design represents more than technical choices - it embodies a commitment to aviation safety through thoughtful system design, where every architectural decision prioritizes the reliable detection and prevention of pilot fatigue in real-time operational environments.
