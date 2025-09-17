@@ -112,7 +112,7 @@ export async function CreateSignupToken({ phone, email, role }) {
   let response;
   let response_body;
   try {
-    response = await fetch(paths.signup.create_token, {
+    response = await fetch(paths.signup.tokens, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -220,6 +220,49 @@ export async function Logout() {
       return { reason: 200 };
     case 400:
       return { reason: 500, message: "Logout 400" };
+    case 500:
+      return {
+        reason: 500,
+        message: "Server error: " + response_body.error ?? "internal error",
+      };
+    default:
+      return {
+        reason: 400,
+        message: `Unknown status code received: ${response.status}`,
+      };
+  }
+}
+
+export async function GetSignupToken(tok_str) {
+  let response;
+  let response_body;
+  try {
+    response = await fetch(paths.signup.tokens+'/'+tok_str);
+    let text = await response.text();
+    if (text.length != 0) {
+      response_body = JSON.parse(text);
+    } else {
+      response_body = {};
+    }
+  } catch(err) {
+    console.error("Failed to send GET signup_token request:", err)
+    return { reason: err };
+  }
+
+  switch (response.status) {
+    case 404:
+      return { reason: 401 };
+    case 400:
+      return { reason: 400, message: response_body.error ?? "invalid request" };
+    case 200:
+      let { id, tok_str, created_at, expires_at, phone, role } = response_body;
+      return { reason: 200, token: {
+        id, tok_str,
+        created_at: new Date(created_at),
+        expires_at: new Date(expires_at),
+        phone,
+        role,
+      }};
     case 500:
       return {
         reason: 500,

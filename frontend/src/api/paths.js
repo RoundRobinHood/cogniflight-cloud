@@ -7,7 +7,7 @@ export default {
   logout: API_PREFIX + '/logout',
 
   signup: {
-    create_token: API_PREFIX + '/signup-tokens',
+    tokens: API_PREFIX + '/signup-tokens',
     signup: API_PREFIX + '/signup',
   }
 }
