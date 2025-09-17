@@ -76,10 +76,10 @@ func (s *FakeUserStore) UpdateUser(ID primitive.ObjectID, update types.UserUpdat
 					updated := *update.PilotInfo.Value
 					if user.PilotInfo == nil {
 						user.PilotInfo = &types.PilotInfo{
-							FaceEmbeddings: nil,
-							LicenseNr:      updated.LicenseNr,
-							FlightHours:    updated.FlightHours.Value,
-							Baseline:       updated.Baseline.Value,
+							FaceEmbeddings:     nil,
+							LicenseNr:          updated.LicenseNr,
+							InitialFlightHours: updated.InitialFlightHours.Value,
+							Baseline:           updated.Baseline.Value,
 							EnvironmentPref: types.PilotEnvPref{
 								NoiseSensitivity: updated.EnvironmentPref.NoiseSensitivity,
 								LightSensitivity: updated.EnvironmentPref.LightSensitivity,
@@ -94,8 +94,8 @@ func (s *FakeUserStore) UpdateUser(ID primitive.ObjectID, update types.UserUpdat
 						if updated.LicenseNr != "" {
 							user.PilotInfo.LicenseNr = updated.LicenseNr
 						}
-						if updated.FlightHours.Provided {
-							user.PilotInfo.FlightHours = updated.FlightHours.Value
+						if updated.InitialFlightHours.Provided {
+							user.PilotInfo.InitialFlightHours = updated.InitialFlightHours.Value
 						}
 						if updated.CertificateExpiry.Provided {
 							user.PilotInfo.CertificateExpiry = updated.CertificateExpiry.Value

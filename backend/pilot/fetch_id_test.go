@@ -29,8 +29,8 @@ func TestFetchByID(t *testing.T) {
 		Pwd:   hashed_pw,
 		Role:  types.RolePilot,
 		PilotInfo: &types.PilotInfo{
-			LicenseNr:   "ijeijfef",
-			FlightHours: 29,
+			LicenseNr:          "ijeijfef",
+			InitialFlightHours: 29,
 			EnvironmentPref: types.PilotEnvPref{
 				NoiseSensitivity: "high",
 				LightSensitivity: "medium",

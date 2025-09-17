@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"go.mongodb.org/mongo-driver/bson"
@@ -43,6 +44,9 @@ func (s DBUserStore) GetUserByID(ID primitive.ObjectID, ctx context.Context) (*t
 }
 
 func (s DBUserStore) CreateUser(User types.User, ctx context.Context) (*types.User, error) {
+	if User.CreatedAt.IsZero() {
+		User.CreatedAt = time.Now()
+	}
 	inserted, err := s.Col.InsertOne(ctx, &User)
 	if err != nil {
 		return nil, err
@@ -73,8 +77,8 @@ func (s DBUserStore) UpdateUser(ID primitive.ObjectID, update types.UserUpdate, 
 			if pilotInfo.LicenseNr != "" {
 				set["pilot_info.license_nr"] = pilotInfo.LicenseNr
 			}
-			if pilotInfo.FlightHours.Provided {
-				set["pilot_info.flight_hours"] = pilotInfo.FlightHours.Value
+			if pilotInfo.InitialFlightHours.Provided {
+				set["pilot_info.initial_flight_hours"] = pilotInfo.InitialFlightHours.Value
 			}
 			if pilotInfo.CertificateExpiry.Provided {
 				set["pilot_info.certification_expiry"] = pilotInfo.CertificateExpiry
