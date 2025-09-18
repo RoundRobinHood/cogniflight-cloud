@@ -17,6 +17,37 @@ For example, in our case it enables us to use Python for ML-enabled behavior suc
 
 ### Component interactions & data flow
 
+```mermaid
+graph LR
+    subgraph "Users & Devices"
+        U[Users]
+        E[Edge Nodes]
+    end
+    
+    subgraph "Cloud Platform"
+        P[Proxy]
+        F[Frontend]
+        B[Backend API]
+        ML[ML Engine]
+        MQ[MQTT Broker]
+        DB[(Databases)]
+    end
+    
+    U -->|HTTPS| P
+    E -->|MQTTS| MQ
+    P --> F
+    P --> B
+    B <--> ML
+    B <--> DB
+    MQ --> DB
+    
+    style U fill:#e3f2fd
+    style E fill:#fff3e0
+    style B fill:#fff9c4
+    style ML fill:#f3e5f5
+    style DB fill:#e0f2f1
+```
+
 We host a Traefik reverse proxy on the server that redirects connections to our backend and frontend. The frontend is simply served as static files to the user, while the backend is a server-side REST API that interacts with our 2 databases and ml-engine to perform any required high-performance operations.
 
 The server also hosts our own MQTT message broker for telemetry data connections, as discussed in the technology stack.
