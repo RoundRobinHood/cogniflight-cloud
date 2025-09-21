@@ -179,7 +179,7 @@ func main() {
 				}()
 			case 0x7f:
 				if len(input) > 0 {
-					input = input[:len(input)-1]
+					line = line[:len(line)-1]
 					fmt.Print("\b \b")
 				}
 			case '\r', '\n':
