@@ -165,7 +165,11 @@ func main() {
 	}), images.UploadImage(imageStore))
 	r.POST("/check-api-key", keys.CheckKey(keyStore))
 	r.POST("/hi", func(c *gin.Context) { c.String(200, "hello") })
-	r.GET("/cmd-socket", cmd.CmdWebhook())
+	r.GET("/cmd-socket", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
+		types.RoleSysAdmin: {},
+		types.RoleATC:      {},
+		types.RolePilot:    {},
+	}), cmd.CmdWebhook())
 
 	key_group := r.Group("/api-keys/", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
 		types.RoleSysAdmin: {},

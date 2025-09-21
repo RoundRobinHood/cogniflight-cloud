@@ -2,11 +2,16 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"net/http/cookiejar"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"sync/atomic"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
@@ -15,32 +20,194 @@ import (
 	"golang.org/x/term"
 )
 
+type AtomicFlag struct {
+	flag int32
+}
+
+func (f *AtomicFlag) Set(value bool) {
+	var v int32
+	if value {
+		v = 1
+	}
+	atomic.StoreInt32(&f.flag, v)
+}
+
+func (f *AtomicFlag) Get() bool {
+	return atomic.LoadInt32(&f.flag) != 0
+}
+
 func main() {
-	if len(os.Args) == 0 {
-		os.Exit(1)
-	}
-	if len(os.Args) == 1 {
-		fmt.Printf("Usage: %s <API_URL>", os.Args[0])
-		return
-	}
-
-	api_url := os.Args[1]
-	env := &sync.Map{}
-
-	conn, _, err := websocket.DefaultDialer.Dial(api_url+"/cmd-socket", nil)
-	if err != nil {
-		log.Fatal("Websocket dial error:", err)
-	}
-	defer conn.Close()
-
-	// done is closed when the program can't go on anymore (typically means websocket disconnected)
-	done := make(chan struct{})
-
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		log.Fatal("Error setting terminal to raw:", err)
 	}
 	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
+	if len(os.Args) == 0 {
+		os.Exit(1)
+	}
+	if len(os.Args) == 1 {
+		fmt.Printf("Usage: %s <API_URL>\r\n", os.Args[0])
+		return
+	}
+
+	api_url := os.Args[1]
+
+	scheme, _, found := strings.Cut(api_url, ":")
+	if !found || (scheme != "http" && scheme != "https") {
+		fmt.Print("URL format: http(s)://domain(:port)\r\n")
+		return
+	}
+	env := &sync.Map{}
+
+	ws_url := strings.Replace(api_url, "http", "ws", 1)
+
+	// done is closed when the program can't go on anymore (typically means websocket disconnected)
+	done := make(chan struct{})
+
+	// Set up input line reader
+	should_echo := &AtomicFlag{}
+	shortcuts_in := make(chan string)
+	lines_in := make(chan string)
+	go func() {
+		// Exhaust the input stuff if the done channel is closed
+		go func() {
+			for range done {
+			}
+
+			go func() {
+				for range lines_in {
+				}
+			}()
+			go func() {
+				for range shortcuts_in {
+				}
+			}()
+		}()
+
+		input := make([]byte, 1)
+		line := ""
+		in_wg := new(sync.WaitGroup)
+		for {
+			select {
+			case <-done:
+				in_wg.Wait()
+				fmt.Print("stopped reading input...\r\n")
+				return
+			default:
+			}
+
+			n, err := os.Stdin.Read(input)
+			if err != nil {
+				fmt.Print("Stdin read error:", err, "\r\n")
+				close(done)
+				return
+			}
+			if n == 0 {
+				continue
+			}
+
+			b := input[0]
+			switch b {
+			case 0x04:
+				in_wg.Add(1)
+				go func() {
+					defer in_wg.Done()
+					shortcuts_in <- "ctrl+d"
+				}()
+			case 0x7f:
+				if len(input) > 0 {
+					line = line[:len(line)-1]
+					if should_echo.Get() {
+						fmt.Print("\b \b")
+					}
+				}
+			case '\r', '\n':
+				if should_echo.Get() {
+					fmt.Print("\r\n")
+				}
+				in_wg.Add(1)
+				go func(line string) {
+					defer in_wg.Done()
+					lines_in <- strings.TrimRight(line, "\r\n")
+				}(line)
+				line = ""
+			default:
+				if should_echo.Get() {
+					fmt.Print(string(b))
+				}
+				line += string(b)
+			}
+		}
+	}()
+
+	prompt_ch := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-prompt_ch:
+				return
+			case shortcut := <-shortcuts_in:
+				if shortcut == "ctrl+d" {
+					fmt.Print("prompt interrupted", "\r\n")
+					close(done)
+					return
+				}
+			}
+		}
+	}()
+
+	fmt.Print("email: ")
+	should_echo.Set(true)
+	email := ""
+	select {
+	case email = <-lines_in:
+	case <-done:
+		return
+	}
+	should_echo.Set(false)
+	fmt.Print("password: ")
+	pwd := ""
+	select {
+	case pwd = <-lines_in:
+	case <-done:
+		return
+	}
+	fmt.Print("\r\n")
+	close(prompt_ch)
+
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{
+		Jar: jar,
+	}
+	body := fmt.Sprintf(`{"email": %q, "pwd": %q}`, email, pwd)
+	resp, err := client.Post(api_url+"/login", "application/json", strings.NewReader(body))
+	if err != nil {
+		fmt.Print("Login request error:", err, "\r\n")
+		close(done)
+		return
+	}
+	if resp.StatusCode == 401 {
+		fmt.Print("Incorrect email/password", err, "\r\n")
+		close(done)
+		return
+	}
+	if resp.StatusCode != 200 {
+		resp_bytes, _ := io.ReadAll(resp.Body)
+		fmt.Printf("Non-200 login status: %d. Body: \r\n%s\r\n", resp.StatusCode, string(resp_bytes))
+		close(done)
+		return
+	}
+	resp.Body.Close()
+
+	websocket.DefaultDialer.Jar = jar
+	conn, _, err := websocket.DefaultDialer.Dial(ws_url+"/cmd-socket", nil)
+	if err != nil {
+		fmt.Print("Websocket dial error:", err, "\r\n")
+		close(done)
+		return
+	}
+	defer conn.Close()
 
 	wg := new(sync.WaitGroup)
 	in, out := make(chan types.WebSocketMessage), make(chan types.WebSocketMessage)
@@ -58,7 +225,7 @@ func main() {
 			case send := <-out:
 				bytes, _ := msgpack.Marshal(send)
 				if err := conn.WriteMessage(websocket.BinaryMessage, bytes); err != nil {
-					log.Println("write error:", err)
+					fmt.Print("write error:", err, "\r\n")
 					close(done)
 					return
 				}
@@ -82,7 +249,7 @@ func main() {
 
 			messageType, msg, err := conn.ReadMessage()
 			if err != nil {
-				log.Print("read error:", err, "\r\n")
+				fmt.Print("read error:", err, "\r\n")
 				close(done)
 				return
 			}
@@ -135,70 +302,9 @@ func main() {
 		}
 	}
 
-	// Set up input line reader
-	shortcuts_in := make(chan string)
-	lines_in := make(chan string)
-	go func() {
-		input := make([]byte, 1)
-		line := ""
-		in_wg := new(sync.WaitGroup)
-		for {
-			select {
-			case <-done:
-				go func() {
-					for range lines_in {
-					}
-				}()
-				go func() {
-					for range shortcuts_in {
-					}
-				}()
-				in_wg.Wait()
-				fmt.Print("stopped reading input...\r\n")
-				return
-			default:
-			}
-
-			n, err := os.Stdin.Read(input)
-			if err != nil {
-				fmt.Print("Stdin read error:", err, "\r\n")
-				close(done)
-				return
-			}
-			if n == 0 {
-				continue
-			}
-
-			b := input[0]
-			switch b {
-			case 0x04:
-				in_wg.Add(1)
-				go func() {
-					defer in_wg.Done()
-					shortcuts_in <- "ctrl+d"
-				}()
-			case 0x7f:
-				if len(input) > 0 {
-					line = line[:len(line)-1]
-					fmt.Print("\b \b")
-				}
-			case '\r', '\n':
-				fmt.Print("\r\n")
-				in_wg.Add(1)
-				go func(line string) {
-					defer in_wg.Done()
-					lines_in <- line
-				}(line)
-				line = ""
-			default:
-				fmt.Print(string(b))
-				line += string(b)
-			}
-		}
-	}()
-
 	disconnect := make(chan struct{})
 	for {
+		should_echo.Set(true)
 	loop_start:
 		select {
 		case <-disconnect:
@@ -247,11 +353,11 @@ func main() {
 				goto loop_start
 			}
 		}
-		input = strings.TrimRight(input, "\r\n")
 		if len(strings.TrimSpace(input)) == 0 {
 			continue
 		}
 
+		should_echo.Set(false)
 		// Send command
 		env_map := map[string]string{}
 		env.Range(func(k, v any) bool { env_map[k.(string)] = v.(string); return true })
@@ -322,7 +428,7 @@ func main() {
 					ClientID:    clientID,
 					MessageType: types.MsgInputStream,
 
-					InputStream: strings.TrimRight(line, "\r\n") + "\r\n",
+					InputStream: line + "\r\n",
 				}
 			case shortcut := <-shortcuts_in:
 				if shortcut == "ctrl+d" {
@@ -411,6 +517,8 @@ func main() {
 					return
 				}
 			}
+
+			should_echo.Set(stdinOpen)
 		}
 	}
 }
