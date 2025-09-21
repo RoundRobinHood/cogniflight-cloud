@@ -7,6 +7,8 @@ export default defineConfig(({ mode }) => {
 
   const api_prefix = env.API_PREFIX || '/api/';
   const api_prefix_escaped = api_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  const api_url = env.BACKEND_URL || 'http://backend:8080'
   return {
     server: {
       // This pattern is so that vite only binds to 0.0.0.0 if in the docker network
@@ -18,8 +20,9 @@ export default defineConfig(({ mode }) => {
 
       proxy: {
         [`^${api_prefix_escaped}`]: {
-          target: env.BACKEND_URL || 'http://backend:8080',
+          target: api_url,
           changeOrigin: true,
+          ws: true,
           rewrite: (path) => {
             return path.replace(new RegExp(`^${api_prefix_escaped}`), '')
           },
