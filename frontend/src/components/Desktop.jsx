@@ -7,6 +7,7 @@ import ContextMenu from './ContextMenu'
 import FatconAlert from './FatconAlert'
 import SystemContext from './useSystem'
 import appRegistry from '../config/appRegistry'
+import { ConfirmProvider } from '../hooks/useConfirm.jsx'
 
 function Desktop({ user, onLogout }) {
   const [windows, setWindows] = useState([])
@@ -31,10 +32,13 @@ function Desktop({ user, onLogout }) {
     const defaultTaskbarApps = ['settings', 'fileexplorer', 'notepad']
     const defaultDesktopApps = ['settings', 'fileexplorer', 'notepad']
     
+    // Extract name from email (part before @)
+    const extractedName = user?.email ? user.email.split('@')[0] : 'Operator'
+    
     return {
       userProfile: {
-        name: user?.username || 'Operator',
-        email: user?.email || `${user?.username || 'user'}@cogniflight.com`,
+        name: extractedName,
+        email: user?.email || 'user@example.com',
         theme: 'dark',
         notifications: true,
         loginTime: user?.loginTime
@@ -307,8 +311,9 @@ function Desktop({ user, onLogout }) {
   }
 
   return (
-    <SystemContext.Provider value={systemContextValue}>
-      <div className="desktop">
+    <ConfirmProvider>
+      <SystemContext.Provider value={systemContextValue}>
+        <div className="desktop">
         <DesktopIcons onOpenApp={openWindow} />
         
         {/* Toast Notifications - Show only recent ones as toasts */}
@@ -389,8 +394,9 @@ function Desktop({ user, onLogout }) {
           previousLevel={globalFatconAlert.previousLevel}
           newLevel={globalFatconAlert.newLevel}
         />
-      </div>
-    </SystemContext.Provider>
+        </div>
+      </SystemContext.Provider>
+    </ConfirmProvider>
   )
 }
 

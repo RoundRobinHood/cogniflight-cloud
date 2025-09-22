@@ -59,7 +59,7 @@ function LoginScreen({ onLogin }) {
         await new Promise(resolve => setTimeout(resolve, 800))
         
         onLogin({
-          username: email || 'User',
+          email: email,
           loginTime: new Date().toISOString()
         })
       } else {
