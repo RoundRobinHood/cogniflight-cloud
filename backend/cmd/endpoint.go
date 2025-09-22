@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -32,9 +33,10 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func CmdWebhook() gin.HandlerFunc {
+func CmdWebhook(userStore types.UserStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		available_commands := InitCommands()
+		auth_status := auth.CheckAuthStatus(c)
+		available_commands := InitCommands(userStore)
 
 		clients := map[string]types.ClientInfo{}
 		wg := new(sync.WaitGroup)
@@ -121,10 +123,11 @@ func CmdWebhook() gin.HandlerFunc {
 						}
 						new_client := types.ClientInfo{
 							Client: types.Client{
-								ClientID: incoming.ClientID,
-								Env:      client_map,
-								In:       make(chan types.WebSocketMessage),
-								Out:      out_ch,
+								ClientID:   incoming.ClientID,
+								Env:        client_map,
+								In:         make(chan types.WebSocketMessage),
+								Out:        out_ch,
+								AuthStatus: auth_status,
 							},
 							StopChannel:    make(chan struct{}),
 							InputWaitGroup: new(sync.WaitGroup),

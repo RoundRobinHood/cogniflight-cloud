@@ -12,6 +12,7 @@ func RunClient(info types.ClientInfo, commands map[string]types.Command, wg *syn
 	defer wg.Done()
 	defer log.Printf("[client %q] - closing", info.Client.ClientID)
 	for {
+		fmt.Println(info.Client.In)
 		select {
 		case <-info.StopChannel:
 			go func() {
@@ -35,7 +36,7 @@ func RunClient(info types.ClientInfo, commands map[string]types.Command, wg *syn
 					result := commands["error"].Run(
 						[]string{"error", fmt.Sprintf("invalid command string: %v", err)},
 						info.Client.In, info.Client.Out, info.Client.Env, info.StopChannel,
-						info.Client.ClientID, msg.MessageID)
+						info.Client.ClientID, msg.MessageID, info.Client.AuthStatus)
 					info.Client.Out <- types.WebSocketMessage{
 						MessageID:   GenerateMessageID(20),
 						ClientID:    info.Client.ClientID,
@@ -64,7 +65,7 @@ func RunClient(info types.ClientInfo, commands map[string]types.Command, wg *syn
 					result := commands["error"].Run(
 						[]string{"error", "invalid command string: no command identifier"},
 						info.Client.In, info.Client.Out, info.Client.Env, info.StopChannel,
-						info.Client.ClientID, msg.MessageID)
+						info.Client.ClientID, msg.MessageID, info.Client.AuthStatus)
 					info.Client.Out <- types.WebSocketMessage{
 						MessageID:   GenerateMessageID(20),
 						ClientID:    info.Client.ClientID,
@@ -86,7 +87,7 @@ func RunClient(info types.ClientInfo, commands map[string]types.Command, wg *syn
 					result := cmd.Run(
 						args,
 						info.Client.In, info.Client.Out, info.Client.Env, info.StopChannel,
-						info.Client.ClientID, msg.MessageID)
+						info.Client.ClientID, msg.MessageID, info.Client.AuthStatus)
 					info.Client.Out <- types.WebSocketMessage{
 						MessageID:   GenerateMessageID(20),
 						ClientID:    info.Client.ClientID,
@@ -106,7 +107,7 @@ func RunClient(info types.ClientInfo, commands map[string]types.Command, wg *syn
 					result := commands["error"].Run(
 						[]string{"error", fmt.Sprintf("unknown command: %q", args[0])},
 						info.Client.In, info.Client.Out, info.Client.Env, info.StopChannel,
-						info.Client.ClientID, msg.MessageID)
+						info.Client.ClientID, msg.MessageID, info.Client.AuthStatus)
 					info.Client.Out <- types.WebSocketMessage{
 						MessageID:   GenerateMessageID(20),
 						ClientID:    info.Client.ClientID,

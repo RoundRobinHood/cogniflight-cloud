@@ -97,6 +97,10 @@ export async function Connect() {
   }
 }
 
+export async function *StringIterator(str) {
+  yield str
+}
+
 export class PipeCmdClient {
   constructor() {
     this.eventHandlers = new Map();
@@ -112,8 +116,7 @@ export class PipeCmdClient {
     this.on('command_running', () => this.command_running = true);
     this.on('command_finished', () => this.command_running = false);
 
-    this.on('raw_message', console.log);
-    this.on('output_stream', console.log);
+    this.on('raw_message', (msg) => console.log('incoming: ', msg));
   }
 
   async connect() {
@@ -237,10 +240,12 @@ export class PipeCmdClient {
   send(message) {
     const encoded = encode(message);
 
+    console.log('outgoing: ', message);
+
     this.sendRaw(encoded);
   }
 
-  async run_command(command, input) {
+  async run_command(command, input=StringIterator("")) {
     let command_result;
     let output = "";
     let error = "";

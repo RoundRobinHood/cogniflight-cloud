@@ -12,7 +12,7 @@ func (CmdEcho) Identifier() string {
 	return "echo"
 }
 
-func (CmdEcho) Run(args []string, in, out chan types.WebSocketMessage, env map[string]string, stopChannel chan struct{}, ClientID, CommandMsgID string) int {
+func (CmdEcho) Run(args []string, in, out chan types.WebSocketMessage, env map[string]string, stopChannel chan struct{}, ClientID, CommandMsgID string, auth_status types.AuthorizationStatus) int {
 	out <- types.WebSocketMessage{
 		MessageID:   GenerateMessageID(20),
 		ClientID:    ClientID,
