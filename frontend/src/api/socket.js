@@ -334,15 +334,16 @@ export class PipeCmdClient {
     websocket.send(data);
   }
 
-  disconnect() {
+  async disconnect() {
     if(websocket != null) {
-      return new Promise((resolve, _) => {
-        const listen_for_ack = () => {
-          this.off('disconnected', listen_for_ack);
-          resolve();
-        }
-        this.on('disconnected', listen_for_ack);
-      })
+      this.send({
+        message_id: GenerateMessageID(),
+        client_id: this.clientID,
+
+        message_type: "disconnect",
+      });
+
+      return await this.until('disconnected');
     }
   }
 }
