@@ -49,6 +49,9 @@ Real-time fatigue assessment across entire fleet operations:
 - **Context Menus**: Right-click actions throughout the interface
 - **Notification System**: Real-time alerts and updates
 - **State Persistence**: Maintains user preferences and window states
+- **Custom Confirmation Dialogs**: Styled, promise-based confirmation system
+- **Authentication System**: Email-based login with session management
+- **Desktop Icons**: Pinnable application shortcuts on desktop
 
 ## 🏗️ Technical Architecture
 
@@ -67,15 +70,25 @@ src/
 │   ├── Window.jsx              # Window container component
 │   ├── Taskbar.jsx             # Dynamic taskbar
 │   ├── StartMenu.jsx           # Application launcher
+│   ├── LoginScreen.jsx         # Authentication interface
 │   ├── FatconWidget.jsx        # FATCON monitoring widget
 │   ├── FatconAlert.jsx         # Alert system
 │   ├── NotificationPanel.jsx   # Notifications
 │   ├── ContextMenu.jsx         # Right-click menus
+│   ├── ConfirmDialog.jsx       # Reusable confirmation dialog
+│   ├── DesktopIcons.jsx        # Desktop icon management
 │   ├── useSystem.js            # System context hook
 │   └── apps/                   # Application components
+│       ├── FileExplorerApp.jsx
+│       ├── NotepadApp.jsx
+│       └── SettingsApp.jsx
 ├── config/
 │   └── appRegistry.js          # Dynamic app registration
-└── index.css                   # Styling (1533 lines)
+├── hooks/
+│   └── useConfirm.jsx          # Confirmation dialog hook
+├── api/
+│   └── auth.js                 # Authentication API
+└── index.css                   # Styling (1625 lines)
 ```
 
 ## 🔧 Creating New Applications
@@ -183,6 +196,95 @@ const {
 } = useSystem()
 ```
 
+### Using the Confirmation Dialog
+
+The application includes a reusable confirmation dialog system that replaces browser's native `confirm()` with a styled, promise-based dialog.
+
+#### Basic Usage
+
+```javascript
+import { useConfirm } from '../hooks/useConfirm.jsx'
+
+function YourApp() {
+  const confirm = useConfirm()
+  
+  const handleDelete = async () => {
+    const confirmed = await confirm({
+      title: 'Delete File',
+      message: 'Are you sure you want to delete this file? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'warning'  // 'warning', 'info', or 'question'
+    })
+    
+    if (confirmed) {
+      // User clicked confirm
+      deleteFile()
+    } else {
+      // User clicked cancel or closed dialog
+    }
+  }
+  
+  return (
+    <button onClick={handleDelete}>Delete File</button>
+  )
+}
+```
+
+#### Dialog Options
+
+```javascript
+const confirmed = await confirm({
+  title: 'Dialog Title',           // Required: Dialog header text
+  message: 'Dialog message',       // Required: Main message text
+  confirmText: 'Confirm',          // Optional: Confirm button text (default: 'Confirm')
+  cancelText: 'Cancel',            // Optional: Cancel button text (default: 'Cancel')
+  type: 'warning'                  // Optional: Icon type ('warning', 'info', 'question')
+})
+```
+
+#### Examples
+
+**Warning Dialog (logout, delete actions):**
+```javascript
+const confirmed = await confirm({
+  title: 'Sign Out',
+  message: 'Are you sure you want to sign out? Any unsaved work will be lost.',
+  confirmText: 'Sign Out',
+  cancelText: 'Cancel',
+  type: 'warning'
+})
+```
+
+**Info Dialog (notifications):**
+```javascript
+const confirmed = await confirm({
+  title: 'Update Available',
+  message: 'A new version is available. Would you like to update now?',
+  confirmText: 'Update Now',
+  cancelText: 'Later',
+  type: 'info'
+})
+```
+
+**Question Dialog (user choices):**
+```javascript
+const confirmed = await confirm({
+  title: 'Save Changes?',
+  message: 'You have unsaved changes. Would you like to save them before closing?',
+  confirmText: 'Save',
+  cancelText: "Don't Save",
+  type: 'question'
+})
+```
+
+The dialog automatically handles:
+- ESC key to cancel
+- Click outside to cancel
+- Smooth animations (fade in/slide up)
+- Proper focus management
+- Z-index stacking above all other elements
+
 ### App Development Best Practices
 
 1. **State Management**
@@ -211,7 +313,7 @@ const {
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server (runs on port 1024)
 npm run dev
 
 # Build for production
@@ -221,20 +323,30 @@ npm run build
 npm run lint
 ```
 
-The development server runs at `http://localhost:5173`
+The development server runs at `http://localhost:1024`
+
+### Login Credentials
+The application uses email-based authentication. Enter your email address to log in.
 
 ## 📊 Current Implementation Status
 
 ### ✅ Working Features
 - Complete window management system
 - Dynamic app loading with lazy imports
-- FATCON monitoring widget
-- Authentication system
-- File management capabilities
-- Notification system
-- Context menus
-- App pinning/unpinning
-- State persistence
+- FATCON monitoring widget with real-time alerts
+- Email-based authentication system with session management
+- File management capabilities (FileExplorer app)
+- Notification system with toast notifications
+- Context menus throughout the interface
+- App pinning/unpinning to taskbar and desktop
+- State persistence via localStorage
+- Custom confirmation dialog system
+- Settings management for user profiles
+- Notepad application for text editing
+- Start menu with search functionality
+- Window minimize, maximize, and close controls
+- Draggable and resizable windows
+- Multi-instance application support
 
 ### ⚠️ Known Issues
 - Window ID collisions with rapid creation (using Date.now())

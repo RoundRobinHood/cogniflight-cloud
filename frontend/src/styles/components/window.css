@@ -1,0 +1,209 @@
+/* Window Component Styles */
+
+.window {
+  position: absolute;
+  background: var(--glass-bg-dark);
+  backdrop-filter: blur(var(--glass-blur-heavy));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  min-width: 300px;
+  min-height: 200px;
+  z-index: var(--z-windows);
+}
+
+/* Window header */
+.window-header {
+  height: var(--window-header-height);
+  background: var(--glass-bg-light);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-sm);
+  cursor: move;
+  user-select: none;
+}
+
+.window-title {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: var(--font-medium);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Window controls */
+.window-controls {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.window-control {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.window-control.minimize {
+  background: var(--color-accent-yellow);
+}
+
+.window-control.maximize {
+  background: var(--color-accent-green);
+}
+
+.window-control.close {
+  background: var(--color-accent-red);
+}
+
+.window-control:hover {
+  filter: brightness(1.1);
+  transform: scale(1.1);
+}
+
+/* Window content */
+.window-content {
+  padding: var(--space-md);
+  color: var(--text-primary);
+  height: calc(100% - var(--window-header-height));
+  overflow: auto;
+  background: transparent;
+}
+
+/* Settings form styles (for settings windows) */
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.form-group label {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  font-weight: var(--font-medium);
+}
+
+.form-group input {
+  padding: var(--space-sm) var(--space-sm);
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all var(--transition-normal);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.form-group input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Window states */
+.window.maximized {
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: calc(100vh - var(--taskbar-height)) !important;
+  border-radius: 0;
+}
+
+.window.minimized {
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.window.active {
+  z-index: var(--z-window-active);
+}
+
+/* Window resize handles */
+.window-resize-handle {
+  position: absolute;
+  background: transparent;
+}
+
+.window-resize-handle.n {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  cursor: n-resize;
+}
+
+.window-resize-handle.s {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  cursor: s-resize;
+}
+
+.window-resize-handle.w {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: w-resize;
+}
+
+.window-resize-handle.e {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: e-resize;
+}
+
+.window-resize-handle.nw {
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  cursor: nw-resize;
+}
+
+.window-resize-handle.ne {
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  cursor: ne-resize;
+}
+
+.window-resize-handle.sw {
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  cursor: sw-resize;
+}
+
+.window-resize-handle.se {
+  bottom: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  cursor: se-resize;
+}

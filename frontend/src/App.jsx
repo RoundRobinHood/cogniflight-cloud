@@ -35,7 +35,7 @@ function App() {
 
   const handleLogin = (userData) => {
     const user = {
-      username: userData.username,
+      email: userData.email,
       loginTime: userData.loginTime,
       avatar: null // Could be added later
     }
