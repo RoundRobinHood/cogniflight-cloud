@@ -40,3 +40,19 @@ export async function Login({ email, pwd }) {
       };
   }
 }
+
+export async function IsAuthorized() {
+  let response;
+  try {
+    response = await fetch(paths.socket);
+  } catch(err) {
+    console.error("Failed to initialize isauth request:", err);
+    return false
+  }
+
+  if (response.status === 400) {
+    return true
+  }
+
+  return false
+}
