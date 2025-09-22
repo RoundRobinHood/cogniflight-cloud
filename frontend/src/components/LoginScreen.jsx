@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Eye, EyeOff, ArrowRight, User } from 'lucide-react'
-import { Login } from '../api/login'
+import { Login } from '../api/auth'
 
 function LoginScreen({ onLogin }) {
   const [currentTime, setCurrentTime] = useState(new Date())
