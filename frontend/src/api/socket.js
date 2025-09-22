@@ -1,3 +1,4 @@
+import { parse } from "yaml";
 import paths from "./paths";
 import { encode, decode } from "@msgpack/msgpack";
 
@@ -246,6 +247,8 @@ export class PipeCmdClient {
   }
 
   async run_command(command, input=StringIterator("")) {
+    if (this.command_running) throw new Error("command already running")
+
     let command_result;
     let output = "";
     let error = "";
@@ -350,5 +353,15 @@ export class PipeCmdClient {
 
       return await this.until('disconnected');
     }
+  }
+
+  async whoami() {
+    const cmd = await this.run_command("whoami");
+
+    if(cmd.command_result != 0) {
+      throw new Error(cmd.error);
+    }
+
+    return parse(cmd.output);
   }
 }
