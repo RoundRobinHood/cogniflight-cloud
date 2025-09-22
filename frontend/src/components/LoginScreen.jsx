@@ -154,15 +154,15 @@ function LoginScreen({ onLogin }) {
               className="login-button" 
               disabled={!password.trim() || isLoading}
             >
-              {isLoading ? (
-                <div className="login-spinner"></div>
-              ) : (
-                <>
-                  <span>Sign in</span>
-                  <ArrowRight size={16} />
-                </>
-              )}
+              <span>Sign in</span>
+              <ArrowRight size={16} />
             </button>
+            
+            {isLoading && (
+              <div className="login-loading-overlay">
+                <div className="login-spinner"></div>
+              </div>
+            )}
 
           </form>
         )}

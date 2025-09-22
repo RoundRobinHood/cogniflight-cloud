@@ -1,0 +1,341 @@
+/* Dialog Component Styles */
+
+/* Dialog backdrop */
+.dialog-backdrop,
+.confirm-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(var(--glass-blur-subtle));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-dialogs);
+  animation: fadeIn var(--transition-normal) ease-out;
+}
+
+/* Base dialog container */
+.dialog,
+.confirm-dialog {
+  background: linear-gradient(135deg, rgba(40, 40, 40, 0.98), rgba(30, 30, 30, 0.98));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  min-width: 400px;
+  max-width: 90vw;
+  max-height: 90vh;
+  box-shadow: var(--shadow-xl);
+  animation: slideUp 0.3s ease-out;
+  overflow: hidden;
+  backdrop-filter: blur(var(--glass-blur-heavy));
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Dialog header */
+.dialog-header,
+.confirm-dialog-header {
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dialog-title-wrapper,
+.confirm-dialog-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.dialog-title,
+.confirm-dialog-title {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+/* Dialog icons */
+.dialog-icon,
+.confirm-dialog-icon-warning {
+  color: var(--color-accent-yellow);
+  font-size: 20px;
+}
+
+.confirm-dialog-icon-info {
+  color: var(--color-primary);
+  font-size: 20px;
+}
+
+.confirm-dialog-icon-question {
+  color: #8b5cf6;
+  font-size: 20px;
+}
+
+.confirm-dialog-icon-error {
+  color: var(--color-accent-red);
+  font-size: 20px;
+}
+
+.confirm-dialog-icon-success {
+  color: var(--color-accent-green);
+  font-size: 20px;
+}
+
+/* Close button */
+.dialog-close,
+.confirm-dialog-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-normal);
+  font-size: 16px;
+}
+
+.dialog-close:hover,
+.confirm-dialog-close:hover {
+  background: var(--glass-bg-light);
+  color: var(--text-primary);
+}
+
+/* Dialog content */
+.dialog-content,
+.confirm-dialog-content {
+  padding: var(--space-lg);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.dialog-message,
+.confirm-dialog-message {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Dialog footer */
+.dialog-footer,
+.confirm-dialog-footer {
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+/* Dialog buttons */
+.dialog-button,
+.confirm-dialog-button {
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: none;
+  min-width: 80px;
+}
+
+.dialog-button-cancel,
+.confirm-dialog-button-cancel {
+  background: var(--glass-bg-light);
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+}
+
+.dialog-button-cancel:hover,
+.confirm-dialog-button-cancel:hover {
+  background: var(--glass-bg-lighter);
+  border-color: var(--glass-border-hover);
+  color: var(--text-primary);
+}
+
+.dialog-button-confirm,
+.confirm-dialog-button-confirm {
+  background: var(--color-primary);
+  color: var(--text-primary);
+}
+
+.dialog-button-confirm:hover,
+.confirm-dialog-button-confirm:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+}
+
+.dialog-button-danger {
+  background: var(--color-accent-red);
+  color: var(--text-primary);
+}
+
+.dialog-button-danger:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.dialog-button-success {
+  background: var(--color-accent-green);
+  color: var(--text-primary);
+}
+
+.dialog-button-success:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* Loading dialog */
+.dialog.loading .dialog-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-2xl);
+}
+
+.dialog-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--glass-border);
+  border-top-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+}
+
+.dialog-loading-text {
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+/* Form dialog styles */
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.dialog-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.dialog-form-label {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: var(--font-medium);
+}
+
+.dialog-form-input,
+.dialog-form-textarea,
+.dialog-form-select {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all var(--transition-normal);
+}
+
+.dialog-form-input:focus,
+.dialog-form-textarea:focus,
+.dialog-form-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.dialog-form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.dialog-form-error {
+  color: var(--color-accent-red);
+  font-size: 12px;
+  margin-top: var(--space-xs);
+}
+
+/* Alert dialog specific styles */
+.dialog.alert .dialog-content {
+  text-align: center;
+}
+
+.dialog.alert .dialog-icon {
+  font-size: 48px;
+  margin-bottom: var(--space-md);
+}
+
+.dialog.alert .dialog-message {
+  font-size: 16px;
+  margin-bottom: var(--space-lg);
+}
+
+/* Prompt dialog specific styles */
+.dialog.prompt .dialog-form-input {
+  width: 100%;
+  margin-top: var(--space-md);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dialog,
+  .confirm-dialog {
+    min-width: 320px;
+    width: 95vw;
+    margin: var(--space-md);
+  }
+  
+  .dialog-header,
+  .confirm-dialog-header,
+  .dialog-content,
+  .confirm-dialog-content,
+  .dialog-footer,
+  .confirm-dialog-footer {
+    padding: var(--space-md);
+  }
+  
+  .dialog-footer,
+  .confirm-dialog-footer {
+    flex-direction: column-reverse;
+  }
+  
+  .dialog-button,
+  .confirm-dialog-button {
+    width: 100%;
+    padding: var(--space-md);
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .dialog,
+  .confirm-dialog {
+    animation: none;
+  }
+  
+  .dialog-backdrop,
+  .confirm-dialog-backdrop {
+    animation: none;
+  }
+}

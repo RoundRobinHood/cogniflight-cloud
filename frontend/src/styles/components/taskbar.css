@@ -1,0 +1,209 @@
+/* Taskbar Component Styles */
+
+/* Main taskbar container */
+.taskbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--taskbar-height);
+  background: var(--glass-bg-darker);
+  backdrop-filter: blur(var(--glass-blur-heavy));
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-sm);
+  z-index: var(--z-taskbar);
+}
+
+/* Taskbar sections */
+.taskbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.taskbar-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.taskbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Start button */
+.start-button {
+  width: 48px;
+  height: 32px;
+  background: var(--glass-bg-light);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.start-button:hover {
+  background: var(--glass-bg-lighter);
+}
+
+/* Taskbar logo button */
+.taskbar-logo-button {
+  width: 40px;
+  height: 32px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 50%, #d0d0d0 100%);
+  border: none;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+  padding: 2px;
+}
+
+.taskbar-logo-button:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 50%, #e0e0e0 100%);
+  transform: translateY(-1px);
+}
+
+.taskbar-logo {
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  object-fit: contain;
+}
+
+.taskbar-logo-fallback {
+  color: #333333;
+  font-size: 16px;
+  font-weight: var(--font-bold);
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Taskbar apps section */
+.taskbar-apps {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.taskbar-app {
+  width: 40px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-size: 18px;
+  position: relative;
+}
+
+.taskbar-app:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.taskbar-app.active {
+  background: var(--glass-bg-lighter) !important;
+  box-shadow: 0 -2px 0 var(--text-primary) inset;
+}
+
+.taskbar-app.has-window::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--text-primary);
+  border-radius: var(--radius-full);
+}
+
+.taskbar-app-indicator {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--color-accent-red);
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: var(--font-bold);
+  padding: 2px 4px;
+  border-radius: 10px;
+  min-width: 14px;
+  text-align: center;
+  line-height: 1;
+}
+
+/* Taskbar clock */
+.taskbar-clock {
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: var(--space-xs) var(--space-sm);
+  white-space: nowrap;
+}
+
+/* Notification button in taskbar */
+.taskbar-notifications {
+  position: relative;
+}
+
+.taskbar-notification-button {
+  width: 32px;
+  height: 32px;
+  background: var(--glass-bg-light);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.taskbar-notification-button:hover {
+  background: var(--glass-bg-lighter);
+}
+
+.taskbar-notification-button.has-notifications {
+  background: rgba(var(--color-primary), 0.3);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--color-accent-red);
+  color: var(--text-primary);
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+  font-weight: var(--font-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--glass-bg-darker);
+}
