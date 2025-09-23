@@ -1,61 +1,50 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Desktop from './components/Desktop'
 import LoginScreen from './components/LoginScreen'
 import { IsAuthorized } from './api/auth'
+import { Connect, PipeCmdClient } from './api/socket'
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(null)
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [client, setClient] = useState(null);
 
   useEffect(() => {
-    // Check for existing session
-    const savedUser = localStorage.getItem('windowsUser')
-    const sessionExpiry = localStorage.getItem('sessionExpiry')
+    // Check for authentication
+    IsAuthorized().then(auth => {
+      setIsAuthenticated(auth)
+      if(!auth)
+        setIsLoading(false);
+    });
+  }, []);
 
-    IsAuthorized().then(authorized => {
-      if (authorized) {
-        const now = new Date().getTime()
-        const expiry = parseInt(sessionExpiry)
+  useEffect(() => {
+    if (isAuthenticated) {
+      const client_instance = new PipeCmdClient();
 
-        if (now < expiry) {
-          // Session is still valid
-          setUser(JSON.parse(savedUser))
-          setIsAuthenticated(true)
-        } else {
-          // Session expired
-          localStorage.removeItem('windowsUser')
-          localStorage.removeItem('sessionExpiry')
-        }
-      }
+      client_instance.connect();
+      setClient(client_instance);
 
-      setIsLoading(false)
-    })
-  }, [])
-
-  const handleLogin = (userData) => {
-    const user = {
-      email: userData.email,
-      loginTime: userData.loginTime,
-      avatar: null // Could be added later
+      return () => client_instance.disconnect().catch(err => console.error(err));
     }
-    
-    // Set session to expire in 2 hours
-    const expiryTime = new Date(userData.loginTime).getTime() + (2 * 60 * 60 * 1000) - 3000
-    
-    localStorage.setItem('windowsUser', JSON.stringify(user))
-    localStorage.setItem('sessionExpiry', expiryTime.toString())
-    
-    setUser(user)
-    setIsAuthenticated(true)
-  }
+  }, [isAuthenticated]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('windowsUser')
-    localStorage.removeItem('sessionExpiry')
+  useEffect(() => {
+    if (client !== null) {
+      client.whoami().then(data => {
+        setUser(data);
+        setIsLoading(false);
+      })
+    }
+  }, [client]);
+
+  const handleLogin = useCallback(() => setIsAuthenticated(true),[]);
+
+  const handleLogout = useCallback(() => {
     setUser(null)
     setIsAuthenticated(false)
-  }
+  }, []);
 
   if (isLoading) {
     return (
@@ -74,7 +63,7 @@ function App() {
     )
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || user === null) {
     return <LoginScreen onLogin={handleLogin} />
   }
 

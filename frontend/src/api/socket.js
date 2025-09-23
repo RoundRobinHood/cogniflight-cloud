@@ -9,32 +9,43 @@ function EventListener() {
   const handlers = new Map();
 
   return {
-    on: (event, handler) => {
+    on(event, handler) {
       if (!handlers.has(event)) {
         handlers.set(event, []);
       }
       handlers.get(event).push(handler);
     },
-    off: (event, handler) => {
+    off(event, handler) {
       if (handlers.has(event)) {
-        const handlers = handlers.get(event);
-        const index = handlers.indexOf(handler);
+        const listeners = handlers.get(event);
+        const index = listeners.indexOf(handler);
         if (index !== -1) {
-          handlers.splice(index, 1);
+          listeners.splice(index, 1);
         }
       }
     },
-    emit: async (event, data) => {
-      if (handlers.has(event)) {
-        handlers.get(event).forEach(async handler => {
-          try {
-            await handler(data);
-          } catch (err) {
-            console.error(err);
-          }
-        });
+    emit(event, data) {
+      const listeners = handlers.get(event);
+      if (!listeners) return;
+      for (const handler of [...listeners]) {
+        try {
+          handler(data);
+        } catch (err) {
+          console.error(err);
+        }
       }
     },
+    until(event, predicate=null) {
+      return new Promise(resolve => {
+        const listen = data => {
+          if(predicate === null || predicate(data)) {
+            this.off(event, listen);
+            resolve(data);
+          }
+        }
+        this.on(event, listen);
+      })
+    }
   };
 }
 
@@ -52,10 +63,18 @@ export function GenerateMessageID(length=20) {
 
 const global_events = EventListener();
 
-export const GlobalEvents = { on: global_events.on, off: global_events.off };
+export const GlobalEvents = { on: global_events.on, off: global_events.off, until: global_events.until };
 
+let connected = false;
+GlobalEvents.on('open', () => connected = true);
+GlobalEvents.on('close', () => connected = false);
+
+export const IsConnected = () => connected;
+
+let connecting = false;
 export async function Connect() {
-  if(websocket == null) {
+  if(websocket == null && !connecting) {
+    connecting = true;
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}${paths.socket}`;
 
@@ -67,42 +86,75 @@ export async function Connect() {
       const open = async () => {
         if(error_ocurred) return;
         websocket = tmp_websocket;
+        connecting = false;
         tmp_websocket.removeEventListener("open", open);
         resolve(true);
-        await global_events.emit('open');
+        global_events.emit('open');
       }
       tmp_websocket.addEventListener("open", open)
       const close = async () => {
         websocket = null;
+        connecting = false;
         tmp_websocket.removeEventListener("close", close);
-        await global_events.emit('close');
+        global_events.emit('close');
       }
       tmp_websocket.addEventListener("close", close);
       const error = async (e) => {
         console.error("Websocket error:", e);
-        if(!open) {
+        if(!connected) {
           error_ocurred = true;
           tmp_websocket.removeEventListener("open", open);
           tmp_websocket.removeEventListener("close", close);
           tmp_websocket.removeEventListener("error", error);
           websocket = null;
+          connecting = false;
           reject(e)
-          await global_events.emit('close');
+          global_events.emit('close');
         }
-        await global_events.emit('error', e);
+        global_events.emit('error', e);
       }
       tmp_websocket.addEventListener("error", error);
     });
   } else {
-    return true;
+    if (!connected) {
+      return new Promise(r => {
+        const listen = () => {
+          GlobalEvents.off('open', listen);
+          r(true);
+        }
+        GlobalEvents.on('open', listen);
+      });
+    } else {
+      return true;
+    }
   }
 }
+
+GlobalEvents.on('open', () => console.log('Socket connected'));
 
 export async function *StringIterator(str) {
   yield str
 }
 
 export class PipeCmdClient {
+  #handler = EventListener()
+
+  on(event, handler) {
+    return this.#handler.on(event, handler);
+  }
+
+  off(event, handler) {
+    return this.#handler.off(event, handler);
+  }
+
+  until(event, predicate) {
+    return this.#handler.until(event, predicate);
+  }
+
+  emit(event, data) {
+    return this.#handler.emit(event, data);
+  }
+
   constructor() {
     this.eventHandlers = new Map();
     this.clientID = `pipe-${++max_client_id_num}`;
@@ -117,10 +169,21 @@ export class PipeCmdClient {
     this.on('command_running', () => this.command_running = true);
     this.on('command_finished', () => this.command_running = false);
 
-    this.on('raw_message', (msg) => console.log('incoming: ', msg));
+    this.on('raw_message', (msg) => console.log(`incoming [${this.clientID}]:`, msg));
+
+    Connect();
+
+    console.log('client created: ', this.clientID);
   }
 
+  #connecting = false;
   async connect() {
+    if(this.connected) return;
+
+    if(this.#connecting) return this.until('connected');
+
+    this.#connecting = true;
+    await Connect();
     const message = (event) => {
         try {
           const decoded = decode(new Uint8Array(event.data));
@@ -178,10 +241,12 @@ export class PipeCmdClient {
     const error = (error) => this.emit('error', error);
     const close = () => {
       this.emit('disconnected')
-      websocket.removeEventListener('open', open);
-      websocket.removeEventListener('message', message);
-      websocket.removeEventListener('error', error);
-      websocket.removeEventListener('close', close);
+      if (websocket) {
+        websocket.removeEventListener('open', open);
+        websocket.removeEventListener('message', message);
+        websocket.removeEventListener('error', error);
+        websocket.removeEventListener('close', close);
+      }
     }
     websocket.addEventListener('message', message);
     websocket.addEventListener('error', error);
@@ -195,58 +260,19 @@ export class PipeCmdClient {
     });
 
     await this.until('connected');
-  }
-
-  on(event, handler) {
-    if (!this.eventHandlers.has(event)) {
-      this.eventHandlers.set(event, []);
-    }
-    this.eventHandlers.get(event).push(handler);
-  }
-
-  until(event, predicate=null) {
-    return new Promise(resolve => {
-      const listen = data => {
-        if(predicate === null || predicate(data)) {
-          this.off(event, listen)
-          resolve(data);
-        }
-      }
-      this.on(event, listen);
-    });
-  }
-
-  off(event, handler) {
-    if (this.eventHandlers.has(event)) {
-      const handlers = this.eventHandlers.get(event);
-      const index = handlers.indexOf(handler);
-      if (index !== -1) {
-        handlers.splice(index, 1);
-      }
-    }
-  }
-
-  emit(event, data) {
-    if (this.eventHandlers.has(event)) {
-      this.eventHandlers.get(event).forEach(handler => {
-        try {
-          handler(data);
-        } catch (error) {
-          console.error(`Error in event handler for ${event}:`, error);
-        }
-      });
-    }
+    this.#connecting = false;
   }
 
   send(message) {
     const encoded = encode(message);
 
-    console.log('outgoing: ', message);
+    console.log(`outgoing [${this.clientID}]:`, message);
 
     this.sendRaw(encoded);
   }
 
   async run_command(command, input=StringIterator("")) {
+    await Connect();
     if (this.command_running) throw new Error("command already running")
 
     let command_result;
@@ -343,15 +369,18 @@ export class PipeCmdClient {
   }
 
   async disconnect() {
-    if(websocket != null) {
+    if(this.connected) {
+      const disconnect = this.until('disconnected');
       this.send({
         message_id: GenerateMessageID(),
         client_id: this.clientID,
 
-        message_type: "disconnect",
-      });
-
-      return await this.until('disconnected');
+        message_type: "disconnect"
+      })
+      return await disconnect;
+    } else if (this.#connecting) {
+      await this.until('connected');
+      return await this.disconnect();
     }
   }
 
