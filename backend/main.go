@@ -169,7 +169,7 @@ func main() {
 		types.RoleSysAdmin: {},
 		types.RoleATC:      {},
 		types.RolePilot:    {},
-	}), cmd.CmdWebhook())
+	}), cmd.CmdWebhook(userStore))
 
 	key_group := r.Group("/api-keys/", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
 		types.RoleSysAdmin: {},

@@ -1,4 +1,4 @@
-import { useState, Suspense, useEffect } from 'react'
+import { useState, Suspense, useEffect, useCallback } from 'react'
 import Taskbar from './Taskbar'
 import Window from './Window'
 import DesktopIcons from './DesktopIcons'
@@ -32,13 +32,13 @@ function Desktop({ user, onLogout }) {
     const defaultTaskbarApps = ['settings', 'fileexplorer', 'notepad']
     const defaultDesktopApps = ['settings', 'fileexplorer', 'notepad']
     
-    // Extract name from email (part before @)
-    const extractedName = user?.email ? user.email.split('@')[0] : 'Operator'
-    
     return {
       userProfile: {
-        name: extractedName,
-        email: user?.email || 'user@example.com',
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
         theme: 'dark',
         notifications: true,
         loginTime: user?.loginTime
@@ -58,9 +58,9 @@ function Desktop({ user, onLogout }) {
       clipboard: '',
       notifications: []
     }
-  })
+  }, [])
 
-  const updateSystemState = (path, value) => {
+  const updateSystemState = useCallback((path, value) => {
     setSystemState(prev => {
       const newState = { ...prev }
       const keys = path.split('.')
@@ -72,9 +72,9 @@ function Desktop({ user, onLogout }) {
       current[keys[keys.length - 1]] = value
       return newState
     })
-  }
+  }, [])
 
-  const addNotification = (message, type = 'info') => {
+  const addNotification = useCallback((message, type = 'info') => {
     const notification = {
       id: Date.now(),
       message,
@@ -85,16 +85,16 @@ function Desktop({ user, onLogout }) {
       ...prev,
       notifications: [...prev.notifications, notification]
     }))
-    
+
     setTimeout(() => {
       setSystemState(prev => ({
         ...prev,
         notifications: prev.notifications.filter(n => n.id !== notification.id)
       }))
     }, 5000)
-  }
+  }, []);
 
-  const addToTaskbar = (appId) => {
+  const addToTaskbar = useCallback((appId) => {
     setSystemState(prev => {
       if (prev.pinnedToTaskbar.includes(appId)) {
         return prev // Already pinned
@@ -104,18 +104,18 @@ function Desktop({ user, onLogout }) {
       return { ...prev, pinnedToTaskbar: newPinned }
     })
     addNotification('App pinned to taskbar', 'success')
-  }
+  }, [addNotification]);
 
-  const removeFromTaskbar = (appId) => {
+  const removeFromTaskbar = useCallback((appId) => {
     setSystemState(prev => {
       const newPinned = prev.pinnedToTaskbar.filter(id => id !== appId)
       localStorage.setItem('pinnedTaskbarApps', JSON.stringify(newPinned))
       return { ...prev, pinnedToTaskbar: newPinned }
     })
     addNotification('App removed from taskbar', 'info')
-  }
+  }, [addNotification]);
 
-  const addToDesktop = (appId) => {
+  const addToDesktop = useCallback((appId) => {
     setSystemState(prev => {
       if (prev.pinnedToDesktop.includes(appId)) {
         return prev // Already pinned
@@ -125,16 +125,16 @@ function Desktop({ user, onLogout }) {
       return { ...prev, pinnedToDesktop: newPinned }
     })
     addNotification('App pinned to desktop', 'success')
-  }
+  }, [addNotification]);
 
-  const removeFromDesktop = (appId) => {
+  const removeFromDesktop = useCallback((appId) => {
     setSystemState(prev => {
       const newPinned = prev.pinnedToDesktop.filter(id => id !== appId)
       localStorage.setItem('pinnedDesktopApps', JSON.stringify(newPinned))
       return { ...prev, pinnedToDesktop: newPinned }
     })
     addNotification('App removed from desktop', 'info')
-  }
+  }, [addNotification]);
 
   const showContextMenu = (position, items) => {
     setGlobalContextMenu({

@@ -71,9 +71,10 @@ type WebSocketMessage struct {
 }
 
 type Client struct {
-	ClientID string
-	Env      map[string]string
-	In, Out  chan WebSocketMessage
+	ClientID   string
+	Env        map[string]string
+	In, Out    chan WebSocketMessage
+	AuthStatus AuthorizationStatus
 }
 
 type ClientInfo struct {
@@ -84,5 +85,5 @@ type ClientInfo struct {
 
 type Command interface {
 	Identifier() string
-	Run(args []string, in, out chan WebSocketMessage, env map[string]string, stopChannel chan struct{}, ClientID, CommandMsgID string) int
+	Run(args []string, in, out chan WebSocketMessage, env map[string]string, stopChannel chan struct{}, ClientID, CommandMsgID string, auth_status AuthorizationStatus) int
 }

@@ -12,7 +12,7 @@ func (CmdError) Identifier() string {
 	return "error"
 }
 
-func (CmdError) Run(args []string, in, out chan types.WebSocketMessage, env map[string]string, stopChannel chan struct{}, ClientID, CommandMsgID string) int {
+func (CmdError) Run(args []string, in, out chan types.WebSocketMessage, env map[string]string, stopChannel chan struct{}, ClientID, CommandMsgID string, auth_status types.AuthorizationStatus) int {
 	err_string := strings.Join(args[1:], " ")
 	out <- types.WebSocketMessage{
 		MessageID:   GenerateMessageID(20),
