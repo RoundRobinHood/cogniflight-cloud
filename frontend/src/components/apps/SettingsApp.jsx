@@ -1,22 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useSystem } from '../useSystem'
-import { PipeCmdClient } from '../../api/socket'
+import { usePipeClient } from '../../api/socket'
 
 function SettingsApp() {
   const { systemState, updateSystemState, addNotification } = useSystem()
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [client, setClient] = useState(null);
-
-  useEffect(() => {
-    const client_instance = new PipeCmdClient();
-
-    client_instance.connect();
-    setClient(client_instance);
-
-    return () => client_instance.disconnect().catch(err => console.error(err));
-  }, []);
+  const client = usePipeClient();
 
   useEffect(() => {
     if (client !== null) {

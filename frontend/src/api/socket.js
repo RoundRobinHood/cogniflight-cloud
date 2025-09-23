@@ -1,6 +1,8 @@
 import { parse } from "yaml";
 import paths from "./paths";
 import { encode, decode } from "@msgpack/msgpack";
+import { useState } from "react";
+import { useEffect } from "react";
 
 let websocket = null;
 let max_client_id_num = 0;
@@ -335,7 +337,20 @@ export class PipeCmdClient {
     this.on('output_stream', listen_stdout);
     this.on('error_stream', listen_stderr);
 
-    command_result = this.until('command_finished');
+    command_result = new Promise((resolve) => {
+      const close_listener = msg => {
+        if(msg.message_type === 'command_finished')
+        {
+          this.off('raw_message', close_listener)
+          resolve(msg.command_result);
+        } else if(msg.message_type === 'disconnected') {
+          error = "error: client disconnected while command running";
+          this.off('raw_message', close_listener)
+          resolve(1);
+        }
+      }
+      this.on('raw_message', close_listener);
+    });
 
     this.send({
       message_id: GenerateMessageID(),
@@ -406,4 +421,18 @@ export class PipeCmdClient {
 
     return parse(cmd.output);
   }
+}
+
+export function usePipeClient() {
+  const [client, setClient] = useState(null);
+  useEffect(() => {
+    const client_instance = new PipeCmdClient();
+
+    client_instance.connect();
+    setClient(client_instance);
+
+    return () => client_instance.disconnect().catch(err => console.error(err));
+  }, []);
+
+  return client;
 }
