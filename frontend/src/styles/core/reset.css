@@ -13,7 +13,9 @@ html {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: 
+    radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a2e 40%, #000000 100%),
+    linear-gradient(45deg, #000014 0%, #000033 25%, #000000 50%, #001122 75%, #000000 100%);
   overflow: hidden;
   height: 100vh;
   width: 100vw;
