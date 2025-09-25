@@ -207,3 +207,35 @@
   height: 8px;
   cursor: se-resize;
 }
+
+/* Snap indicator styles */
+.snap-indicator {
+  position: fixed;
+  background: rgba(0, 120, 212, 0.3);
+  border: 2px solid rgba(0, 120, 212, 0.8);
+  z-index: 9999;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  opacity: 1;
+  animation: snapIndicatorPulse 1.5s infinite;
+}
+
+@keyframes snapIndicatorPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+/* Window snapped states */
+.window.half-snapped {
+  border-radius: 0;
+}
+
+.window.half-snapped.left {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.window.half-snapped.right {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
