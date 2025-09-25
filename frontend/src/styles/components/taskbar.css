@@ -1,20 +1,21 @@
 /* Taskbar Component Styles */
 
-/* Main taskbar container */
+/* Galaxy-themed taskbar container */
 .taskbar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   height: var(--taskbar-height);
-  background: var(--glass-bg-darker);
-  backdrop-filter: blur(var(--glass-blur-heavy));
-  border-top: 1px solid var(--glass-border);
+  background: rgba(26, 26, 62, 0.9);
+  backdrop-filter: blur(20px);
+  border-top: 2px solid rgba(135, 206, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-sm);
   z-index: var(--z-taskbar);
+  box-shadow: 0 -4px 20px rgba(135, 206, 255, 0.2);
 }
 
 /* Taskbar sections */
@@ -40,23 +41,26 @@
   gap: var(--space-sm);
 }
 
-/* Start button */
+/* Galaxy-styled start button */
 .start-button {
   width: 48px;
   height: 32px;
-  background: var(--glass-bg-light);
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
+  background: rgba(135, 206, 255, 0.2);
+  border: 1px solid rgba(135, 206, 255, 0.4);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(135, 206, 255, 0.2);
 }
 
 .start-button:hover {
-  background: var(--glass-bg-lighter);
+  background: rgba(135, 206, 255, 0.3);
+  border-color: rgba(135, 206, 255, 0.6);
+  box-shadow: 0 4px 12px rgba(135, 206, 255, 0.4);
 }
 
 /* Taskbar logo button */
@@ -106,26 +110,30 @@
 .taskbar-app {
   width: 40px;
   height: 32px;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
+  border: 1px solid rgba(135, 206, 255, 0.2);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: all 0.3s ease;
   font-size: 18px;
   position: relative;
+  background: rgba(135, 206, 255, 0.1);
 }
 
 .taskbar-app:hover {
-  opacity: 0.9;
+  background: rgba(135, 206, 255, 0.2);
+  border-color: rgba(135, 206, 255, 0.4);
   transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(135, 206, 255, 0.3);
 }
 
 .taskbar-app.active {
-  background: var(--glass-bg-lighter) !important;
-  box-shadow: 0 -2px 0 var(--text-primary) inset;
+  background: rgba(135, 206, 255, 0.3) !important;
+  border-color: rgba(135, 206, 255, 0.6);
+  box-shadow: 0 -2px 0 rgba(135, 206, 255, 0.8) inset;
 }
 
 .taskbar-app.has-window::after {

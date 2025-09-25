@@ -205,8 +205,31 @@ function Desktop({ user, onLogout }) {
       w.id === id ? { 
         ...w, 
         isMaximized: !w.isMaximized,
+        isHalfSnapped: false,
         ...(w.isMaximized ? { x: w.prevX, y: w.prevY, width: w.prevWidth, height: w.prevHeight } : 
                             { prevX: w.x, prevY: w.y, prevWidth: w.width, prevHeight: w.height, x: 0, y: 0, width: window.innerWidth, height: window.innerHeight - 48 })
+      } : w
+    ))
+  }
+
+  const snapWindowToHalf = (id, side) => {
+    const screenWidth = window.innerWidth
+    const screenHeight = window.innerHeight - 48 // Account for taskbar
+    
+    setWindows(prev => prev.map(w => 
+      w.id === id ? {
+        ...w,
+        isMaximized: false,
+        isHalfSnapped: true,
+        snapSide: side,
+        prevX: w.isHalfSnapped ? w.prevX : w.x,
+        prevY: w.isHalfSnapped ? w.prevY : w.y,
+        prevWidth: w.isHalfSnapped ? w.prevWidth : w.width,
+        prevHeight: w.isHalfSnapped ? w.prevHeight : w.height,
+        x: side === 'left' ? 0 : screenWidth / 2,
+        y: 0,
+        width: screenWidth / 2,
+        height: screenHeight
       } : w
     ))
   }
@@ -220,13 +243,13 @@ function Desktop({ user, onLogout }) {
 
   const updateWindowPosition = (id, x, y) => {
     setWindows(prev => prev.map(w => 
-      w.id === id ? { ...w, x, y } : w
+      w.id === id ? { ...w, x, y, isHalfSnapped: false } : w
     ))
   }
 
   const updateWindowSize = (id, width, height) => {
     setWindows(prev => prev.map(w => 
-      w.id === id ? { ...w, width, height } : w
+      w.id === id ? { ...w, width, height, isHalfSnapped: false } : w
     ))
   }
 
@@ -360,6 +383,7 @@ function Desktop({ user, onLogout }) {
               onFocus={() => focusWindow(window.id)}
               onMove={(x, y) => updateWindowPosition(window.id, x, y)}
               onResize={(width, height) => updateWindowSize(window.id, width, height)}
+              onSnapToHalf={(side) => snapWindowToHalf(window.id, side)}
             >
               {renderAppContent(window)}
             </Window>
