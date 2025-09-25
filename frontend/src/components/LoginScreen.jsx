@@ -34,6 +34,20 @@ function LoginScreen({ onLogin }) {
     })
   }
 
+  const getTimeBasedGreeting = () => {
+    const hour = currentTime.getHours()
+    
+    if (hour >= 5 && hour < 12) {
+      return 'Good Morning'
+    } else if (hour >= 12 && hour < 17) {
+      return 'Good Afternoon'
+    } else if (hour >= 17 && hour < 21) {
+      return 'Good Evening'
+    } else {
+      return 'Good Night'
+    }
+  }
+
   const handleEmailSubmit = (e) => {
     e.preventDefault()
     if (email.trim()) {
@@ -92,7 +106,7 @@ function LoginScreen({ onLogin }) {
             <div className="login-logo">
               <img src="/logo_full.png" alt="Logo" />
             </div>
-            <h2 className="login-title">Welcome</h2>
+            <h2 className="login-title">{getTimeBasedGreeting()}</h2>
             <p className="login-subtitle">Enter your email to continue</p>
             
             <div className="login-input-group">

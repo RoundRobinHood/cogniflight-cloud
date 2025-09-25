@@ -1,4 +1,4 @@
-/* Login Screen Component Styles */
+/* Galaxy-Themed Login Screen */
 
 .login-screen {
   position: fixed;
@@ -6,7 +6,9 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, var(--color-primary-darker) 100%);
+  background: 
+    radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a2e 40%, #000000 100%),
+    linear-gradient(45deg, #000014 0%, #000033 25%, #000000 50%, #001122 75%, #000000 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,60 +16,150 @@
   overflow: hidden;
 }
 
-/* Login background animation */
+/* Animated starfield background */
 .login-background {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1" fill="rgba(255,255,255,0.08)"/><circle cx="40" cy="70" r="1" fill="rgba(255,255,255,0.12)"/><circle cx="10" cy="90" r="1" fill="rgba(255,255,255,0.06)"/><circle cx="70" cy="10" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="30" cy="30" r="1" fill="rgba(255,255,255,0.09)"/><circle cx="90" cy="80" r="1" fill="rgba(255,255,255,0.11)"/><circle cx="60" cy="60" r="1" fill="rgba(255,255,255,0.07)"/></svg>') repeat;
-  background-size: 200px 200px;
-  animation: float 20s linear infinite;
 }
 
-@keyframes float {
-  0% { transform: translateY(0px) translateX(0px); }
-  25% { transform: translateY(-10px) translateX(5px); }
-  50% { transform: translateY(-5px) translateX(-5px); }
-  75% { transform: translateY(-15px) translateX(3px); }
-  100% { transform: translateY(0px) translateX(0px); }
+.login-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(2px 2px at 160px 30px, rgba(255, 255, 255, 0.8), transparent);
+  background-size: 200px 100px;
+  animation: starsMove 20s linear infinite;
 }
 
-/* Time display */
+.login-background::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(1px 1px at 50px 50px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 100px 100px, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 150px 150px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(2px 2px at 200px 200px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 250px 250px, rgba(255, 255, 255, 0.6), transparent);
+  background-size: 300px 300px;
+  animation: starsMove 35s linear infinite reverse;
+}
+
+@keyframes starsMove {
+  0% { 
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+  }
+  50% { 
+    opacity: 0.3;
+  }
+  100% { 
+    transform: translateX(-200px) translateY(-200px);
+    opacity: 1;
+  }
+}
+
+/* Time display with galaxy styling */
 .login-time-display {
   position: absolute;
   bottom: 100px;
   left: 60px;
-  color: var(--text-primary);
+  color: rgba(255, 255, 255, 0.9);
   text-align: left;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 0 0 40px rgba(135, 206, 255, 0.3);
 }
 
 .login-time {
   font-size: 72px;
-  font-weight: 300;
+  font-weight: 200;
   line-height: 1;
   margin-bottom: var(--space-sm);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(45deg, #ffffff, #87ceeb, #ffffff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: shimmer 3s ease-in-out infinite;
 }
 
 .login-date {
   font-size: 24px;
-  font-weight: var(--font-normal);
-  opacity: 0.9;
-  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 0 10px rgba(135, 206, 255, 0.5);
 }
 
-/* Login card */
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* White login card with galaxy glow */
 .login-card {
-  background: var(--glass-bg-dark);
-  backdrop-filter: blur(var(--glass-blur-heavy));
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
   padding: var(--space-lg) var(--space-xl);
   width: 400px;
-  box-shadow: var(--shadow-xl);
-  animation: slideIn 0.6s ease-out;
+  box-shadow: 
+    0 0 50px rgba(135, 206, 255, 0.3),
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  animation: slideIn 0.6s ease-out, cardGlow 4s ease-in-out infinite;
+  position: relative;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, 
+    rgba(135, 206, 255, 0.5), 
+    rgba(255, 255, 255, 0.2), 
+    rgba(135, 206, 255, 0.5), 
+    rgba(255, 255, 255, 0.2));
+  border-radius: 22px;
+  z-index: -1;
+  animation: borderGlow 3s linear infinite;
+}
+
+@keyframes cardGlow {
+  0%, 100% { 
+    box-shadow: 
+      0 0 50px rgba(135, 206, 255, 0.3),
+      0 20px 40px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  50% { 
+    box-shadow: 
+      0 0 80px rgba(135, 206, 255, 0.5),
+      0 25px 50px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+}
+
+@keyframes borderGlow {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
 }
 
 @keyframes slideIn {
@@ -105,27 +197,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--space-xs);
-  height: 120px;
+  margin-bottom: calc(var(--space-xs) * 0.6);
+  height: 140px;
 }
 
 .login-logo img {
-  max-width: 380px;
-  max-height: 120px;
+  max-width: 420px;
+  max-height: 140px;
   width: auto;
   height: auto;
 }
 
 .login-title {
-  color: var(--text-primary);
+  color: #333333;
   font-size: 28px;
-  font-weight: var(--font-normal);
+  font-weight: 500;
   margin: 0;
   text-align: center;
 }
 
 .login-subtitle {
-  color: var(--text-secondary);
+  color: #666666;
   font-size: 16px;
   margin: 0;
   text-align: center;
@@ -140,23 +232,23 @@
 .login-input {
   width: 100%;
   padding: var(--space-md) var(--space-lg);
-  background: var(--glass-bg-light);
-  border: 2px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(200, 200, 200, 0.5);
+  border-radius: 12px;
+  color: #333333;
   font-size: 16px;
   transition: all 0.3s ease;
   outline: none;
 }
 
 .login-input:focus {
-  border-color: var(--color-primary);
-  background: var(--glass-bg-lighter);
-  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.3);
+  border-color: rgba(135, 206, 255, 0.8);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 0 3px rgba(135, 206, 255, 0.2), 0 0 20px rgba(135, 206, 255, 0.3);
 }
 
 .login-input::placeholder {
-  color: var(--text-muted);
+  color: #999999;
 }
 
 .login-input-toggle {
@@ -166,28 +258,28 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: var(--text-tertiary);
+  color: #666666;
   cursor: pointer;
   padding: var(--space-xs);
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-normal);
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .login-input-toggle:hover {
-  color: var(--text-primary);
-  background: var(--glass-bg-light);
+  color: #333333;
+  background: rgba(135, 206, 255, 0.1);
 }
 
-/* Login button */
+/* Galaxy-styled login button */
 .login-button {
   width: 100%;
   padding: var(--space-md) var(--space-lg);
-  background: var(--color-primary);
+  background: linear-gradient(45deg, #4a90e2, #87ceeb, #4a90e2);
   border: none;
-  border-radius: var(--radius-lg);
-  color: var(--text-primary);
+  border-radius: 12px;
+  color: #ffffff;
   font-size: 16px;
-  font-weight: var(--font-medium);
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -197,12 +289,28 @@
   position: relative;
   overflow: hidden;
   min-height: 52px;
+  box-shadow: 0 4px 15px rgba(135, 206, 255, 0.4);
+}
+
+.login-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
 }
 
 .login-button:hover:not(:disabled) {
-  background: var(--color-primary-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.4);
+  background: linear-gradient(45deg, #3a80d2, #77bedb, #3a80d2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(135, 206, 255, 0.6);
+}
+
+.login-button:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .login-button:active:not(:disabled) {
@@ -239,30 +347,31 @@
   animation: spin 1s linear infinite;
 }
 
-/* Back arrow */
+/* Back arrow with galaxy styling */
 .login-back-arrow {
   position: absolute;
   top: 0;
   left: 0;
-  background: var(--glass-bg-light);
-  border: 1px solid var(--glass-border);
-  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(135, 206, 255, 0.3);
+  color: #666666;
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: all 0.3s ease;
   z-index: 10;
 }
 
 .login-back-arrow:hover {
-  background: var(--glass-bg-lighter);
-  border-color: var(--glass-border-hover);
-  color: var(--text-primary);
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(135, 206, 255, 0.6);
+  color: #333333;
   transform: translateX(-2px);
+  box-shadow: 0 4px 10px rgba(135, 206, 255, 0.3);
 }
 
 /* Error message */
