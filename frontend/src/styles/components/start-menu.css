@@ -12,7 +12,7 @@
   backdrop-filter: blur(var(--glass-blur-subtle));
 }
 
-/* Start menu container */
+/* Galaxy-themed start menu container */
 .start-menu {
   position: fixed;
   bottom: calc(var(--taskbar-height) + var(--space-sm));
@@ -31,6 +31,7 @@
   max-height: 70vh;
   overflow-y: auto;
 }
+
 
 @keyframes slideInFromBottom {
   from {
