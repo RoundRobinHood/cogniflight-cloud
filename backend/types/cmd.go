@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"sync"
 )
 
@@ -75,15 +76,26 @@ type Client struct {
 	Env        map[string]string
 	In, Out    chan WebSocketMessage
 	AuthStatus AuthorizationStatus
+	UserTags   []string
 }
 
 type ClientInfo struct {
 	Client         Client
-	StopChannel    chan struct{}
+	Ctx            context.Context
 	InputWaitGroup *sync.WaitGroup
+}
+
+type CommandContext struct {
+	Args                   []string
+	In, Out                chan WebSocketMessage
+	Env                    map[string]string
+	Ctx                    context.Context
+	CommandMsgID, ClientID string
+	AuthStatus             AuthorizationStatus
+	ParentTags             []string
 }
 
 type Command interface {
 	Identifier() string
-	Run(args []string, in, out chan WebSocketMessage, env map[string]string, stopChannel chan struct{}, ClientID, CommandMsgID string, auth_status AuthorizationStatus) int
+	Run(ctx CommandContext) int
 }

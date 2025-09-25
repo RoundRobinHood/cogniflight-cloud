@@ -2,9 +2,9 @@ package cmd
 
 import "github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 
-func InitCommands(userStore types.UserStore) map[string]types.Command {
+func InitCommands(userStore types.UserStore, fileRoot types.FsDirectory) map[string]types.Command {
 	cmds := []types.Command{
-		CmdCat{},
+		&CmdCat{FileRoot: fileRoot},
 		CmdEcho{},
 		CmdError{},
 		CmdWhoami{Store: userStore},

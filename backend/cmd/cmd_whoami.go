@@ -16,28 +16,33 @@ func (CmdWhoami) Identifier() string {
 	return "whoami"
 }
 
-func (cmd CmdWhoami) Run(args []string, in, out chan types.WebSocketMessage, env map[string]string, stopChannel chan struct{}, ClientID, CommandMsgID string, auth_status types.AuthorizationStatus) int {
-	out = CRLFChannel(out)
+func (cmd CmdWhoami) Run(ctx types.CommandContext) int {
+	out := CRLFChannel(ctx.Out)
 	defer close(out)
 	defer func() {
 		log.Println("Exiting whoami")
 	}()
 
-	if auth_status.Key == nil && auth_status.Sess == nil {
-		return CmdError{}.Run([]string{"error", "error: no authorization status"}, in, out, env, stopChannel, ClientID, CommandMsgID, auth_status)
+	if ctx.AuthStatus.Key == nil && ctx.AuthStatus.Sess == nil {
+		new_ctx := ctx
+		new_ctx.Args = []string{"error", "error: no authorisation status"}
+		return CmdError{}.Run(new_ctx)
 	}
 
-	if auth_status.Key != nil {
+	if ctx.AuthStatus.Key != nil {
 		var bytes []byte
-		if auth_status.Key.EdgeID != nil {
-			bytes, _ = yaml.Marshal(map[string]string{"type": "edge_node", "edge_id": auth_status.Key.ID.Hex()})
+		if ctx.AuthStatus.Key.EdgeID != nil {
+			bytes, _ = yaml.Marshal(map[string]string{"type": "edge_node", "edge_id": ctx.AuthStatus.Key.ID.Hex()})
 		} else {
 			bytes, _ = yaml.Marshal(map[string]string{"type": "api_key"})
 		}
 
-		return CmdEcho{}.Run([]string{"echo", string(bytes)}, in, out, env, stopChannel, ClientID, CommandMsgID, auth_status)
+		echo_ctx := ctx
+		echo_ctx.Args = []string{"echo", string(bytes)}
+		echo_ctx.Out = out
+		return CmdEcho{}.Run(echo_ctx)
 	} else {
-		ctx, cancel := context.WithCancel(context.Background())
+		cmd_ctx, cancel := context.WithCancel(context.Background())
 
 		stop_ctxch := make(chan struct{})
 		defer close(stop_ctxch)
@@ -47,7 +52,7 @@ func (cmd CmdWhoami) Run(args []string, in, out chan types.WebSocketMessage, env
 				select {
 				case <-stop_ctxch:
 					return
-				case incoming := <-in:
+				case incoming := <-ctx.In:
 					if incoming.MessageType == types.MsgInputEOF {
 						return
 					}
@@ -55,9 +60,11 @@ func (cmd CmdWhoami) Run(args []string, in, out chan types.WebSocketMessage, env
 			}
 		}()
 
-		if user, err := cmd.Store.GetUserByID(auth_status.Sess.UserID, ctx); err != nil {
+		if user, err := cmd.Store.GetUserByID(ctx.AuthStatus.Sess.UserID, cmd_ctx); err != nil {
 			log.Println("Error fetching user: ", err)
-			return CmdError{}.Run([]string{"error", "error: couldnt fetch user"}, in, out, env, stopChannel, ClientID, CommandMsgID, auth_status)
+			error_ctx := ctx
+			error_ctx.Args = []string{"error", "error: couldnt fetch user"}
+			return CmdError{}.Run(error_ctx)
 		} else {
 			var ret struct {
 				Type           string `yaml:"type"`
@@ -75,9 +82,14 @@ func (cmd CmdWhoami) Run(args []string, in, out chan types.WebSocketMessage, env
 
 			if bytes, err := yaml.Marshal(ret); err != nil {
 				log.Println("Couldn't marshal whoami response: ", err)
-				return CmdError{}.Run([]string{"error", "error: couldnt fetch user"}, in, out, env, stopChannel, ClientID, CommandMsgID, auth_status)
+				error_ctx := ctx
+				error_ctx.Args = []string{"error", "error: couldnt fetch user"}
+				return CmdError{}.Run(error_ctx)
 			} else {
-				return CmdEcho{}.Run([]string{"echo", string(bytes)}, in, out, env, stopChannel, ClientID, CommandMsgID, auth_status)
+				echo_ctx := ctx
+				echo_ctx.Args = []string{"echo", string(bytes)}
+				echo_ctx.Out = out
+				return CmdEcho{}.Run(echo_ctx)
 			}
 		}
 	}
