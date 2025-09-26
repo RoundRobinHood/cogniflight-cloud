@@ -55,6 +55,7 @@ func main() {
 	nodeStore := db.DBEdgeNodeStore{Col: database.Collection("edge_nodes")}
 	keyStore := db.DBAPIKeyStore{Col: database.Collection("api_keys")}
 	imageStore := db.DBUserImageStore{Col: database.Collection("user_images"), Bucket: bucket}
+	fileStore := filesystem.Store{Col: database.Collection("vfs"), Bucket: bucket}
 
 	go func() {
 		for {
@@ -63,6 +64,31 @@ func main() {
 				time.Sleep(2 * time.Second)
 			} else {
 				log.Println("[MongoDB] Connection established!")
+
+				if _, err := fileStore.Lookup(context.Background(), nil, "/"); err != nil {
+					if err != os.ErrNotExist {
+						log.Fatal("Couldn't check for filesystem (exiting): ", err)
+					}
+
+					// No filesystem
+					log.Println("No filesystem found. Looking for bootstrap credentials for init...")
+
+					username := os.Getenv("BOOTSTRAP_USERNAME")
+					email := os.Getenv("BOOTSTRAP_EMAIL")
+					phone := os.Getenv("BOOTSTRAP_PHONE")
+					pwd := os.Getenv("BOOTSTRAP_PWD")
+
+					if username == "" || email == "" || phone == "" || pwd == "" {
+						log.Fatal("No bootstrap credentials found. Nothing to provide users. exiting")
+					}
+
+					if err := InitFilesystem(fileStore, username, email, phone, pwd); err != nil {
+						log.Fatal("Failed to init file system: ", err)
+					}
+
+					fmt.Println("Successfully initialized file system")
+				}
+
 				cur, err := userStore.Col.Find(context.Background(), bson.D{})
 
 				if err != nil {
@@ -170,7 +196,7 @@ func main() {
 		types.RoleSysAdmin: {},
 		types.RoleATC:      {},
 		types.RolePilot:    {},
-	}), cmd.CmdWebhook(userStore, filesystem.Store{Col: database.Collection("vfs"), Bucket: bucket}))
+	}), cmd.CmdWebhook(userStore, fileStore))
 
 	key_group := r.Group("/api-keys/", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
 		types.RoleSysAdmin: {},

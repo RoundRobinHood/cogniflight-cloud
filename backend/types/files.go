@@ -135,10 +135,10 @@ const (
 
 type FsEntry struct {
 	ID            primitive.ObjectID  `bson:"_id"`
-	IsRoot        bool                `bson:"is_root,omitempty"`
+	IsRoot        bool                `bson:"is_root"`
 	EntryType     FsEntryType         `bson:"type"`
 	Permissions   FsEntryPermissions  `bson:"permissions"`
 	Timestamps    FileTimestamps      `bson:"timestamps"`
-	Entries       FsReferenceList     `bson:"entries,omitempty"`  // Represents a directory's contents as FsEntry references (including . and ..)
-	FileReference *primitive.ObjectID `bson:"file_ref,omitempty"` // GridFS file reference (for files)
+	Entries       FsReferenceList     `bson:"entries"`  // Represents a directory's contents as FsEntry references
+	FileReference *primitive.ObjectID `bson:"file_ref"` // GridFS file reference (for files)
 }

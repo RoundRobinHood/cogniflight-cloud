@@ -36,7 +36,7 @@ func (c *CmdMkdir) Run(ctx types.CommandContext) int {
 		return CmdError{}.Run(error_ctx)
 	}
 
-	if _, err := c.FileStore.WriteDirectory(ctx.Ctx, folder.ID, filename, ctx.ParentTags); err != nil {
+	if _, err := c.FileStore.WriteDirectory(ctx.Ctx, folder.ID, filename, ctx.ParentTags, nil); err != nil {
 		error_ctx := ctx
 		error_ctx.Args = []string{"error", fmt.Sprintf("error creating directory: %v", err)}
 		return CmdError{}.Run(error_ctx)

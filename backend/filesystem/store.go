@@ -34,7 +34,11 @@ func (s Store) Lookup(ctx context.Context, tags []string, abs_path string) (*typ
 		"type":    types.Directory,
 		"is_root": true,
 	}).Decode(&root); err != nil {
-		return nil, err
+		if err == mongo.ErrNoDocuments {
+			return nil, os.ErrNotExist
+		} else {
+			return nil, err
+		}
 	}
 
 	splits := strings.Split(clean_path[1:], "/")
@@ -156,7 +160,7 @@ func (s Store) ReadFileObj(ctx context.Context, file types.FsEntry, tags []strin
 	return s.Bucket.OpenDownloadStream(*file.FileReference)
 }
 
-func (s Store) WriteDirectory(ctx context.Context, parentID primitive.ObjectID, directoryName string, tags []string) (*types.FsEntry, error) {
+func (s Store) WriteDirectory(ctx context.Context, parentID primitive.ObjectID, directoryName string, tags []string, dirTags *types.FsEntryPermissions) (*types.FsEntry, error) {
 	now := time.Now()
 	parent := types.FsEntry{}
 	if err := s.Col.FindOne(ctx, bson.M{"_id": parentID}).Decode(&parent); err != nil {
@@ -172,6 +176,13 @@ func (s Store) WriteDirectory(ctx context.Context, parentID primitive.ObjectID, 
 	}
 	if parent.EntryType != types.Directory {
 		return nil, fmt.Errorf("parent isn't a directory")
+	}
+	perms := parent.Permissions
+	if dirTags != nil {
+		if !parent.Permissions.CanUpdatePermTags(dirTags.UpdatePermissionTags, tags) {
+			return nil, types.ErrCantAccessFs
+		}
+		perms = *dirTags
 	}
 	for _, entry := range parent.Entries {
 		dir := types.FsEntry{}
@@ -193,7 +204,7 @@ func (s Store) WriteDirectory(ctx context.Context, parentID primitive.ObjectID, 
 			ModifiedAt: now,
 			AccessedAt: now,
 		},
-		Permissions: parent.Permissions,
+		Permissions: perms,
 	}
 
 	if _, err := s.Col.InsertOne(ctx, created); err != nil {
