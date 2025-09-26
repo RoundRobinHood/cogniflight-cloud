@@ -1,10 +1,16 @@
 package cmd
 
-import "github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+import (
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+)
 
-func InitCommands(userStore types.UserStore, fileRoot types.FsDirectory) map[string]types.Command {
+func InitCommands(userStore types.UserStore, filestore filesystem.Store) map[string]types.Command {
 	cmds := []types.Command{
-		&CmdCat{FileRoot: fileRoot},
+		&CmdLs{FileStore: filestore},
+		&CmdMkdir{FileStore: filestore},
+		&CmdCat{FileStore: filestore},
+		&CmdTee{FileStore: filestore},
 		CmdEcho{},
 		CmdError{},
 		CmdWhoami{Store: userStore},

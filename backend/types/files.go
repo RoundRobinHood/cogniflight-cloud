@@ -1,10 +1,11 @@
 package types
 
 import (
-	"context"
 	"errors"
-	"io"
 	"slices"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type FsAccessMode int
@@ -18,11 +19,14 @@ const (
 
 var ErrCantAccessFs = errors.New("error: cannot access file/directory (access denied)")
 
-type FsNodePermissions struct {
-	ReadTags, WriteTags, ExecuteTags, UpdatePermissionTags []string
+type FsEntryPermissions struct {
+	ReadTags             []string `bson:"read_tags"`
+	WriteTags            []string `bson:"write_tags"`
+	ExecuteTags          []string `bson:"execute_tags"`
+	UpdatePermissionTags []string `bson:"updatetag_tags"`
 }
 
-func (p FsNodePermissions) IsAllowed(mode FsAccessMode, tags []string) bool {
+func (p FsEntryPermissions) IsAllowed(mode FsAccessMode, tags []string) bool {
 	if tags == nil {
 		return true
 	}
@@ -48,7 +52,7 @@ func (p FsNodePermissions) IsAllowed(mode FsAccessMode, tags []string) bool {
 	return false
 }
 
-func (p FsNodePermissions) CanUpdatePermTags(new_perms []string, user_tags []string) bool {
+func (p FsEntryPermissions) CanUpdatePermTags(new_perms []string, user_tags []string) bool {
 	if user_tags == nil {
 		return true
 	}
@@ -99,66 +103,42 @@ func (p FsNodePermissions) CanUpdatePermTags(new_perms []string, user_tags []str
 	return false
 }
 
-type FsNodeType int
+type FileTimestamps struct {
+	CreatedAt  time.Time `bson:"created_at"`
+	ModifiedAt time.Time `bson:"modified_at"`
+	AccessedAt time.Time `bson:"accessed_at"`
+}
+
+type FsEntryReference struct {
+	Name  string             `bson:"name"`
+	RefID primitive.ObjectID `bson:"ref_id"`
+}
+
+type FsReferenceList []FsEntryReference
+
+func (l FsReferenceList) Get(name string) (FsEntryReference, bool) {
+	for _, entry := range l {
+		if entry.Name == name {
+			return entry, true
+		}
+	}
+
+	return FsEntryReference{}, false
+}
+
+type FsEntryType int
 
 const (
-	File FsNodeType = iota
+	File FsEntryType = iota
 	Directory
 )
 
-type FsNode interface {
-	NodeType() FsNodeType
-
-	Permissions() FsNodePermissions
-	SetPermissions(perms FsNodePermissions)
-
-	Desync(ctx context.Context, tags []string) error // Desync un-syncs the current node from the backing store
-}
-
-var ErrSyncConflict = errors.New("error: could not sync file due to conflicts")
-
-type ValidationErr struct {
-	ValidationMsg string
-}
-
-func (v ValidationErr) Error() string {
-	return v.ValidationMsg
-}
-
-// FileHandle starts returning os.ErrNotExist when it notices the file source no longer exists
-type FileHandle interface {
-	io.ReadWriteSeeker
-	io.Closer
-	io.WriterTo
-	io.ReaderFrom
-	Truncate(newSize int64) error
-	Size() int64
-
-	Sync(ctx context.Context) error
-}
-
-// NOTE: about passing tags to functions
-// if tag arrays are nil, the function should proceed without access control (meant for system-level operations, like initializing the file system. For high-privelege ops, use "root")
-// If implementations are returning access errors, `errors.Is(err, types.ErrCantAccessFs)` will be true.
-// Additionally, GetHandle from FsFile and Lookup from FsDirectory should enforce access control according to the executable tags on directories
-
-// FsFile represents an editable buffer, that is potentially executable (if there's time, it will basically be a bash DSL)
-type FsFile interface {
-	FsNode
-
-	GetHandle(tags []string) (FileHandle, error)                    // GetHandle should do no long-running ops (that's why ctx is in the handle definitions instead)
-	GetCommand(ctx context.Context, tags []string) (Command, error) // TODO: parsing error types for Command parsing (theoretically)
-}
-
-// FsDirectory represents a named, queriable list of nodes, that can also be added to or removed from
-type FsDirectory interface {
-	FsNode
-
-	List(ctx context.Context, tags []string) ([]string, error)
-	Lookup(ctx context.Context, tags []string, name string) (FsNode, error) // also os.ErrNotExist when looking for non-existent files
-
-	AddChild(ctx context.Context, tags []string, child FsNode, name string) error
-	DeleteChild(ctx context.Context, tags []string, name string) error // DeleteChild removes the current child from the tree and desyncs it its backing store
-	UnlinkChild(ctx context.Context, tags []string, name string) error // UnlinkChild removes the directory's reference to the child (without de-syncing it)
-	RenameChild(ctx context.Context, tags []string, oldName, newName string) error
+type FsEntry struct {
+	ID            primitive.ObjectID  `bson:"_id"`
+	IsRoot        bool                `bson:"is_root,omitempty"`
+	EntryType     FsEntryType         `bson:"type"`
+	Permissions   FsEntryPermissions  `bson:"permissions"`
+	Timestamps    FileTimestamps      `bson:"timestamps"`
+	Entries       FsReferenceList     `bson:"entries,omitempty"`  // Represents a directory's contents as FsEntry references (including . and ..)
+	FileReference *primitive.ObjectID `bson:"file_ref,omitempty"` // GridFS file reference (for files)
 }

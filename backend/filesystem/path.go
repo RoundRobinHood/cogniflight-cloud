@@ -1,12 +1,8 @@
 package filesystem
 
 import (
-	"context"
 	"fmt"
-	"os"
 	"strings"
-
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 )
 
 func CleanupAbsPath(path string) (string, error) {
@@ -54,21 +50,15 @@ func AbsPath(cwd, path string) (string, error) {
 	}
 }
 
-func Lookup(ctx context.Context, root types.FsDirectory, tags []string, abs_path string) (types.FsNode, error) {
-	splits := strings.Split(abs_path[1:], "/")
-
-	dir := root
-	for i, name := range splits {
-		if node, err := dir.Lookup(ctx, tags, name); err != nil {
-			return nil, err
-		} else if i == len(splits)-1 {
-			return node, nil
-		} else if node.NodeType() != types.Directory {
-			return nil, os.ErrNotExist
-		} else {
-			dir = node.(types.FsDirectory)
+func DirUp(abs_path string) (string, string, error) {
+	if cleaned, err := CleanupAbsPath(abs_path); err != nil {
+		return "", "", err
+	} else {
+		splits := strings.Split(cleaned[1:], "/")
+		if len(splits) < 1 {
+			return "", "", fmt.Errorf("cannot perform DirUp on /")
 		}
-	}
 
-	return nil, fmt.Errorf("error: impossible code point")
+		return "/" + strings.Join(splits[:len(splits)-1], "/"), splits[len(splits)-1], nil
+	}
 }

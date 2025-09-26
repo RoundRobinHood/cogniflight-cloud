@@ -15,7 +15,7 @@ type EditableBuffer struct {
 	pos     int
 	closed  bool
 
-	perms types.FsNodePermissions
+	perms types.FsEntryPermissions
 	tags  []string
 }
 

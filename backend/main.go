@@ -16,6 +16,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/crud"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/edge"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/images"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/keys"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/pilot"
@@ -169,7 +170,7 @@ func main() {
 		types.RoleSysAdmin: {},
 		types.RoleATC:      {},
 		types.RolePilot:    {},
-	}), cmd.CmdWebhook(userStore))
+	}), cmd.CmdWebhook(userStore, filesystem.Store{Col: database.Collection("vfs"), Bucket: bucket}))
 
 	key_group := r.Group("/api-keys/", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
 		types.RoleSysAdmin: {},

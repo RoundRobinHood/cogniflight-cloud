@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -34,11 +35,10 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func CmdWebhook(userStore types.UserStore) gin.HandlerFunc {
+func CmdWebhook(userStore types.UserStore, filestore filesystem.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		auth_status := auth.CheckAuthStatus(c)
-		fileroot := InitFileSystem(auth_status)
-		available_commands := InitCommands(userStore, fileroot)
+		available_commands := InitCommands(userStore, filestore)
 
 		clients := map[string]types.ClientInfo{}
 		client_cancels := map[string]context.CancelFunc{}

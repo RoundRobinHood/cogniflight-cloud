@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 )
 
 type CmdCat struct {
-	FileRoot types.FsDirectory
+	FileStore filesystem.Store
 }
 
 func (*CmdCat) Identifier() string {
@@ -41,32 +42,21 @@ func (c *CmdCat) Run(ctx types.CommandContext) int {
 				return CmdError{}.Run(error_ctx)
 			}
 
-			node, err := filesystem.Lookup(ctx.Ctx, c.FileRoot, ctx.ParentTags, abs_path)
-			if err != nil {
+			if node, err := c.FileStore.Lookup(ctx.Ctx, ctx.ParentTags, abs_path); err != nil {
 				error_ctx := ctx
-				error_ctx.Args = []string{"error", fmt.Sprintf("error (arg %d): fetching file: %v", i, err)}
-				return CmdError{}.Run(error_ctx)
-			}
-
-			if node.NodeType() != types.File {
-				error_ctx := ctx
-				error_ctx.Args = []string{"error", fmt.Sprintf("error (arg %d): is a directory", i)}
-				return CmdError{}.Run(error_ctx)
-			}
-
-			file := node.(types.FsFile)
-			if handle, err := file.GetHandle(ctx.ParentTags); err != nil {
-				error_ctx := ctx
-				error_ctx.Args = []string{"error", fmt.Sprintf("error getting file handle: %v", err)}
+				error_ctx.Args = []string{"error", fmt.Sprintf("error (arg %d): couldnt lookup file: %v", i, err)}
 				return CmdError{}.Run(error_ctx)
 			} else {
-				out_writer := &OutputWriter{Ctx: ctx, StreamType: types.MsgOutputStream}
-				if _, err := handle.WriteTo(out_writer); err != nil {
+				if stream, err := c.FileStore.ReadFileObj(ctx.Ctx, *node, ctx.ParentTags); err != nil {
 					error_ctx := ctx
-					error_ctx.Args = []string{"error", fmt.Sprintf("error reading from file (arg %d): %v", i, err)}
+					error_ctx.Args = []string{"error", fmt.Sprintf("error (arg %d): couldnt open file for reading: %v", i, err)}
 					return CmdError{}.Run(error_ctx)
+				} else {
+					io.Copy(&OutputWriter{Ctx: ctx, StreamType: types.MsgOutputStream}, stream)
+					stream.Close()
 				}
 			}
+
 			ctx.Out <- types.WebSocketMessage{
 				MessageID:   GenerateMessageID(20),
 				ClientID:    ctx.ClientID,
