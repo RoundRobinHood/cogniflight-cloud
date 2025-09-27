@@ -13,7 +13,7 @@ func InitCommands(userStore types.UserStore, filestore filesystem.Store) map[str
 		&CmdTee{FileStore: filestore},
 		CmdEcho{},
 		CmdError{},
-		CmdWhoami{Store: userStore},
+		&CmdWhoami{FileStore: filestore},
 	}
 
 	output := make(map[string]types.Command)

@@ -5,6 +5,6 @@ package types
 // If Key != nil, it's a request with a valid API Key, as stipiulated in the APIKey object
 // If both are nil, then this request has no valid authorization
 type AuthorizationStatus struct {
-	Sess *Session
-	Key  *APIKey
+	Username string
+	Tags     []string
 }

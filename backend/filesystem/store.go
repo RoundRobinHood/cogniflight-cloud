@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -27,7 +26,6 @@ func (s Store) Lookup(ctx context.Context, tags []string, abs_path string) (*typ
 	if err != nil {
 		return nil, err
 	}
-	log.Println("Path: ", clean_path)
 
 	root := types.FsEntry{}
 	if err := s.Col.FindOne(ctx, bson.M{
@@ -158,6 +156,29 @@ func (s Store) ReadFileObj(ctx context.Context, file types.FsEntry, tags []strin
 	}
 
 	return s.Bucket.OpenDownloadStream(*file.FileReference)
+}
+
+func (s Store) LookupRead(ctx context.Context, abs_path string, tags []string) (io.ReadCloser, error) {
+	if entry, err := s.Lookup(ctx, tags, abs_path); err != nil {
+		return nil, err
+	} else if !entry.Permissions.IsAllowed(types.ReadMode, tags) {
+		return nil, types.ErrCantAccessFs
+	} else if entry.EntryType != types.File {
+		return nil, fmt.Errorf("error: read target is not a file")
+	} else if entry.FileReference == nil {
+		return io.NopCloser(bytes.NewReader(nil)), nil
+	} else {
+		return s.Bucket.OpenDownloadStream(*entry.FileReference)
+	}
+}
+
+func (s Store) LookupReadAll(ctx context.Context, abs_path string, tags []string) ([]byte, error) {
+	if reader, err := s.LookupRead(ctx, abs_path, tags); err != nil {
+		return nil, err
+	} else {
+		defer reader.Close()
+		return io.ReadAll(reader)
+	}
 }
 
 func (s Store) WriteDirectory(ctx context.Context, parentID primitive.ObjectID, directoryName string, tags []string, dirTags *types.FsEntryPermissions) (*types.FsEntry, error) {

@@ -1,96 +1,67 @@
 package cmd
 
 import (
-	"context"
-	"log"
+	"fmt"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
-	"github.com/goccy/go-yaml"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 )
 
 type CmdWhoami struct {
-	Store types.UserStore
+	FileStore filesystem.Store
 }
 
-func (CmdWhoami) Identifier() string {
+func (*CmdWhoami) Identifier() string {
 	return "whoami"
 }
 
-func (cmd CmdWhoami) Run(ctx types.CommandContext) int {
-	out := CRLFChannel(ctx.Out)
-	defer close(out)
+func (c *CmdWhoami) Run(ctx types.CommandContext) int {
+	ctx.Out <- types.WebSocketMessage{
+		MessageID:   GenerateMessageID(20),
+		ClientID:    ctx.ClientID,
+		RefID:       ctx.CommandMsgID,
+		MessageType: types.MsgOpenStdOut,
+	}
 	defer func() {
-		log.Println("Exiting whoami")
+		ctx.Out <- types.WebSocketMessage{
+			MessageID:   GenerateMessageID(20),
+			ClientID:    ctx.ClientID,
+			RefID:       ctx.CommandMsgID,
+			MessageType: types.MsgCloseStdout,
+		}
 	}()
 
-	if ctx.AuthStatus.Key == nil && ctx.AuthStatus.Sess == nil {
-		new_ctx := ctx
-		new_ctx.Args = []string{"error", "error: no authorisation status"}
-		return CmdError{}.Run(new_ctx)
+	auth_bytes, err := util.YamlCRLF(ctx.AuthStatus)
+	if err != nil {
+		error_ctx := ctx
+		error_ctx.Args = []string{"error", fmt.Sprintf("error: couldn't marshal auth status: %v", err)}
+		return CmdError{}.Run(error_ctx)
+	}
+	ctx.Out <- types.WebSocketMessage{
+		MessageID:   GenerateMessageID(20),
+		ClientID:    ctx.ClientID,
+		RefID:       ctx.CommandMsgID,
+		MessageType: types.MsgOutputStream,
+
+		OutputStream: "# AuthStatus\r\n" + string(auth_bytes),
 	}
 
-	if ctx.AuthStatus.Key != nil {
-		var bytes []byte
-		if ctx.AuthStatus.Key.EdgeID != nil {
-			bytes, _ = yaml.Marshal(map[string]string{"type": "edge_node", "edge_id": ctx.AuthStatus.Key.ID.Hex()})
-		} else {
-			bytes, _ = yaml.Marshal(map[string]string{"type": "api_key"})
-		}
-
-		echo_ctx := ctx
-		echo_ctx.Args = []string{"echo", string(bytes)}
-		echo_ctx.Out = out
-		return CmdEcho{}.Run(echo_ctx)
+	profileBytes, err := c.FileStore.LookupReadAll(ctx.Ctx, fmt.Sprintf("/home/%s/user.profile", ctx.AuthStatus.Username), ctx.ParentTags)
+	if err != nil {
+		error_ctx := ctx
+		error_ctx.Args = []string{"error", fmt.Sprintf("error: couldn't read profile file: %v", err)}
+		CmdError{}.Run(error_ctx)
 	} else {
-		cmd_ctx, cancel := context.WithCancel(context.Background())
+		ctx.Out <- types.WebSocketMessage{
+			MessageID:   GenerateMessageID(20),
+			ClientID:    ctx.ClientID,
+			RefID:       ctx.CommandMsgID,
+			MessageType: types.MsgOutputStream,
 
-		stop_ctxch := make(chan struct{})
-		defer close(stop_ctxch)
-		go func() {
-			defer cancel()
-			for {
-				select {
-				case <-stop_ctxch:
-					return
-				case incoming := <-ctx.In:
-					if incoming.MessageType == types.MsgInputEOF {
-						return
-					}
-				}
-			}
-		}()
-
-		if user, err := cmd.Store.GetUserByID(ctx.AuthStatus.Sess.UserID, cmd_ctx); err != nil {
-			log.Println("Error fetching user: ", err)
-			error_ctx := ctx
-			error_ctx.Args = []string{"error", "error: couldnt fetch user"}
-			return CmdError{}.Run(error_ctx)
-		} else {
-			var ret struct {
-				Type           string `yaml:"type"`
-				types.UserInfo `yaml:",inline"`
-			}
-
-			ret.Type = "user"
-			ret.UserInfo = types.UserInfo{
-				ID:    user.ID,
-				Name:  user.Name,
-				Email: user.Email,
-				Phone: user.Phone,
-				Role:  user.Role,
-			}
-
-			if bytes, err := yaml.Marshal(ret); err != nil {
-				log.Println("Couldn't marshal whoami response: ", err)
-				error_ctx := ctx
-				error_ctx.Args = []string{"error", "error: couldnt fetch user"}
-				return CmdError{}.Run(error_ctx)
-			} else {
-				echo_ctx := ctx
-				echo_ctx.Args = []string{"echo", string(bytes)}
-				echo_ctx.Out = out
-				return CmdEcho{}.Run(echo_ctx)
-			}
+			OutputStream: "\r\n# user.profile\r\n" + string(profileBytes),
 		}
 	}
+
+	return 0
 }

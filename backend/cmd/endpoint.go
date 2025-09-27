@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/gin-gonic/gin"
@@ -37,7 +36,13 @@ var upgrader = websocket.Upgrader{
 
 func CmdWebhook(userStore types.UserStore, filestore filesystem.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		auth_status := auth.CheckAuthStatus(c)
+		auth_get, ok := c.Get("auth")
+		if !ok {
+			log.Println("missing auth middleware")
+			c.Status(401)
+			return
+		}
+		auth_status := auth_get.(types.AuthorizationStatus)
 		available_commands := InitCommands(userStore, filestore)
 
 		clients := map[string]types.ClientInfo{}

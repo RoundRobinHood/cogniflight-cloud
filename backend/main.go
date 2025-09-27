@@ -13,14 +13,9 @@ import (
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/crud"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/edge"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/images"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/keys"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/pilot"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/settings"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
@@ -50,11 +45,7 @@ func main() {
 	}
 
 	userStore := db.DBUserStore{Col: database.Collection("users")}
-	sessionStore := db.DBSessionStore{Col: database.Collection("sessions")}
-	signupTokenStore := db.DBSignupTokenStore{Col: database.Collection("signup_tokens")}
-	nodeStore := db.DBEdgeNodeStore{Col: database.Collection("edge_nodes")}
 	keyStore := db.DBAPIKeyStore{Col: database.Collection("api_keys")}
-	imageStore := db.DBUserImageStore{Col: database.Collection("user_images"), Bucket: bucket}
 	fileStore := filesystem.Store{Col: database.Collection("vfs"), Bucket: bucket}
 
 	go func() {
@@ -162,52 +153,11 @@ func main() {
 	r.SetTrustedProxies(strings.Split(os.Getenv("TRUSTED_PROXIES"), ","))
 	r.Use(jlogging.Middleware())
 
-	r.POST("/login", auth.Login(userStore, sessionStore))
-	r.POST("/logout", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-		types.RoleATC:      {},
-		types.RolePilot:    {},
-	}), auth.Logout(sessionStore))
-	r.POST("/signup-tokens", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{types.RoleSysAdmin: {}}), auth.CreateSignupToken(signupTokenStore))
-	r.GET("/signup-tokens/:id", auth.GetSignupToken(signupTokenStore))
-	r.POST("/signup", auth.Signup(userStore, signupTokenStore, sessionStore))
-	r.GET("/whoami", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-		types.RoleATC:      {},
-		types.RolePilot:    {},
-	}), auth.WhoAmI(sessionStore, userStore))
-	r.PATCH("/settings", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-		types.RoleATC:      {},
-		types.RolePilot:    {},
-	}), settings.Settings(userStore))
-	r.POST("/edge-nodes", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-	}), edge.CreateEdgeNode(nodeStore))
-	r.GET("/pilots/:id", auth.KeyAuthMiddleware(keyStore), pilot.FetchPilotByID(userStore))
-	r.POST("/my/images", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-		types.RoleATC:      {},
-		types.RolePilot:    {},
-	}), images.UploadImage(imageStore))
 	r.POST("/check-api-key", keys.CheckKey(keyStore))
 	r.POST("/hi", func(c *gin.Context) { c.String(200, "hello") })
-	r.GET("/cmd-socket", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-		types.RoleATC:      {},
-		types.RolePilot:    {},
-	}), cmd.CmdWebhook(userStore, fileStore))
 
-	key_group := r.Group("/api-keys/", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-	}))
-
-	key_repo := &keys.KeyRepository{Store: keyStore}
-
-	key_group.GET("", crud.List(key_repo, 10))
-	key_group.GET(":id", crud.Get(key_repo, "id"))
-	key_group.POST("", crud.Create(key_repo))
-	key_group.DELETE(":id", crud.Delete(key_repo, "id"))
+	r.POST("/login", auth.Login(fileStore))
+	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(userStore, fileStore))
 
 	server := &http.Server{
 		Addr:    ":8080",

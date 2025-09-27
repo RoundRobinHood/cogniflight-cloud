@@ -85,6 +85,26 @@ func InitFilesystem(fileStore filesystem.Store, username, email, phone, pwd stri
 		return err
 	}
 
+	sess_folder := types.FsEntry{
+		ID:        primitive.NewObjectID(),
+		EntryType: types.Directory,
+		Permissions: types.FsEntryPermissions{
+			WriteTags:            []string{"sysadmin"},
+			ReadTags:             []string{"sysadmin"},
+			ExecuteTags:          []string{"sysadmin"},
+			UpdatePermissionTags: []string{"sysadmin"},
+		},
+		Timestamps: types.FileTimestamps{
+			CreatedAt:  now,
+			ModifiedAt: now,
+			AccessedAt: now,
+		},
+		Entries: []types.FsEntryReference{},
+	}
+	if _, err := fileStore.Col.InsertOne(context.Background(), sess_folder); err != nil {
+		return err
+	}
+
 	etc_folder := types.FsEntry{
 		ID:        primitive.NewObjectID(),
 		EntryType: types.Directory,
@@ -103,6 +123,10 @@ func InitFilesystem(fileStore filesystem.Store, username, email, phone, pwd stri
 			{
 				Name:  "passwd",
 				RefID: passwd_folder.ID,
+			},
+			{
+				Name:  "sess",
+				RefID: sess_folder.ID,
 			},
 		},
 	}
