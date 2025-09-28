@@ -8,7 +8,7 @@
 
 CogniFlight Cloud is an advanced aviation management platform that provides a comprehensive desktop-style web application for flight operations, pilot management, and real-time edge node monitoring. This report details the information architecture and UX/UI design for the platform, focusing on creating an intuitive, responsive, and accessible interface that serves multiple user roles including ground control operators, flight managers, pilots, and system administrators.
 
-The platform leverages a unique desktop paradigm within a web browser, following a desktop-first approach optimized for control center operations and professional aviation management workstations. The system provides familiar desktop interaction patterns while delivering powerful aviation management capabilities through modular applications, with special emphasis on ML-powered analytics and live edge node monitoring for critical aviation safety operations.
+The platform leverages a unique desktop paradigm within a web browser, following a desktop-first approach optimized for control center operations and professional aviation management workstations. Each application is designed to perform its specific function independently, with the FATCON widget providing critical fatigue monitoring exclusively for ground control operations to manage system-wide pilot fatigue situations.
 
 ---
 
@@ -32,555 +32,423 @@ CogniFlight Cloud Platform
 │   │
 │   ├── Taskbar
 │   │   ├── Start Menu
+│   │   ├── FATCON Widget (Ground Control Only)
 │   │   ├── Pinned Applications
 │   │   ├── Active Windows
 │   │   ├── System Tray
-│   │   └── Alert Notifications
+│   │   └── Notification Bell
 │   │
-│   └── Window Management System
-│       ├── Draggable Windows
-│       ├── Resizable Frames
-│       ├── Minimize/Maximize/Close
-│       └── Snap-to-Edge
+│   ├── Window Management System
+│   │   ├── Draggable Windows
+│   │   ├── Resizable Frames
+│   │   ├── Minimize/Maximize/Close
+│   │   └── Snap-to-Edge
+│   │
+│   └── Alert & Notification System
+│       ├── FATCON Critical Alerts (Ground Control)
+│       ├── Toast Notifications
+│       ├── Modal Dialogs
+│       └── Notification Panel
 │
-└── Core Applications
-    ├── Dashboard (Edge Node Monitor)
-    │   ├── Live Node Grid
+└── Core Applications (Independent Functionality)
+    ├── Dashboard
+    │   ├── Live Edge Node Monitoring
     │   ├── Risk Priority Display
-    │   ├── Telemetry Streams
+    │   ├── Real-time Telemetry
     │   ├── Alert Management
-    │   └── Adaptive Layout System
+    │   └── Adaptive Grid Layout
     │
-    ├── ML Engine
-    │   ├── Function List View
-    │   │   ├── Search Bar
-    │   │   ├── Function Cards (Name & Description)
-    │   │   └── Category Filter
-    │   ├── Function Detail View
-    │   │   ├── Description Section
-    │   │   ├── Input Parameters Section
-    │   │   ├── Output Format Section
-    │   │   └── Execute Button
-    │   └── Results View
-    │       ├── Execution Status
-    │       ├── Results Display
-    │       └── Export Options
+    ├── MLEngine
+    │   ├── Function List
+    │   ├── Function Search
+    │   ├── Parameter Input
+    │   ├── Execution Engine
+    │   └── Results Display
     │
-    ├── Flights Management
+    ├── Flights
     │   ├── Flight Schedule
     │   ├── Route Planning
     │   ├── Aircraft Assignment
     │   ├── Status Tracking
-    │   └── Historical Data
+    │   └── Flight History
     │
-    ├── Pilots Management
-    │   ├── Pilot List View
-    │   │   ├── Search & Filter
-    │   │   ├── Pilot Cards/Table
-    │   │   └── Quick Actions
-    │   ├── Pilot Detail View
-    │   │   ├── Personal Information
-    │   │   ├── Certifications
-    │   │   ├── Flight History
-    │   │   └── Performance Metrics
+    ├── Pilots
+    │   ├── Pilot Registry
+    │   ├── Certification Management
+    │   ├── Schedule Tracking
+    │   ├── Performance Metrics
     │   └── Pilot Invitation
-    │       ├── Invitation Form
-    │       ├── Bulk Import
-    │       └── Pending Invitations
     │
-    ├── Users & Access Control
-    │   ├── User List View
-    │   │   ├── Search & Filter
-    │   │   ├── User Table
-    │   │   └── Bulk Actions
-    │   ├── User Detail View
-    │   │   ├── Profile Information
-    │   │   ├── Role Assignment
-    │   │   ├── Permissions Matrix
-    │   │   └── Activity Log
+    ├── Users
+    │   ├── User Management
+    │   ├── Role Assignment
+    │   ├── Permission Control
+    │   ├── Activity Monitoring
     │   └── User Invitation
-    │       ├── Invitation Form
-    │       ├── Role Selection
-    │       └── Pending Invitations
     │
     └── Settings
-        ├── Profile Settings
-        │   ├── Personal Information
-        │   ├── Change Password
-        │   └── Avatar Upload
+        ├── Profile Configuration
         ├── System Preferences
-        │   ├── Theme Selection
-        │   ├── Language Settings
-        │   └── Time Zone
-        ├── Display Settings
-        │   ├── Monitor Configuration
-        │   ├── Window Defaults
-        │   └── Font Size
-        ├── Notification Settings
-        │   ├── Alert Types
-        │   ├── Sound Configuration
-        │   └── Email Preferences
+        ├── Display Options
+        ├── Notification Preferences
         └── Integration Settings
-            ├── API Keys
-            ├── External Services
-            └── Data Export
 ```
 
 ### 1.2 Navigation Hierarchy Levels
 
 **Level 0: Authentication**
 - Entry point validation
-- Role-based routing
-- Session establishment
+- Role determination
+- Session initialization
 
 **Level 1: Desktop Environment**
+- Primary workspace
+- FATCON monitoring (Ground Control role only)
 - Application launcher
-- Multi-window workspace
-- System-wide notifications
+- System notifications
 
 **Level 2: Application Layer**
-- Specialized app interfaces
-- Inter-app data sharing
-- Context-aware operations
+- Independent applications
+- Focused functionality per app
+- Self-contained operations
 
 **Level 3: Feature Components**
-- Function-specific interfaces
-- Data manipulation tools
-- Real-time visualizations
-
-**Level 4: Actions & Operations**
-- Execute ML functions
-- Monitor edge nodes
-- Manage resources
-- Generate reports
+- App-specific functions
+- Specialized operations
+- Data management
 
 ---
 
 ## 2. TASK FLOWS - User Journey Mappings
 
-### 2.1 Ground Control Operator Task Flow: Monitoring High-Risk Edge Nodes
+### 2.1 Ground Control Operator Task Flow: System-Wide Fatigue Monitoring
 
 ```
-Start → Login → Desktop Loads → Dashboard Auto-Opens 
-→ System Analyzes Edge Node Risk Levels → Adaptive Grid Arranges High-Risk Nodes 
-→ Operator Views Live Telemetry on Multiple Monitors → Receives Alert for Critical Node 
-→ Click Node for Detailed View in New Window → Assess Situation 
-→ Open ML Engine in Adjacent Window → Search for Analysis Function
-→ Execute Risk Analysis → View Results → Take Action 
-→ Continue Monitoring → System Re-prioritizes Display
-```
-
-**Decision Points:**
-- Risk threshold exceeded (alert/monitor)
-- Node connection status (online/offline)
-- Window arrangement preference
-- ML function selection for analysis
-- Action required (immediate/scheduled)
-- Display optimization (resize/rearrange)
-
-### 2.2 Data Analyst Task Flow: ML Function Discovery and Execution
-
-```
-Start → Login → Desktop → Open ML Engine App
-→ View Function List → Use Search Bar to Find Function
-→ Browse Function Cards (Name + Description) → Click Desired Function
-→ View Function Details Page → Read Input/Output Documentation
-→ Enter Values in Input Text Fields → Click Execute Button
-→ View Execution Progress → Results Display in Same Window
-→ Review Results → Export or Save for Later Use
+Start → Login (Ground Control Role) → Desktop Loads with FATCON Widget
+→ FATCON Widget Shows System-Wide Pilot Fatigue Status
+→ Monitor Overall Fatigue Levels Across All Active Pilots
+→ FATCON Level Becomes Critical (Too Many Fatigued Pilots)
+→ Alert Popup: "Critical Fatigue Threshold Exceeded"
+→ View Alert: "18 pilots at critical fatigue, system capacity exceeded"
+→ Initiate Emergency Protocols → Adjust Operations
+→ Ground Flights if Necessary → Request Backup Crews
+→ Monitor Recovery → Continue Operations
 ```
 
 **Decision Points:**
-- Search vs browse for function
-- Function selection based on description
-- Input validation requirements
-- Execution confirmation
-- Results meet expectations
-- Export format selection
+- System fatigue threshold exceeded
+- Emergency protocol activation
+- Flight grounding decisions
+- Crew reassignment priorities
+- Recovery monitoring
 
-### 2.3 Administrator Task Flow: Managing System Users
-
-```
-Start → Login → Desktop → Open Users App
-→ View User List with Roles → Search/Filter for Specific User
-→ Click User to View Details → Review Permissions and Activity
-→ Modify Role Assignment → Save Changes
-→ Click "Invite User" → Fill Invitation Form → Select Role
-→ Send Invitation → Monitor Pending Invitations
-→ User Accepts → Verify in User List
-```
-
-**Decision Points:**
-- User search criteria
-- Role assignment appropriateness
-- Permission level requirements
-- Invitation method (email/link)
-- Approval workflow needed
-- Bulk operations required
-
-### 2.4 Flight Operations Manager Task Flow: Managing Pilots
+### 2.2 Data Analyst Task Flow: MLEngine Function Execution
 
 ```
-Start → Login → Desktop → Open Pilots App
-→ View Pilot List → Filter by Availability/Certification
-→ Click Pilot for Details → Review Flight History and Certifications
-→ Check Performance Metrics → Assign to Flight
-→ Click "Invite Pilot" → Enter Pilot Information
-→ Upload Certifications → Send Invitation
-→ Track Onboarding Status → Activate Pilot Profile
+Start → Login → Open MLEngine App
+→ Search for Analysis Function
+→ Select Function from List
+→ View Function Description
+→ Enter Parameters in Input Fields
+→ Execute Function
+→ View Results
+→ Export Results
+→ Close MLEngine
 ```
 
 **Decision Points:**
-- Pilot search filters
+- Function selection
+- Parameter validation
+- Result interpretation
+- Export format
+
+### 2.3 Administrator Task Flow: User Management
+
+```
+Start → Login → Open Users App
+→ View User List
+→ Search/Filter for User
+→ Select User to View Details
+→ Modify Role/Permissions
+→ Save Changes
+→ Invite New User if Needed
+→ Monitor User Activity
+```
+
+**Decision Points:**
+- User role assignment
+- Permission levels
+- Invitation approval
+- Activity review
+
+### 2.4 Pilot Manager Task Flow: Pilot Management
+
+```
+Start → Login → Open Pilots App
+→ View Pilot Registry
+→ Check Certifications Status
+→ Review Performance Metrics
+→ Schedule Pilot Assignments
+→ Invite New Pilots
+→ Update Pilot Records
+```
+
+**Decision Points:**
 - Certification validity
 - Performance thresholds
-- Assignment compatibility
-- Invitation information completeness
-- Document verification required
+- Schedule conflicts
+- Invitation criteria
 
-### 2.5 User Task Flow: Personalizing Settings
+### 2.5 Flight Operations Task Flow: Flight Management
 
 ```
-Start → Login → Desktop → Open Settings App
-→ Navigate Through Setting Categories → Select Profile Settings
-→ Update Personal Information → Change Theme to Galaxy
-→ Navigate to Display Settings → Configure Multi-Monitor Setup
-→ Set Notification Preferences → Configure Alert Sounds
-→ Save All Settings → Settings Apply System-Wide
-→ Close Settings → Continue Working
+Start → Login → Open Flights App
+→ View Flight Schedule
+→ Create/Modify Flight Plans
+→ Assign Aircraft and Crew
+→ Monitor Flight Status
+→ Update Flight Information
+→ Generate Reports
 ```
 
 **Decision Points:**
-- Setting category selection
-- Theme preference
-- Display configuration needs
-- Notification frequency
-- Sound preferences
-- Save vs discard changes
+- Route selection
+- Aircraft availability
+- Crew assignment
+- Status updates
 
 ---
 
 ## 3. LOW-FIDELITY WIREFRAMES - Key Interface Designs
 
-### 3.1 Desktop Environment - Multi-Window Layout
+### 3.1 Desktop Environment with FATCON Widget (Ground Control View)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CogniFlight Cloud Desktop - Ground Control                         - □ X    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                    ┌──────────────────────────────────┐                     │
+│                    │ ⚠ CRITICAL FATIGUE ALERT ⚠      │                     │
+│                    ├──────────────────────────────────┤                     │
+│                    │ System Fatigue Level: CRITICAL   │                     │
+│                    │                                  │                     │
+│                    │ 18 pilots at critical fatigue    │                     │
+│                    │ 12 pilots at high fatigue        │                     │
+│                    │ System capacity: EXCEEDED        │                     │
+│                    │                                  │                     │
+│                    │ Required Actions:                │                     │
+│                    │ • Ground non-critical flights    │                     │
+│                    │ • Activate reserve crews         │                     │
+│                    │ • Redistribute flight schedule   │                     │
+│                    │                                  │                     │
+│                    │ [Initiate Protocol] [Details]    │                     │
+│                    └──────────────────────────────────┘                     │
+│                                                                              │
+│  Desktop Icons:                                                             │
+│  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐              │
+│  │ Dash │  │  ML  │  │Flight│  │Pilots│  │Users │  │ Set  │              │
+│  │board │  │Engine│  │      │  │      │  │      │  │tings │              │
+│  └──────┘  └──────┘  └──────┘  └──────┘  └──────┘  └──────┘              │
+│                                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│[Start]│[FATCON:CRITICAL▼]│Dashboard│MLEngine│Flights│      🔔(5) 10:24 AM  │
+└─────────────────────────────────────────────────────────────────────────────┘
+         ↑
+    FATCON Widget showing system-wide fatigue status
+```
+
+### 3.2 FATCON Widget States (Ground Control Only)
+
+```
+Normal Operations:              Warning Level:                  Critical Level:
+┌─────────────────┐            ┌─────────────────┐            ┌─────────────────┐
+│ FATCON: NORMAL  │            │ FATCON: WARNING │            │FATCON: CRITICAL│
+│ Active: 156     │            │ Active: 156     │            │ Active: 156     │
+│ Fatigued: 8     │            │ Fatigued: 35    │            │ Fatigued: 48    │
+│ Capacity: OK    │            │ Capacity: 78%   │            │ Capacity: OVER  │
+└─────────────────┘            └─────────────────┘            └─────────────────┘
+     (Green)                        (Yellow)                        (Red)
+
+Expanded Widget View (Ground Control Click):
+┌──────────────────────────────────┐
+│ System Fatigue Management        │
+├──────────────────────────────────┤
+│ Total Active Pilots: 156         │
+│ Critical Fatigue: 18 (11.5%)     │
+│ High Fatigue: 30 (19.2%)         │
+│ Medium Fatigue: 45 (28.8%)       │
+│ Low Fatigue: 63 (40.4%)          │
+│                                  │
+│ System Status: CRITICAL          │
+│ Capacity: 135% (EXCEEDED)        │
+│                                  │
+│ Recommended Actions:             │
+│ • Immediate crew rotation        │
+│ • Flight consolidation           │
+│ • Emergency reserves activation  │
+│                                  │
+│ [Open Dashboard] [Protocols]     │
+└──────────────────────────────────┘
+```
+
+### 3.3 Desktop Environment (Regular User View - No FATCON)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ CogniFlight Cloud Desktop                                          - □ X    │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  ┌──────────────────────────────┐  ┌──────────────────────────────┐        │
-│  │ Dashboard - Ground Control    │  │ ML Engine                    │        │
-│  ├──────────────────────────────┤  ├──────────────────────────────┤        │
-│  │ Active: 47 | High Risk: 8    │  │ [Search functions...]        │        │
-│  │ ┌────┐ ┌────┐ ┌────┐ ┌────┐ │  │ ┌────────────────────────┐   │        │
-│  │ │JFK │ │LAX │ │ORD│ │DFW │ │  │ │ Risk Analysis          │   │        │
-│  │ │ ⚠⚠ │ │ ⚠⚠ │ │ ⚠ │ │    │ │  │ │ Analyzes flight risk   │   │        │
-│  │ └────┘ └────┘ └────┘ └────┘ │  │ └────────────────────────┘   │        │
-│  │ ┌────┐ ┌────┐ ┌────┐ ┌────┐ │  │ ┌────────────────────────┐   │        │
-│  │ │ATL │ │BOS │ │SEA │ │PHX │ │  │ │ Weather Prediction     │   │        │
-│  │ │    │ │    │ │    │ │    │ │  │ │ Forecasts weather      │   │        │
-│  │ └────┘ └────┘ └────┘ └────┘ │  │ └────────────────────────┘   │        │
-│  └──────────────────────────────┘  └──────────────────────────────┘        │
+│  Desktop Icons:                                                             │
+│  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐              │
+│  │ Dash │  │  ML  │  │Flight│  │Pilots│  │Users │  │ Set  │              │
+│  │board │  │Engine│  │      │  │      │  │      │  │tings │              │
+│  └──────┘  └──────┘  └──────┘  └──────┘  └──────┘  └──────┘              │
 │                                                                              │
-│  ┌──────────────────────────────────────────────────────────────┐          │
-│  │ Flights Management                                     - □ X │          │
-│  ├──────────────────────────────────────────────────────────────┤          │
-│  │ CF1234  JFK-LAX  14:30  A320  Active  [Details]             │          │
-│  │ CF1235  LAX-ORD  15:45  B737  Boarding [Details]            │          │
-│  └──────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
 │                                                                              │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ [Start] │ Dashboard │ ML Engine │ Flights │ Pilots │ Users │ Settings│10:24│
+│ [Start] │ Dashboard │ MLEngine │ Flights │               🔔(2) 10:24 AM    │
 └─────────────────────────────────────────────────────────────────────────────┘
+         Note: No FATCON widget for non-ground control users
 ```
 
-### 3.2 Settings Application
+### 3.4 Dashboard Application
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Settings                                                           - □ X   │
+│ Dashboard                                                          - □ X   │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ ┌──────────────────┬────────────────────────────────────────────┐          │
-│ │ Categories       │ Profile Settings                            │          │
-│ ├──────────────────┤                                            │          │
-│ │ ▼ Profile        │ ┌──────────────────────────────────────┐   │          │
-│ │   • Personal     │ │ Personal Information                  │   │          │
-│ │   • Password     │ ├──────────────────────────────────────┤   │          │
-│ │   • Avatar       │ │                                      │   │          │
-│ │                  │ │ Full Name:                           │   │          │
-│ │ ▶ System         │ │ [John Doe_____________________]      │   │          │
-│ │                  │ │                                      │   │          │
-│ │ ▶ Display        │ │ Email:                               │   │          │
-│ │                  │ │ [john.doe@cogniflight.com____]      │   │          │
-│ │                  │ │                                      │   │          │
-│ │ ▶ Notifications  │ │ Phone:                               │   │          │
-│ │                  │ │ [+1 555-0123__________________]      │   │          │
-│ │                  │ │                                      │   │          │
-│ │ ▶ Integration    │ │ Department:                          │   │          │
-│ │                  │ │ [Operations ▼]                       │   │          │
-│ │                  │ │                                      │   │          │
-│ │                  │ │ Job Title:                           │   │          │
-│ │                  │ │ [Ground Control Operator______]      │   │          │
-│ │                  │ │                                      │   │          │
-│ │                  │ │ Employee ID:                         │   │          │
-│ │                  │ │ [CF-2024-1234] (read-only)          │   │          │
-│ │                  │ │                                      │   │          │
-│ │                  │ └──────────────────────────────────────┘   │          │
-│ │                  │                                            │          │
-│ │                  │ [Save Changes] [Cancel]                   │          │
-│ └──────────────────┴────────────────────────────────────────────┘          │
+│ Edge Node Monitoring                                       [Settings ⚙]     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Active Nodes: 47 | High Risk: 8 | Critical: 3 | Offline: 2                │
+│                                                                              │
+│ HIGH PRIORITY NODES                                                         │
+│ ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐         │
+│ │ NODE: JFK-01  ⚠⚠⚠│  │ NODE: LAX-03  ⚠⚠│  │ NODE: ORD-07   ⚠│         │
+│ │ ALT: 35,000 ft   │  │ ALT: 28,500 ft   │  │ ALT: 31,200 ft   │         │
+│ │ SPEED: 485 kts   │  │ SPEED: 510 kts   │  │ SPEED: 475 kts   │         │
+│ │ STATUS: WEATHER  │  │ STATUS: TRAFFIC  │  │ STATUS: NORMAL   │         │
+│ │ [View] [Alert]   │  │ [View] [Alert]   │  │ [View] [Monitor] │         │
+│ └──────────────────┘  └──────────────────┘  └──────────────────┘         │
+│                                                                              │
+│ STANDARD MONITORING                                                         │
+│ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐       │
+│ │DFW-12  │ │ATL-09  │ │BOS-04  │ │SEA-15  │ │PHX-08  │ │DEN-11  │       │
+│ │Risk:35%│ │Risk:28%│ │Risk:22%│ │Risk:20%│ │Risk:18%│ │Risk:15%│       │
+│ └────────┘ └────────┘ └────────┘ └────────┘ └────────┘ └────────┘       │
+│                                                                              │
+│ [Auto-Layout: ON] [Risk Threshold: 70%] [Refresh Rate: 1s]                 │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.3 Settings - System Preferences
+### 3.5 MLEngine Application
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Settings                                                           - □ X   │
+│ MLEngine                                                           - □ X   │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ ┌──────────────────┬────────────────────────────────────────────┐          │
-│ │ Categories       │ System Preferences                         │          │
-│ ├──────────────────┤                                            │          │
-│ │ ▶ Profile        │ ┌──────────────────────────────────────┐   │          │
-│ │                  │ │ Theme Selection                      │   │          │
-│ │ ▼ System         │ ├──────────────────────────────────────┤   │          │
-│ │   • Theme        │ │                                      │   │          │
-│ │   • Language     │ │ ( ) Blue Theme                       │   │          │
-│ │   • Time Zone    │ │     Classic professional blue       │   │          │
-│ │                  │ │                                      │   │          │
-│ │ ▶ Display        │ │ (•) Galaxy Theme                     │   │          │
-│ │                  │ │     Modern space-inspired dark      │   │          │
-│ │                  │ │                                      │   │          │
-│ │ ▶ Notifications  │ │ ( ) High Contrast                    │   │          │
-│ │                  │ │     Optimized for bright environments│   │          │
-│ │ ▶ Integration    │ └──────────────────────────────────────┘   │          │
-│ │                  │                                            │          │
-│ │                  │ ┌──────────────────────────────────────┐   │          │
-│ │                  │ │ Language Settings                    │   │          │
-│ │                  │ ├──────────────────────────────────────┤   │          │
-│ │                  │ │                                      │   │          │
-│ │                  │ │ Display Language: [English (US) ▼]  │   │          │
-│ │                  │ │                                      │   │          │
-│ │                  │ │ Date Format:      [MM/DD/YYYY ▼]    │   │          │
-│ │                  │ │                                      │   │          │
-│ │                  │ │ Number Format:    [1,234.56 ▼]      │   │          │
-│ │                  │ └──────────────────────────────────────┘   │          │
-│ │                  │                                            │          │
-│ │                  │ ┌──────────────────────────────────────┐   │          │
-│ │                  │ │ Time Zone                            │   │          │
-│ │                  │ ├──────────────────────────────────────┤   │          │
-│ │                  │ │                                      │   │          │
-│ │                  │ │ Time Zone: [UTC-5 Eastern Time ▼]   │   │          │
-│ │                  │ │                                      │   │          │
-│ │                  │ │ [✓] Automatically adjust for DST    │   │          │
-│ │                  │ └──────────────────────────────────────┘   │          │
-│ │                  │                                            │          │
-│ │                  │ [Save Changes] [Cancel]                   │          │
-│ └──────────────────┴────────────────────────────────────────────┘          │
+│                                                                              │
+│  [Search functions...                                                   🔍] │
+│                                                                              │
+│  Filter: [All Categories ▼]  Sort: [Name ▼]                               │
+│                                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────┐        │
+│  │ Risk Analysis                                                  │        │
+│  │ Comprehensive safety risk assessment for flights               │        │
+│  │                                                          [View>]│        │
+│  └────────────────────────────────────────────────────────────────┘        │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────┐        │
+│  │ Route Optimization                                              │        │
+│  │ Calculate optimal flight paths based on multiple factors       │        │
+│  │                                                          [View>]│        │
+│  └────────────────────────────────────────────────────────────────┘        │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────┐        │
+│  │ Weather Prediction                                              │        │
+│  │ Advanced weather forecasting for flight planning               │        │
+│  │                                                          [View>]│        │
+│  └────────────────────────────────────────────────────────────────┘        │
+│                                                                              │
+│  Showing 3 of 23 functions                                    [Load More]  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.4 Settings - Notification Preferences
+### 3.6 MLEngine Function Detail View
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Settings                                                           - □ X   │
+│ MLEngine - Risk Analysis                                          - □ X   │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ ┌──────────────────┬────────────────────────────────────────────┐          │
-│ │ Categories       │ Notification Settings                      │          │
-│ ├──────────────────┤                                            │          │
-│ │ ▶ Profile        │ ┌──────────────────────────────────────┐   │          │
-│ │                  │ │ Alert Types                          │   │          │
-│ │ ▶ System         │ ├──────────────────────────────────────┤   │          │
-│ │                  │ │                                      │   │          │
-│ │ ▶ Display        │ │ [✓] Critical Alerts (Always On)     │   │          │
-│ │                  │ │     System failures, emergencies    │   │          │
-│ │ ▼ Notifications  │ │                                      │   │          │
-│ │   • Alert Types  │ │ [✓] High Priority Alerts            │   │          │
-│ │   • Sounds       │ │     Risk threshold exceeded         │   │          │
-│ │   • Email        │ │                                      │   │          │
-│ │                  │ │ [✓] Medium Priority Alerts          │   │          │
-│ │ ▶ Integration    │ │     Schedule changes, updates       │   │          │
-│ │                  │ │                                      │   │          │
-│ │                  │ │ [ ] Low Priority Notifications      │   │          │
-│ │                  │ │     General information             │   │          │
-│ │                  │ └──────────────────────────────────────┘   │          │
-│ │                  │                                            │          │
-│ │                  │ ┌──────────────────────────────────────┐   │          │
-│ │                  │ │ Sound Configuration                  │   │          │
-│ │                  │ ├──────────────────────────────────────┤   │          │
-│ │                  │ │                                      │   │          │
-│ │                  │ │ Master Volume: [========|==] 80%    │   │          │
-│ │                  │ │                                      │   │          │
-│ │                  │ │ Critical: [Alarm ▼] [Test]          │   │          │
-│ │                  │ │ High:     [Chime ▼] [Test]          │   │          │
-│ │                  │ │ Medium:   [Ding ▼]  [Test]          │   │          │
-│ │                  │ │ Low:      [None ▼]  [Test]          │   │          │
-│ │                  │ └──────────────────────────────────────┘   │          │
-│ │                  │                                            │          │
-│ │                  │ ┌──────────────────────────────────────┐   │          │
-│ │                  │ │ Email Preferences                    │   │          │
-│ │                  │ ├──────────────────────────────────────┤   │          │
-│ │                  │ │                                      │   │          │
-│ │                  │ │ [✓] Email critical alerts           │   │          │
-│ │                  │ │ [✓] Daily summary report            │   │          │
-│ │                  │ │ [ ] All notifications               │   │          │
-│ │                  │ └──────────────────────────────────────┘   │          │
-│ │                  │                                            │          │
-│ │                  │ [Save Changes] [Cancel] [Test Alerts]  │          │
-│ └──────────────────┴────────────────────────────────────────────┘          │
+│ [← Back to Functions]                                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│ Description:                                                                │
+│ Comprehensive safety risk assessment for flights based on multiple          │
+│ factors including weather, traffic, aircraft condition, and route.          │
+│                                                                              │
+│ Input Parameters:                                                           │
+│                                                                              │
+│ Flight ID *         [_____________________________________________]         │
+│ Departure Airport * [_____________________________________________]         │
+│ Arrival Airport *   [_____________________________________________]         │
+│ Departure Time *    [_____________________________________________]         │
+│ Aircraft Type       [_____________________________________________]         │
+│                                                                              │
+│ Expected Output:                                                            │
+│ • Risk Score (0-100)                                                       │
+│ • Risk Category (Low/Medium/High/Critical)                                 │
+│ • Contributing Factors                                                      │
+│ • Recommendations                                                           │
+│                                                                              │
+│                            [Execute Function]                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.5 Users Management - List View
+### 3.7 Flights Application
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Users & Access Control                                            - □ X    │
+│ Flights                                                            - □ X   │
+├───────┬────────┬──────────┬───────────────────────────────────────────────┤
+│ Live  │ Schedule │ Planning │                                               │
+├───────┴────────┴──────────┴───────────────────────────────────────────────┤
+│ [+ New Flight] [Import Schedule] [Filter ▼] [Export]                       │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ [+ Invite User] [Import Users] [Export] [Search: _____________] [Filter ▼] │
-├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│ Active Users: 87 | Pending: 3 | Inactive: 12                              │
+│ ┌─┬────────┬──────────┬────────┬────────┬─────────┬────────┬──────┬─────┐│
+│ │□│Flight  │Route     │Depart  │Arrive  │Aircraft │Pilot   │Status│Risk ││
+│ ├─┼────────┼──────────┼────────┼────────┼─────────┼────────┼──────┼─────┤│
+│ │□│CF1234  │JFK → LAX │14:30   │17:45   │A320-214 │Smith.J │En Air│ Low ││
+│ │□│CF1235  │LAX → ORD │15:45   │21:30   │B737-800 │Doe.J   │Board │ Med ││
+│ │□│CF1236  │ORD → DFW │16:20   │18:45   │A321-200 │Wilson.R│Ready │ Low ││
+│ │□│CF1237  │DFW → ATL │17:00   │20:15   │B757-200 │Brown.M │Sched │ Low ││
+│ └─┴────────┴──────────┴────────┴────────┴─────────┴────────┴──────┴─────┘│
 │                                                                              │
-│ ┌─┬──────────────┬──────────────────┬──────────┬─────────┬──────┬───────┐│
-│ │□│Name          │Email             │Role      │Status   │Last  │Actions││
-│ ├─┼──────────────┼──────────────────┼──────────┼─────────┼──────┼───────┤│
-│ │□│John Smith    │j.smith@cf.com    │Admin     │Active   │2 hrs │[⋮]   ││
-│ │□│Jane Doe      │j.doe@cf.com      │Manager   │Active   │5 min │[⋮]   ││
-│ │□│Bob Wilson    │b.wilson@cf.com   │Analyst   │Active   │1 day │[⋮]   ││
-│ │□│Alice Brown   │a.brown@cf.com    │Operator  │Active   │3 hrs │[⋮]   ││
-│ │□│Mike Davis    │m.davis@cf.com    │Analyst   │Pending  │Never │[⋮]   ││
-│ │□│Sarah Miller  │s.miller@cf.com   │Manager   │Active   │12 hrs│[⋮]   ││
-│ │□│Tom Johnson   │t.johnson@cf.com  │Admin     │Inactive │30 day│[⋮]   ││
-│ └─┴──────────────┴──────────────────┴──────────┴─────────┴──────┴───────┘│
+│ [View Details] [Edit Flight] [Assign Crew] [Update Status]                 │
 │                                                                              │
-│ Bulk Actions: [Change Role ▼] [Deactivate] [Delete] [Resend Invitations]  │
-│                                                                              │
-│ Showing 7 of 102 users                         Pages: [1] 2 3 4 ... 15 [>] │
+│ Showing 4 of 247 flights                           Pages: [1] 2 3 ... 42   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.6 Users Management - Detail View
+### 3.8 Pilots Application
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Users & Access Control - Jane Doe                                 - □ X    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ [← Back to List]  [Edit User]  [Reset Password]  [Deactivate]  [Delete]   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│ ┌────────────────────────┬─────────────────────────────────────┐           │
-│ │ Profile Information    │ Access & Permissions                │           │
-│ ├────────────────────────┼─────────────────────────────────────┤           │
-│ │                        │                                     │           │
-│ │ Name: Jane Doe         │ Current Role: [Manager ▼]          │           │
-│ │ Email: j.doe@cf.com    │                                     │           │
-│ │ Phone: +1 555-0124     │ ┌─────────────────────────────────┐│           │
-│ │ Department: Operations │ │ Permissions                     ││           │
-│ │ Employee ID: CF-1002   │ ├─────────────────────────────────┤│           │
-│ │ Status: Active ●       │ │ Dashboard           [✓] View    ││           │
-│ │ Joined: Jan 15, 2024   │ │                     [✓] Edit    ││           │
-│ │ Last Login: 5 min ago  │ │ ML Engine           [✓] View    ││           │
-│ │                        │ │                     [✓] Execute ││           │
-│ │ ┌──────────────────┐   │ │ Flights             [✓] View    ││           │
-│ │ │     [Avatar]     │   │ │                     [✓] Edit    ││           │
-│ │ │                  │   │ │ Pilots              [✓] View    ││           │
-│ │ │   Jane Doe      │   │ │                     [ ] Edit    ││           │
-│ │ └──────────────────┘   │ │ Users               [✓] View    ││           │
-│ │                        │ │                     [ ] Edit    ││           │
-│ │                        │ │ Settings            [✓] View    ││           │
-│ │                        │ │                     [✓] Edit    ││           │
-│ │                        │ └─────────────────────────────────┘│           │
-│ └────────────────────────┴─────────────────────────────────────┘           │
-│                                                                              │
-│ ┌───────────────────────────────────────────────────────────────┐          │
-│ │ Recent Activity                                               │          │
-│ ├───────────────────────────────────────────────────────────────┤          │
-│ │ • 5 min ago    - Logged in from 192.168.1.100                │          │
-│ │ • 2 hours ago  - Executed ML function: Risk Analysis         │          │
-│ │ • 3 hours ago  - Modified flight CF1234                      │          │
-│ │ • Yesterday    - Updated personal settings                   │          │
-│ │ • 2 days ago   - Exported flight reports                     │          │
-│ └───────────────────────────────────────────────────────────────┘          │
-│                                                                              │
-│ [Save Changes] [Cancel]                                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 3.7 Users Management - Invite New User
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Users & Access Control - Invite New User                          - □ X    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ [← Back to List]                                                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│ ┌────────────────────────────────────────────────────────────────┐         │
-│ │ User Information                                               │         │
-│ ├────────────────────────────────────────────────────────────────┤         │
-│ │                                                                │         │
-│ │ Email Address *                                                │         │
-│ │ [_________________________________________________________]    │         │
-│ │                                                                │         │
-│ │ First Name *                                                   │         │
-│ │ [_________________________________________________________]    │         │
-│ │                                                                │         │
-│ │ Last Name *                                                    │         │
-│ │ [_________________________________________________________]    │         │
-│ │                                                                │         │
-│ │ Department                                                     │         │
-│ │ [Select Department ▼]                                          │         │
-│ │                                                                │         │
-│ │ Employee ID                                                    │         │
-│ │ [_________________________________________________________]    │         │
-│ └────────────────────────────────────────────────────────────────┘         │
-│                                                                              │
-│ ┌────────────────────────────────────────────────────────────────┐         │
-│ │ Role Assignment                                                │         │
-│ ├────────────────────────────────────────────────────────────────┤         │
-│ │                                                                │         │
-│ │ Select Role *                                                  │         │
-│ │                                                                │         │
-│ │ ( ) Administrator - Full system access                         │         │
-│ │ ( ) Manager - Manage operations and view reports               │         │
-│ │ (•) Analyst - Execute ML functions and view data              │         │
-│ │ ( ) Operator - Monitor dashboard and manage flights            │         │
-│ │ ( ) Viewer - Read-only access to system                       │         │
-│ │                                                                │         │
-│ │ Custom Message (Optional)                                      │         │
-│ │ ┌──────────────────────────────────────────────────────────┐  │         │
-│ │ │Welcome to CogniFlight Cloud. You've been invited to join│  │         │
-│ │ │our aviation management platform...                       │  │         │
-│ │ └──────────────────────────────────────────────────────────┘  │         │
-│ └────────────────────────────────────────────────────────────────┘         │
-│                                                                              │
-│ [Send Invitation] [Send & Add Another] [Cancel]                            │
-│                                                                              │
-│ ┌────────────────────────────────────────────────────────────────┐         │
-│ │ Pending Invitations (3)                                       │         │
-│ ├────────────────────────────────────────────────────────────────┤         │
-│ │ • m.davis@cf.com    - Sent 2 days ago    [Resend] [Cancel]   │         │
-│ │ • k.white@cf.com    - Sent 5 days ago    [Resend] [Cancel]   │         │
-│ │ • r.green@cf.com    - Sent 7 days ago    [Resend] [Cancel]   │         │
-│ └────────────────────────────────────────────────────────────────┘         │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 3.8 Pilots Management - List View
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Pilots Management                                                 - □ X    │
+│ Pilots                                                             - □ X    │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ [+ Invite Pilot] [Import] [Export] [Search: _____________]                 │
-│                                                                              │
-│ Filter: [All ▼] [Available ▼] [Certified for: ▼] [Base Location: ▼]       │
+│ Filter: [All ▼] [Available ▼] [Certified ▼] [Base ▼]                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│ Active Pilots: 156 | Available: 42 | On Duty: 89 | Rest: 25               │
+│ Total: 156 | Available: 42 | On Duty: 89 | Rest: 25                       │
 │                                                                              │
 │ ┌─┬──────────────┬────────┬───────────┬──────────┬─────────┬──────┬──────┐│
 │ │□│Name          │License │Aircraft   │Hours     │Status   │Base  │Action││
@@ -590,136 +458,63 @@ Start → Login → Desktop → Open Settings App
 │ │□│Bob Wilson    │ATP-890 │A320, A380 │12,450    │Rest     │ORD   │[View]││
 │ │□│Alice Brown   │CPL-123 │B737       │2,100     │Available│DFW   │[View]││
 │ │□│Mike Johnson  │ATP-456 │A350, B777 │9,800     │On Duty  │ATL   │[View]││
-│ │□│Sarah Davis   │CPL-789 │A320       │1,850     │Training │BOS   │[View]││
-│ │□│Tom Miller    │ATP-012 │B747, A380 │15,200    │Available│SEA   │[View]││
 │ └─┴──────────────┴────────┴───────────┴──────────┴─────────┴──────┴──────┘│
 │                                                                              │
-│ Quick Stats:                                                                │
-│ ├─ Average Flight Hours: 6,742                                             │
-│ ├─ Certifications Expiring (30 days): 8                                    │
-│ └─ Performance Average: 94.2%                                              │
+│ [View Selected] [Update Status] [Generate Report]                          │
 │                                                                              │
-│ Showing 7 of 156 pilots                        Pages: [1] 2 3 4 ... 23 [>] │
+│ Showing 5 of 156 pilots                            Pages: [1] 2 3 ... 23   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.9 Pilots Management - Detail View
+### 3.9 Users Application
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Pilots Management - John Smith                                    - □ X    │
+│ Users                                                              - □ X    │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ [← Back to List]  [Edit]  [Schedule]  [Performance Report]  [Export]       │
+│ [+ Invite User] [Import] [Export] [Search: _____________] [Filter: All ▼]  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│ ┌────────────────────────┬─────────────────────────────────────┐           │
-│ │ Personal Information   │ Certifications & Qualifications     │           │
-│ ├────────────────────────┼─────────────────────────────────────┤           │
-│ │                        │                                     │           │
-│ │ Name: John Smith       │ ┌─────────────────────────────────┐│           │
-│ │ Employee ID: P-1001    │ │ License       Status   Expires ││           │
-│ │ License #: ATP-234567  │ ├─────────────────────────────────┤│           │
-│ │ Base: JFK              │ │ ATP           Active   12/2025 ││           │
-│ │ Status: Available ●    │ │ Medical 1st   Active   03/2025 ││           │
-│ │                        │ │ A320 Type     Active   06/2025 ││           │
-│ │ Contact:               │ │ A350 Type     Active   09/2025 ││           │
-│ │ Email: j.smith@cf.com  │ │ ETOPS         Active   01/2026 ││           │
-│ │ Phone: +1 555-0125     │ │ CAT III       Active   04/2025 ││           │
-│ │ Emergency: +1 555-0126 │ └─────────────────────────────────┘│           │
-│ │                        │                                     │           │
-│ │ ┌──────────────────┐   │ Aircraft Qualified:                │           │
-│ │ │     [Photo]      │   │ • Airbus A320 Family               │           │
-│ │ │                  │   │ • Airbus A350                      │           │
-│ │ │   John Smith    │   │                                     │           │
-│ │ └──────────────────┘   │ Languages: English, Spanish        │           │
-│ └────────────────────────┴─────────────────────────────────────┘           │
+│ Active: 87 | Pending: 3 | Inactive: 12                                     │
 │                                                                              │
-│ ┌───────────────────────────────────────────────────────────────┐          │
-│ │ Flight Statistics                                            │          │
-│ ├───────────────────────────────────────────────────────────────┤          │
-│ │                                                              │          │
-│ │ Total Flight Hours: 8,542        This Month: 85             │          │
-│ │ Total Landings: 4,271           This Year: 892              │          │
-│ │ Night Hours: 2,856              Career Flights: 2,847       │          │
-│ │                                                              │          │
-│ │ Performance Score: 96.5/100     Safety Record: Excellent    │          │
-│ │ On-Time Rate: 94.8%            Fuel Efficiency: A+          │          │
-│ └───────────────────────────────────────────────────────────────┘          │
+│ ┌─┬──────────────┬──────────────────┬──────────┬─────────┬──────┬───────┐│
+│ │□│Name          │Email             │Role      │Status   │Last  │Actions││
+│ ├─┼──────────────┼──────────────────┼──────────┼─────────┼──────┼───────┤│
+│ │□│John Smith    │j.smith@cf.com    │Ground Ctl│Active   │2 hrs │[⋮]   ││
+│ │□│Jane Doe      │j.doe@cf.com      │Manager   │Active   │5 min │[⋮]   ││
+│ │□│Bob Wilson    │b.wilson@cf.com   │Analyst   │Active   │1 day │[⋮]   ││
+│ │□│Alice Brown   │a.brown@cf.com    │Operator  │Active   │3 hrs │[⋮]   ││
+│ └─┴──────────────┴──────────────────┴──────────┴─────────┴──────┴───────┘│
 │                                                                              │
-│ ┌───────────────────────────────────────────────────────────────┐          │
-│ │ Recent Flights                                               │          │
-│ ├───────────────────────────────────────────────────────────────┤          │
-│ │ • CF1234  JFK→LAX  Sep 29  A320  5.5 hrs  On Time          │          │
-│ │ • CF1198  LAX→JFK  Sep 28  A320  5.2 hrs  On Time          │          │
-│ │ • CF1156  JFK→ORD  Sep 27  A350  2.8 hrs  On Time          │          │
-│ │ • CF1089  ORD→JFK  Sep 26  A350  2.5 hrs  Early            │          │
-│ └───────────────────────────────────────────────────────────────┘          │
+│ [Change Role] [Deactivate] [Reset Password]                                │
 │                                                                              │
-│ [View Full History] [Download Records]                                      │
+│ Showing 4 of 102 users                              Pages: [1] 2 3 ... 15  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.10 Pilots Management - Invite New Pilot
+### 3.10 Settings Application
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Pilots Management - Invite New Pilot                              - □ X    │
+│ Settings                                                           - □ X   │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ [← Back to List]                                                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│ ┌────────────────────────────────────────────────────────────────┐         │
-│ │ Pilot Information                                              │         │
-│ ├────────────────────────────────────────────────────────────────┤         │
-│ │                                                                │         │
-│ │ Email Address *                                                │         │
-│ │ [_________________________________________________________]    │         │
-│ │                                                                │         │
-│ │ First Name *                Last Name *                       │         │
-│ │ [_________________________]  [__________________________]    │         │
-│ │                                                                │         │
-│ │ License Number *             License Type *                   │         │
-│ │ [_________________________]  [ATP ▼]                          │         │
-│ │                                                                │         │
-│ │ Base Location *              Employee ID                      │         │
-│ │ [Select Base ▼]              [__________________________]    │         │
-│ └────────────────────────────────────────────────────────────────┘         │
-│                                                                              │
-│ ┌────────────────────────────────────────────────────────────────┐         │
-│ │ Certifications                                                 │         │
-│ ├────────────────────────────────────────────────────────────────┤         │
-│ │                                                                │         │
-│ │ Medical Certificate                                            │         │
-│ │ Class: [1st ▼]  Number: [___________]  Expires: [MM/DD/YYYY]  │         │
-│ │                                                                │         │
-│ │ Aircraft Type Ratings                                          │         │
-│ │ [✓] A320 Family    [ ] A350    [ ] A380                      │         │
-│ │ [✓] B737 Family    [ ] B777    [ ] B747                      │         │
-│ │                                                                │         │
-│ │ Additional Qualifications                                      │         │
-│ │ [✓] ETOPS    [ ] CAT III    [ ] Instructor    [ ] Examiner   │         │
-│ │                                                                │         │
-│ │ Upload Documents                                               │         │
-│ │ ┌──────────────────────────────────────────────────────────┐  │         │
-│ │ │ Drag files here or [Browse Files]                       │  │         │
-│ │ │ Accepted: PDF, JPG, PNG (Max 10MB each)                 │  │         │
-│ │ └──────────────────────────────────────────────────────────┘  │         │
-│ └────────────────────────────────────────────────────────────────┘         │
-│                                                                              │
-│ ┌────────────────────────────────────────────────────────────────┐         │
-│ │ Experience Summary                                            │         │
-│ ├────────────────────────────────────────────────────────────────┤         │
-│ │                                                                │         │
-│ │ Total Flight Hours *         Previous Airline                 │         │
-│ │ [_________________________]  [__________________________]    │         │
-│ │                                                                │         │
-│ │ Notes (Optional)                                               │         │
-│ │ ┌──────────────────────────────────────────────────────────┐  │         │
-│ │ │                                                          │  │         │
-│ │ └──────────────────────────────────────────────────────────┘  │         │
-│ └────────────────────────────────────────────────────────────────┘         │
-│                                                                              │
-│ [Send Invitation] [Save as Draft] [Cancel]                                 │
+│ ┌──────────────────┬────────────────────────────────────────────┐          │
+│ │ Categories       │ Profile Settings                            │          │
+│ ├──────────────────┤                                            │          │
+│ │ ▼ Profile        │ Personal Information                        │          │
+│ │   • Personal     │                                            │          │
+│ │   • Password     │ Full Name:    [John Doe_______________]    │          │
+│ │                  │ Email:        [john.doe@cogniflight.com]  │          │
+│ │ ▶ System         │ Department:   [Operations ▼]              │          │
+│ │                  │ Role:         Ground Control (read-only)   │          │
+│ │ ▶ Display        │                                            │          │
+│ │                  │ Change Password                            │          │
+│ │ ▶ Notifications  │ Current:      [••••••••••••••••••••]      │          │
+│ │                  │ New:          [____________________]      │          │
+│ │ ▶ Integration    │ Confirm:      [____________________]      │          │
+│ │                  │                                            │          │
+│ │                  │ [Save Changes] [Cancel]                    │          │
+│ └──────────────────┴────────────────────────────────────────────┘          │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -732,233 +527,313 @@ Start → Login → Desktop → Open Settings App
 **Primary Design Targets:**
 ```css
 /* Desktop-First Breakpoints */
-- Control Center Displays: 2560px+ (4K monitors)
-- Professional Workstations: 1920px - 2559px
-- Standard Desktop: 1280px - 1919px
-- Compact Desktop: 1024px - 1279px
-- Tablet (Emergency Access): 768px - 1023px
+- Control Center: 2560px+ (4K monitors)
+- Workstation: 1920px - 2559px  
+- Standard: 1280px - 1919px
+- Compact: 1024px - 1279px
+- Tablet: 768px - 1023px (Emergency only)
 ```
 
-### 4.2 Application-Specific Responsive Behaviors
+### 4.2 FATCON Widget Display Rules
 
-**Settings App:**
-- Large displays: Sidebar navigation with wide content area
-- Standard displays: Collapsible sidebar
-- Compact displays: Tab-based navigation
+**Role-Based Display:**
+- Ground Control Users: FATCON widget always visible in taskbar
+- Other Users: No FATCON widget displayed
+- Widget updates every 15 seconds with system-wide data
+- Expandable for detailed fatigue breakdown
 
-**Users Management:**
-- 4K displays: Show 8 columns in table view
-- Full HD: Show 6 essential columns
-- Standard: Show 4 primary columns with actions menu
+### 4.3 Application Window Management
 
-**Pilots Management:**
-- Large displays: Side-by-side detail panels
-- Standard displays: Stacked detail sections
-- Compact: Accordion-style information panels
+```
+Window Snap Zones:
+┌─────────────────────────────────┐
+│         Full Screen            │
+├────────────┬────────────────────┤
+│ Left Half  │   Right Half       │
+├────────────┼────────────────────┤
+│  Quarter   │    Quarter         │
+├────────────┼────────────────────┤
+│  Quarter   │    Quarter         │
+└────────────┴────────────────────┘
+```
 
 ---
 
 ## 5. TECHNICAL IMPLEMENTATION
 
-### 5.1 Settings Application Architecture
+### 5.1 FATCON System Architecture (Ground Control Only)
 
 ```javascript
-// Settings Manager
-class SettingsManager {
-  constructor() {
-    this.categories = [
-      { id: 'profile', label: 'Profile', icon: 'user' },
-      { id: 'system', label: 'System', icon: 'settings' },
-      { id: 'display', label: 'Display', icon: 'monitor' },
-      { id: 'notifications', label: 'Notifications', icon: 'bell' },
-      { id: 'integration', label: 'Integration', icon: 'link' }
-    ]
-    this.currentCategory = 'profile'
-    this.unsavedChanges = false
-  }
-  
-  loadSettings() {
-    return fetch('/api/settings/user')
-      .then(res => res.json())
-      .then(data => this.applySettings(data))
-  }
-  
-  saveSettings(settings) {
-    this.validateSettings(settings)
-    return fetch('/api/settings/user', {
-      method: 'PUT',
-      body: JSON.stringify(settings)
-    })
-  }
-  
-  applyTheme(theme) {
-    document.body.className = `theme-${theme}`
-    localStorage.setItem('theme', theme)
-  }
-}
-```
-
-### 5.2 Users Management System
-
-```javascript
-// User Management Controller
-class UserManagement {
-  constructor() {
-    this.users = []
-    this.roles = ['admin', 'manager', 'analyst', 'operator', 'viewer']
-    this.filters = {
-      status: 'all',
-      role: 'all',
-      search: ''
-    }
-  }
-  
-  async inviteUser(userData) {
-    const invitation = {
-      email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      role: userData.role,
-      department: userData.department,
-      customMessage: userData.message,
-      invitedBy: currentUser.id,
-      invitedAt: Date.now()
+// FATCON Widget - Ground Control Operations
+class FatconWidget {
+  constructor(userRole) {
+    // Only initialize for ground control role
+    if (userRole !== 'GROUND_CONTROL') {
+      return null;
     }
     
-    const response = await fetch('/api/users/invite', {
-      method: 'POST',
-      body: JSON.stringify(invitation)
-    })
+    this.systemFatigue = {
+      totalPilots: 0,
+      criticalCount: 0,
+      highCount: 0,
+      mediumCount: 0,
+      lowCount: 0,
+      systemCapacity: 100
+    };
     
-    return response.json()
+    this.updateInterval = 15000; // 15 seconds
+    this.criticalThreshold = 15; // Max critical pilots before alert
   }
   
-  updateUserRole(userId, newRole) {
-    return fetch(`/api/users/${userId}/role`, {
-      method: 'PUT',
-      body: JSON.stringify({ role: newRole })
-    })
-  }
-  
-  generatePermissionMatrix(role) {
-    const permissions = {
-      admin: { all: true },
-      manager: {
-        dashboard: ['view', 'edit'],
-        mlEngine: ['view', 'execute'],
-        flights: ['view', 'edit'],
-        pilots: ['view', 'edit'],
-        users: ['view'],
-        settings: ['view', 'edit']
-      },
-      analyst: {
-        dashboard: ['view'],
-        mlEngine: ['view', 'execute'],
-        flights: ['view'],
-        pilots: ['view'],
-        users: [],
-        settings: ['view']
-      },
-      operator: {
-        dashboard: ['view', 'edit'],
-        mlEngine: ['view'],
-        flights: ['view', 'edit'],
-        pilots: ['view'],
-        users: [],
-        settings: ['view']
-      },
-      viewer: {
-        dashboard: ['view'],
-        mlEngine: [],
-        flights: ['view'],
-        pilots: ['view'],
-        users: [],
-        settings: []
-      }
-    }
+  calculateSystemCapacity() {
+    // Calculate if system can handle current fatigue levels
+    const criticalWeight = 3;
+    const highWeight = 2;
+    const mediumWeight = 1;
     
-    return permissions[role] || permissions.viewer
-  }
-}
-```
-
-### 5.3 Pilots Management System
-
-```javascript
-// Pilot Management Controller
-class PilotManagement {
-  constructor() {
-    this.pilots = []
-    this.certificationTypes = [
-      'ATP', 'CPL', 'Medical 1st', 'Medical 2nd',
-      'A320 Type', 'A350 Type', 'B737 Type', 'B777 Type',
-      'ETOPS', 'CAT III', 'Instructor', 'Examiner'
-    ]
-    this.bases = ['JFK', 'LAX', 'ORD', 'DFW', 'ATL', 'BOS', 'SEA']
-  }
-  
-  async invitePilot(pilotData) {
-    const invitation = {
-      personalInfo: {
-        email: pilotData.email,
-        firstName: pilotData.firstName,
-        lastName: pilotData.lastName,
-        employeeId: pilotData.employeeId
-      },
-      license: {
-        number: pilotData.licenseNumber,
-        type: pilotData.licenseType,
-        medicalClass: pilotData.medicalClass,
-        medicalExpiry: pilotData.medicalExpiry
-      },
-      qualifications: {
-        aircraftTypes: pilotData.aircraftTypes,
-        additionalCerts: pilotData.additionalCerts
-      },
-      experience: {
-        totalHours: pilotData.totalHours,
-        previousAirline: pilotData.previousAirline
-      },
-      base: pilotData.base,
-      documents: pilotData.uploadedDocuments,
-      invitedAt: Date.now()
-    }
+    const load = (this.systemFatigue.criticalCount * criticalWeight) +
+                 (this.systemFatigue.highCount * highWeight) +
+                 (this.systemFatigue.mediumCount * mediumWeight);
     
-    const response = await fetch('/api/pilots/invite', {
-      method: 'POST',
-      body: JSON.stringify(invitation)
-    })
+    const capacity = (load / this.systemFatigue.totalPilots) * 100;
     
-    return response.json()
-  }
-  
-  calculatePilotStats(pilot) {
     return {
-      totalHours: pilot.flights.reduce((sum, f) => sum + f.duration, 0),
-      thisMonth: this.getMonthlyHours(pilot),
-      performanceScore: this.calculatePerformance(pilot),
-      onTimeRate: this.calculateOnTimeRate(pilot),
-      safetyRecord: this.evaluateSafetyRecord(pilot)
+      percentage: capacity,
+      status: capacity > 100 ? 'EXCEEDED' : capacity > 80 ? 'WARNING' : 'NORMAL'
+    };
+  }
+  
+  checkCriticalThreshold() {
+    if (this.systemFatigue.criticalCount > this.criticalThreshold) {
+      this.triggerCriticalAlert({
+        level: 'CRITICAL',
+        message: 'System fatigue capacity exceeded',
+        criticalPilots: this.systemFatigue.criticalCount,
+        totalFatigued: this.systemFatigue.criticalCount + this.systemFatigue.highCount,
+        requiredActions: [
+          'Ground non-critical flights',
+          'Activate reserve crews',
+          'Redistribute schedule'
+        ]
+      });
+    }
+  }
+}
+```
+
+### 5.2 Independent Application Architecture
+
+```javascript
+// Each app is completely self-contained
+class DashboardApp {
+  constructor() {
+    this.name = 'Dashboard';
+    this.data = {};
+    this.api = '/api/dashboard';
+  }
+  
+  async init() {
+    // Load dashboard-specific data
+    this.data = await fetch(this.api + '/nodes').then(r => r.json());
+    this.render();
+  }
+  
+  // Dashboard only focuses on edge nodes
+  monitorNodes() {
+    // Edge node monitoring logic
+  }
+}
+
+class MLEngineApp {
+  constructor() {
+    this.name = 'MLEngine';
+    this.functions = [];
+    this.api = '/api/ml';
+  }
+  
+  async init() {
+    // Load ML functions
+    this.functions = await fetch(this.api + '/functions').then(r => r.json());
+    this.render();
+  }
+  
+  // MLEngine only focuses on function execution
+  executeFunction(id, params) {
+    // ML execution logic
+  }
+}
+
+class FlightsApp {
+  constructor() {
+    this.name = 'Flights';
+    this.flights = [];
+    this.api = '/api/flights';
+  }
+  
+  // Flights only manages flight operations
+  manageFlight(flightId) {
+    // Flight management logic
+  }
+}
+
+// No shared state between apps
+// Each app manages its own domain
+```
+
+### 5.3 Role-Based UI Rendering
+
+```javascript
+// Desktop component with role-based FATCON
+class Desktop {
+  constructor(user) {
+    this.user = user;
+    this.apps = this.loadApps();
+    this.fatconWidget = null;
+    
+    // Only create FATCON widget for ground control
+    if (this.user.role === 'GROUND_CONTROL') {
+      this.fatconWidget = new FatconWidget(this.user.role);
     }
   }
   
-  checkCertificationExpiry(pilot) {
-    const expiringCerts = []
-    const thirtyDays = 30 * 24 * 60 * 60 * 1000
-    const now = Date.now()
+  renderTaskbar() {
+    const taskbarElements = [
+      this.renderStartButton(),
+      this.user.role === 'GROUND_CONTROL' ? this.renderFatconWidget() : null,
+      this.renderPinnedApps(),
+      this.renderActiveWindows(),
+      this.renderSystemTray()
+    ].filter(Boolean);
     
-    pilot.certifications.forEach(cert => {
-      const daysUntilExpiry = (cert.expiryDate - now) / (24 * 60 * 60 * 1000)
-      if (daysUntilExpiry <= 30) {
-        expiringCerts.push({
-          name: cert.name,
-          daysRemaining: Math.floor(daysUntilExpiry)
-        })
-      }
-    })
-    
-    return expiringCerts
+    return taskbarElements;
   }
+  
+  renderFatconWidget() {
+    if (!this.fatconWidget) return null;
+    
+    return `
+      <div class="fatcon-widget">
+        <div class="fatcon-level">FATCON: ${this.fatconWidget.getLevel()}</div>
+        <div class="fatcon-status">${this.fatconWidget.getStatus()}</div>
+      </div>
+    `;
+  }
+}
+```
+
+### 5.4 Alert System for Critical Operations
+
+```javascript
+// Alert system primarily for ground control operations
+class AlertManager {
+  constructor() {
+    this.alerts = [];
+  }
+  
+  showFatconCriticalAlert(data) {
+    // Critical system-wide fatigue alert
+    const alert = {
+      type: 'FATCON_CRITICAL',
+      priority: 'HIGHEST',
+      title: 'Critical Fatigue Alert',
+      content: {
+        systemStatus: data.status,
+        affectedPilots: data.criticalPilots,
+        totalFatigued: data.totalFatigued,
+        capacity: data.capacity,
+        actions: data.requiredActions
+      },
+      requiresAcknowledgment: true,
+      timestamp: Date.now()
+    };
+    
+    this.displayModal(alert);
+    this.logCriticalEvent(alert);
+    this.notifyOperationsTeam(alert);
+  }
+  
+  showToast(message, type) {
+    // Standard notifications for all users
+    const toast = {
+      message: message,
+      type: type,
+      duration: 5000
+    };
+    
+    this.displayToast(toast);
+  }
+}
+```
+
+---
+
+## 6. USER EXPERIENCE DESIGN
+
+### 6.1 Ground Control Operations Focus
+
+**FATCON System Benefits:**
+- Real-time system-wide fatigue monitoring
+- Proactive alert system for capacity issues
+- Clear escalation protocols
+- Centralized fatigue management
+- Emergency response capabilities
+
+**Operational Flow:**
+1. Continuous monitoring of all active pilots
+2. Automatic threshold detection
+3. Alert generation when limits exceeded
+4. Protocol activation options
+5. Recovery monitoring
+
+### 6.2 Application Specialization
+
+**Each App's Focus:**
+- **Dashboard:** Edge node monitoring only
+- **MLEngine:** Function execution only
+- **Flights:** Flight management only
+- **Pilots:** Pilot records only
+- **Users:** User administration only
+- **Settings:** Personal preferences only
+
+**Benefits of Separation:**
+- Clear purpose for each application
+- Reduced complexity
+- Easier training
+- Better performance
+- Simpler maintenance
+
+---
+
+## 7. TESTING & QUALITY ASSURANCE
+
+### 7.1 FATCON System Testing
+
+**Ground Control Specific Tests:**
+- System capacity calculations
+- Threshold breach detection
+- Alert generation timing
+- Protocol activation flow
+- Recovery monitoring accuracy
+
+### 7.2 Application Independence Testing
+
+**Isolation Tests:**
+- Each app functions without others
+- No shared dependencies
+- Independent data fetching
+- Separate error handling
+- Isolated state management
+
+### 7.3 Performance Targets
+
+```javascript
+const performanceMetrics = {
+  fatconUpdate: '<100ms',
+  capacityCalculation: '<50ms',
+  alertGeneration: '<200ms',
+  appLaunch: '<1s',
+  dataRefresh: '<500ms',
+  windowRendering: '60fps'
 }
 ```
 
@@ -966,11 +841,16 @@ class PilotManagement {
 
 ## CONCLUSION
 
-The CogniFlight Cloud platform delivers a sophisticated desktop-first aviation management system with comprehensive user interfaces for all core applications. The Settings app provides intuitive personal and system configuration options with clear categorization. The Users Management system offers robust access control with role-based permissions and streamlined invitation workflows. The Pilots Management application enables efficient pilot roster management with detailed tracking of certifications, performance metrics, and flight history.
+The CogniFlight Cloud platform delivers a sophisticated aviation management system with specialized applications for distinct operational needs. The FATCON widget provides critical system-wide fatigue monitoring exclusively for ground control operations, enabling proactive management of pilot fatigue at a system level when capacity thresholds are exceeded.
 
-These applications, combined with the ML Engine's simple function discovery interface and the adaptive Dashboard for real-time edge node monitoring, create a complete aviation operations platform. The consistent desktop-first design philosophy, multi-window support, and professional-grade features ensure maximum productivity for control center operations while maintaining clarity and efficiency in all user interactions.
+Key design principles:
+- **FATCON Widget**: Exclusive to ground control for system-wide fatigue management
+- **Independent Applications**: Each app performs one function excellently
+- **No Inter-App Dependencies**: Clean separation of concerns
+- **Role-Based Features**: UI adapts to user role and responsibilities
+- **Professional Desktop Environment**: Optimized for control center operations
 
-The low-fidelity wireframes demonstrate a clear information hierarchy and intuitive navigation patterns across all applications, ensuring users can efficiently manage complex aviation operations with confidence and precision.
+This architecture ensures that ground control can effectively manage critical system-wide fatigue situations while other users focus on their specific operational tasks through dedicated, purpose-built applications.
 
 ---
 
