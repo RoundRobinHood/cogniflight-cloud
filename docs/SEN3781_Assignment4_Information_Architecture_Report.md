@@ -66,11 +66,11 @@ CogniFlight Cloud Platform
     │   └── Results Display
     │
     ├── Flights
-    │   ├── Flight Schedule
-    │   ├── Route Planning
-    │   ├── Aircraft Assignment
-    │   ├── Status Tracking
-    │   └── Flight History
+    │   ├── Flight List
+    │   ├── Flight Details
+    │   ├── Status Monitoring
+    │   ├── Flight History
+    │   └── Report Generation
     │
     ├── Pilots
     │   ├── Pilot Registry
@@ -199,23 +199,23 @@ Start → Login → Open Pilots App
 - Schedule conflicts
 - Invitation criteria
 
-### 2.5 Flight Operations Task Flow: Flight Management
+### 2.5 Flight Operations Task Flow: Flight Monitoring
 
 ```
 Start → Login → Open Flights App
-→ View Flight Schedule
-→ Create/Modify Flight Plans
-→ Assign Aircraft and Crew
+→ View Flight List
+→ Select Flight for Details
 → Monitor Flight Status
-→ Update Flight Information
-→ Generate Reports
+→ View Flight Information
+→ Generate Flight Report
+→ Export Report Data
 ```
 
 **Decision Points:**
-- Route selection
-- Aircraft availability
-- Crew assignment
-- Status updates
+- Flight selection
+- Report parameters
+- Export format
+- Status monitoring
 
 ---
 
@@ -417,10 +417,10 @@ Expanded Widget View (Ground Control Click):
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ Flights                                                            - □ X   │
-├───────┬────────┬──────────┬───────────────────────────────────────────────┤
-│ Live  │ Schedule │ Planning │                                               │
-├───────┴────────┴──────────┴───────────────────────────────────────────────┤
-│ [+ New Flight] [Import Schedule] [Filter ▼] [Export]                       │
+├───────┬────────┬───────────┬──────────────────────────────────────────────┤
+│ Live  │ History │ Reports   │                                              │
+├───────┴────────┴───────────┴──────────────────────────────────────────────┤
+│ [Search: _______________] [Filter ▼] [Export] [Generate Report]            │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │ ┌─┬────────┬──────────┬────────┬────────┬─────────┬────────┬──────┬─────┐│
@@ -432,7 +432,7 @@ Expanded Widget View (Ground Control Click):
 │ │□│CF1237  │DFW → ATL │17:00   │20:15   │B757-200 │Brown.M │Sched │ Low ││
 │ └─┴────────┴──────────┴────────┴────────┴─────────┴────────┴──────┴─────┘│
 │                                                                              │
-│ [View Details] [Edit Flight] [Assign Crew] [Update Status]                 │
+│ [View Details] [Monitor] [Generate Report] [Export Data]                   │
 │                                                                              │
 │ Showing 4 of 247 flights                           Pages: [1] 2 3 ... 42   │
 └─────────────────────────────────────────────────────────────────────────────┘
