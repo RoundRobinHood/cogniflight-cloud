@@ -6,9 +6,9 @@
 
 ## Executive Summary
 
-CogniFlight Cloud is an advanced aviation management platform that provides a comprehensive desktop-style web application for flight operations, pilot management, and real-time edge node monitoring. This report details the information architecture and UX/UI design for the platform, focusing on creating an intuitive, responsive, and accessible interface that serves multiple user roles including ground control operators, flight managers, pilots, and system administrators.
+CogniFlight Cloud is an advanced aviation management platform that provides a comprehensive desktop-style web application for flight operations, pilot management, and real-time edge node monitoring. This report details the information architecture and UX/UI design for the platform, focusing on creating an intuitive, responsive, and accessible interface that serves four distinct user roles: Air Traffic Controllers (ATC), Pilots, Administrators, and Data Analysts.
 
-The platform leverages a unique desktop paradigm within a web browser, following a desktop-first approach optimized for control center operations and professional aviation management workstations. Each application is designed to perform its specific function independently, with the FATCON widget providing critical fatigue monitoring exclusively for ground control operations to manage system-wide pilot fatigue situations.
+The platform leverages a unique desktop paradigm within a web browser, following a desktop-first approach optimized for control center operations and professional aviation management workstations. Each application is designed to perform its specific function independently, with the FATCON widget providing critical fatigue monitoring exclusively for Air Traffic Controller (ATC) operations to manage system-wide pilot fatigue situations.
 
 ---
 
@@ -32,7 +32,7 @@ CogniFlight Cloud Platform
 │   │
 │   ├── Taskbar
 │   │   ├── Start Menu
-│   │   ├── FATCON Widget (Ground Control Only)
+│   │   ├── FATCON Widget (ATC Only)
 │   │   ├── Pinned Applications
 │   │   ├── Active Windows
 │   │   ├── System Tray
@@ -45,7 +45,7 @@ CogniFlight Cloud Platform
 │   │   └── Snap-to-Edge
 │   │
 │   └── Alert & Notification System
-│       ├── FATCON Critical Alerts (Ground Control)
+│       ├── FATCON Critical Alerts (ATC)
 │       ├── Toast Notifications
 │       ├── Modal Dialogs
 │       └── Notification Panel
@@ -100,7 +100,7 @@ CogniFlight Cloud Platform
 
 **Level 1: Desktop Environment**
 - Primary workspace
-- FATCON monitoring (Ground Control role only)
+- FATCON monitoring (ATC role only)
 - Application launcher
 - System notifications
 
@@ -118,10 +118,10 @@ CogniFlight Cloud Platform
 
 ## 2. TASK FLOWS - User Journey Mappings
 
-### 2.1 Ground Control Operator Task Flow: System-Wide Fatigue Monitoring
+### 2.1 Air Traffic Controller Task Flow: System-Wide Fatigue Monitoring
 
 ```
-Start → Login (Ground Control Role) → Desktop Loads with FATCON Widget
+Start → Login (ATC Role) → Desktop Loads with FATCON Widget
 → FATCON Widget Shows System-Wide Pilot Fatigue Status
 → Monitor Overall Fatigue Levels Across All Active Pilots
 → FATCON Level Becomes Critical (Too Many Fatigued Pilots)
@@ -178,7 +178,7 @@ Start → Login → Open Users App
 - Invitation approval
 - Activity review
 
-### 2.4 Pilot Manager Task Flow: Pilot Management
+### 2.4 Administrator Task Flow: Pilot Management
 
 ```
 Start → Login → Open Pilots App
@@ -196,7 +196,7 @@ Start → Login → Open Pilots App
 - Schedule conflicts
 - Invitation criteria
 
-### 2.5 Flight Operations Task Flow: Flight Monitoring
+### 2.5 Pilot Task Flow: Flight Monitoring
 
 ```
 Start → Login → Open Flights App
@@ -218,11 +218,11 @@ Start → Login → Open Flights App
 
 ## 3. LOW-FIDELITY WIREFRAMES - Key Interface Designs
 
-### 3.1 Desktop Environment with FATCON Widget (Ground Control View)
+### 3.1 Desktop Environment with FATCON Widget (ATC View)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ CogniFlight Cloud Desktop - Ground Control                         - □ X    │
+│ CogniFlight Cloud Desktop - Air Traffic Controller                 - □ X    │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │                    ┌──────────────────────────────────┐                     │
@@ -255,7 +255,7 @@ Start → Login → Open Flights App
     FATCON Widget showing system-wide fatigue status
 ```
 
-### 3.2 FATCON Widget States (Ground Control Only)
+### 3.2 FATCON Widget States (ATC Only)
 
 ```
 Normal Operations:              Warning Level:                  Critical Level:
@@ -267,7 +267,7 @@ Normal Operations:              Warning Level:                  Critical Level:
 └─────────────────┘            └─────────────────┘            └─────────────────┘
      (Green)                        (Yellow)                        (Red)
 
-Expanded Widget View (Ground Control Click):
+Expanded Widget View (ATC Click):
 ┌──────────────────────────────────┐
 │ System Fatigue Management        │
 ├──────────────────────────────────┤
@@ -311,7 +311,7 @@ Expanded Widget View (Ground Control Click):
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ [Start] │ Dashboard │ MLEngine │ Flights │               🔔(2) 10:24 AM    │
 └─────────────────────────────────────────────────────────────────────────────┘
-         Note: No FATCON widget for non-ground control users
+         Note: No FATCON widget for non-ATC users
 ```
 
 ### 3.4 Dashboard Application
@@ -477,10 +477,10 @@ Expanded Widget View (Ground Control Click):
 │ ┌─┬──────────────┬──────────────────┬──────────┬─────────┬──────┬───────┐│
 │ │□│Name          │Email             │Role      │Status   │Last  │Actions││
 │ ├─┼──────────────┼──────────────────┼──────────┼─────────┼──────┼───────┤│
-│ │□│John Smith    │j.smith@cf.com    │Ground Ctl│Active   │2 hrs │[⋮]   ││
-│ │□│Jane Doe      │j.doe@cf.com      │Manager   │Active   │5 min │[⋮]   ││
+│ │□│John Smith    │j.smith@cf.com    │ATC       │Active   │2 hrs │[⋮]   ││
+│ │□│Jane Doe      │j.doe@cf.com      │Admin     │Active   │5 min │[⋮]   ││
 │ │□│Bob Wilson    │b.wilson@cf.com   │Analyst   │Active   │1 day │[⋮]   ││
-│ │□│Alice Brown   │a.brown@cf.com    │Operator  │Active   │3 hrs │[⋮]   ││
+│ │□│Alice Brown   │a.brown@cf.com    │Pilot     │Active   │3 hrs │[⋮]   ││
 │ └─┴──────────────┴──────────────────┴──────────┴─────────┴──────┴───────┘│
 │                                                                              │
 │ [Change Role] [Deactivate] [Reset Password]                                │
@@ -502,7 +502,7 @@ Expanded Widget View (Ground Control Click):
 │  Email:             [john.doe@cogniflight.com______________________]       │
 │  Phone:             [+1 555-0123____________________________________]       │
 │  Department:        [Operations ▼]                                          │
-│  Role:              Ground Control (read-only)                              │
+│  Role:              ATC (read-only)                                         │
 │                                                                              │
 │  Change Password                                                            │
 │  Current Password:  [••••••••••••••••••••••••••••••••________________]       │
@@ -537,8 +537,8 @@ Expanded Widget View (Ground Control Click):
 ### 4.2 FATCON Widget Display Rules
 
 **Role-Based Display:**
-- Ground Control Users: FATCON widget always visible in taskbar
-- Other Users: No FATCON widget displayed
+- ATC Users: FATCON widget always visible in taskbar
+- Other Users (Pilot, Admin, Data Analyst): No FATCON widget displayed
 - Widget updates every 15 seconds with system-wide data
 - Expandable for detailed fatigue breakdown
 
@@ -561,14 +561,14 @@ Window Snap Zones:
 
 ## 5. TECHNICAL IMPLEMENTATION
 
-### 5.1 FATCON System Architecture (Ground Control Only)
+### 5.1 FATCON System Architecture (ATC Only)
 
 ```javascript
-// FATCON Widget - Ground Control Operations
+// FATCON Widget - ATC Operations
 class FatconWidget {
   constructor(userRole) {
-    // Only initialize for ground control role
-    if (userRole !== 'GROUND_CONTROL') {
+    // Only initialize for ATC role
+    if (userRole !== 'ATC') {
       return null;
     }
     
@@ -690,8 +690,8 @@ class Desktop {
     this.apps = this.loadApps();
     this.fatconWidget = null;
     
-    // Only create FATCON widget for ground control
-    if (this.user.role === 'GROUND_CONTROL') {
+    // Only create FATCON widget for ATC
+    if (this.user.role === 'ATC') {
       this.fatconWidget = new FatconWidget(this.user.role);
     }
   }
@@ -699,7 +699,7 @@ class Desktop {
   renderTaskbar() {
     const taskbarElements = [
       this.renderStartButton(),
-      this.user.role === 'GROUND_CONTROL' ? this.renderFatconWidget() : null,
+      this.user.role === 'ATC' ? this.renderFatconWidget() : null,
       this.renderPinnedApps(),
       this.renderActiveWindows(),
       this.renderSystemTray()
@@ -724,7 +724,7 @@ class Desktop {
 ### 5.4 Alert System for Critical Operations
 
 ```javascript
-// Alert system primarily for ground control operations
+// Alert system primarily for ATC operations
 class AlertManager {
   constructor() {
     this.alerts = [];
@@ -769,7 +769,7 @@ class AlertManager {
 
 ## 6. USER EXPERIENCE DESIGN
 
-### 6.1 Ground Control Operations Focus
+### 6.1 Air Traffic Control Operations Focus
 
 **FATCON System Benefits:**
 - Real-time system-wide fatigue monitoring
@@ -808,7 +808,7 @@ class AlertManager {
 
 ### 7.1 FATCON System Testing
 
-**Ground Control Specific Tests:**
+**ATC Specific Tests:**
 - System capacity calculations
 - Threshold breach detection
 - Alert generation timing
@@ -841,16 +841,16 @@ const performanceMetrics = {
 
 ## CONCLUSION
 
-The CogniFlight Cloud platform delivers a sophisticated aviation management system with specialized applications for distinct operational needs. The FATCON widget provides critical system-wide fatigue monitoring exclusively for ground control operations, enabling proactive management of pilot fatigue at a system level when capacity thresholds are exceeded.
+The CogniFlight Cloud platform delivers a sophisticated aviation management system with specialized applications for distinct operational needs. The FATCON widget provides critical system-wide fatigue monitoring exclusively for Air Traffic Controller (ATC) operations, enabling proactive management of pilot fatigue at a system level when capacity thresholds are exceeded.
 
 Key design principles:
-- **FATCON Widget**: Exclusive to ground control for system-wide fatigue management
+- **FATCON Widget**: Exclusive to ATC for system-wide fatigue management
 - **Independent Applications**: Each app performs one function excellently
 - **No Inter-App Dependencies**: Clean separation of concerns
-- **Role-Based Features**: UI adapts to user role and responsibilities
+- **Role-Based Features**: UI adapts to four distinct user roles (ATC, Pilot, Admin, Data Analyst)
 - **Professional Desktop Environment**: Optimized for control center operations
 
-This architecture ensures that ground control can effectively manage critical system-wide fatigue situations while other users focus on their specific operational tasks through dedicated, purpose-built applications.
+This architecture ensures that Air Traffic Controllers can effectively manage critical system-wide fatigue situations while other users (Pilots, Admins, and Data Analysts) focus on their specific operational tasks through dedicated, purpose-built applications.
 
 ---
 
