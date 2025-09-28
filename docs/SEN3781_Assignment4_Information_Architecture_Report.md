@@ -88,10 +88,7 @@ CogniFlight Cloud Platform
     │
     └── Settings
         ├── Profile Configuration
-        ├── System Preferences
-        ├── Display Options
-        ├── Notification Preferences
-        └── Integration Settings
+        └── Theme Selection
 ```
 
 ### 1.2 Navigation Hierarchy Levels
@@ -498,23 +495,26 @@ Expanded Widget View (Ground Control Click):
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ Settings                                                           - □ X   │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ ┌──────────────────┬────────────────────────────────────────────┐          │
-│ │ Categories       │ Profile Settings                            │          │
-│ ├──────────────────┤                                            │          │
-│ │ ▼ Profile        │ Personal Information                        │          │
-│ │   • Personal     │                                            │          │
-│ │   • Password     │ Full Name:    [John Doe_______________]    │          │
-│ │                  │ Email:        [john.doe@cogniflight.com]  │          │
-│ │ ▶ System         │ Department:   [Operations ▼]              │          │
-│ │                  │ Role:         Ground Control (read-only)   │          │
-│ │ ▶ Display        │                                            │          │
-│ │                  │ Change Password                            │          │
-│ │ ▶ Notifications  │ Current:      [••••••••••••••••••••]      │          │
-│ │                  │ New:          [____________________]      │          │
-│ │ ▶ Integration    │ Confirm:      [____________________]      │          │
-│ │                  │                                            │          │
-│ │                  │ [Save Changes] [Cancel]                    │          │
-│ └──────────────────┴────────────────────────────────────────────┘          │
+│                                                                              │
+│  Profile Configuration                                                      │
+│                                                                              │
+│  Full Name:         [John Doe_______________________________________]       │
+│  Email:             [john.doe@cogniflight.com______________________]       │
+│  Phone:             [+1 555-0123____________________________________]       │
+│  Department:        [Operations ▼]                                          │
+│  Role:              Ground Control (read-only)                              │
+│                                                                              │
+│  Change Password                                                            │
+│  Current Password:  [••••••••••••••••••••••••••••••••________________]       │
+│  New Password:      [_______________________________________________]       │
+│  Confirm Password:  [_______________________________________________]       │
+│                                                                              │
+│  Theme Selection                                                            │
+│  ( ) Blue Theme - Classic professional interface                            │
+│  (•) Galaxy Theme - Modern dark theme with space-inspired visuals          │
+│                                                                              │
+│  [Save Changes] [Cancel]                                                    │
+│                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
