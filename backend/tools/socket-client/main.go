@@ -180,7 +180,7 @@ func main() {
 	client := &http.Client{
 		Jar: jar,
 	}
-	body := fmt.Sprintf(`{"username": %q, "pwd": %q}`, username, pwd)
+	body := fmt.Sprintf(`{"username": %q, "password": %q}`, username, pwd)
 	resp, err := client.Post(api_url+"/login", "application/json", strings.NewReader(body))
 	if err != nil {
 		fmt.Print("Login request error:", err, "\r\n")

@@ -17,8 +17,8 @@ func Login(filestore filesystem.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		l := jlogging.MustGet(c)
 		var req struct {
-			Username string `json:"username,required"`
-			Password string `json:"password,required"`
+			Username string `json:"username" binding:"required"`
+			Password string `json:"password" binding:"required"`
 		}
 
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -49,6 +49,12 @@ func Login(filestore filesystem.Store) gin.HandlerFunc {
 		var cred types.CredentialsEntry
 		if err := yaml.Unmarshal(bytes, &cred); err != nil {
 			l.Printf("login file contains invalid YAML: %v", err)
+			c.Status(401)
+			return
+		}
+
+		if !util.CheckPwd(cred.Password, req.Password) {
+			l.Printf("Wrong pwd")
 			c.Status(401)
 			return
 		}

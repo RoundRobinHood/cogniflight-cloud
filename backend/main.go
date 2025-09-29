@@ -13,15 +13,10 @@ import (
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/keys"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
 	"github.com/sourcegraph/jsonrpc2"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/gridfs"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -44,8 +39,6 @@ func main() {
 		log.Fatalf("Couldn't create gridFS bucket: %v", err)
 	}
 
-	userStore := db.DBUserStore{Col: database.Collection("users")}
-	keyStore := db.DBAPIKeyStore{Col: database.Collection("api_keys")}
 	fileStore := filesystem.Store{Col: database.Collection("vfs"), Bucket: bucket}
 
 	go func() {
@@ -79,52 +72,7 @@ func main() {
 
 					fmt.Println("Successfully initialized file system")
 				}
-
-				cur, err := userStore.Col.Find(context.Background(), bson.D{})
-
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to query user table: %v\n", err)
-
-				} else {
-					if !cur.Next(context.Background()) {
-						if err := cur.Err(); err != nil {
-							fmt.Fprintf(os.Stderr, "Failed to iterate user table query: %v\n", err)
-						} else {
-							// Landing here means there are no users
-							fmt.Fprintln(os.Stderr, "No users in the database. Checking for bootstrap credentials...")
-
-							user := os.Getenv("BOOTSTRAP_USERNAME")
-							email := os.Getenv("BOOTSTRAP_EMAIL")
-							phone := os.Getenv("BOOTSTRAP_PHONE")
-							pwd := os.Getenv("BOOTSTRAP_PWD")
-
-							hashed_pwd, err := util.HashPwd(pwd)
-							if err != nil {
-								fmt.Fprintln(os.Stderr, "Failed to hash pwd: ", err)
-								return
-							}
-
-							if user != "" && email != "" && phone != "" && pwd != "" {
-
-								if _, err := userStore.CreateUser(types.User{
-									Name:  user,
-									Role:  types.RoleSysAdmin,
-									Email: email,
-									Phone: phone,
-									Pwd:   hashed_pwd,
-								}, context.Background()); err != nil {
-									fmt.Fprintln(os.Stderr, "Failed to create user: ", err)
-									return
-								}
-								fmt.Fprintln(os.Stderr, "Bootstrap user created successfully")
-
-							}
-						}
-					}
-				}
-
 				break
-
 			}
 
 		}
@@ -153,11 +101,11 @@ func main() {
 	r.SetTrustedProxies(strings.Split(os.Getenv("TRUSTED_PROXIES"), ","))
 	r.Use(jlogging.Middleware())
 
-	r.POST("/check-api-key", keys.CheckKey(keyStore))
+	r.POST("/check-mqtt-user", auth.CheckMQTTUser(fileStore))
 	r.POST("/hi", func(c *gin.Context) { c.String(200, "hello") })
 
 	r.POST("/login", auth.Login(fileStore))
-	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(userStore, fileStore))
+	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore))
 
 	server := &http.Server{
 		Addr:    ":8080",

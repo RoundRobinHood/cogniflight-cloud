@@ -5,7 +5,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 )
 
-func InitCommands(userStore types.UserStore, filestore filesystem.Store) map[string]types.Command {
+func InitCommands(filestore filesystem.Store) map[string]types.Command {
 	cmds := []types.Command{
 		&CmdLs{FileStore: filestore},
 		&CmdMkdir{FileStore: filestore},
