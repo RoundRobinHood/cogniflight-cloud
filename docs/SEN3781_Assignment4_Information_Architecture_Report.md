@@ -28,14 +28,12 @@ CogniFlight Cloud Platform
 │   ├── Desktop Canvas
 │   │   ├── Application Icons
 │   │   ├── Context Menus
-│   │   └── Theme Selection (Galaxy/Blue)
+│   │   └── Theme Selection
 │   │
 │   ├── Taskbar
 │   │   ├── Start Menu
-│   │   ├── FATCON Widget (ATC Only - In Design)
 │   │   ├── Pinned Applications
 │   │   ├── Active Windows
-│   │   ├── System Tray
 │   │   └── Notification Bell
 │   │
 │   ├── Window Management System
@@ -85,6 +83,10 @@ CogniFlight Cloud Platform
     │   ├── Permission Control
     │   ├── Activity Monitoring
     │   └── User Invitation
+    |
+    ├── File Explorer
+    |
+    ├── Notepad
     │
     └── Settings
         ├── Profile Configuration
