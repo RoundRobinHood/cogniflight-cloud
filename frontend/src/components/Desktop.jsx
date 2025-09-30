@@ -34,14 +34,15 @@ function Desktop({ user, onLogout }) {
     
     return {
       userProfile: {
-        id: user.id,
         name: user.name,
-        email: user.email,
+        username: user.username,
+        email: user.email || `${user.username}@cogniflight.com`,
         phone: user.phone,
         role: user.role,
+        tags: user.tags,
         theme: 'dark',
         notifications: true,
-        loginTime: user?.loginTime
+        loginTime: user.loginTime
       },
       fileSystem: {
         currentPath: '/home/Documents',

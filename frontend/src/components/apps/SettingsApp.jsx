@@ -68,11 +68,11 @@ function SettingsApp() {
       </p>
 
       <div className="form-group">
-        <label htmlFor="id">User ID</label>
+        <label htmlFor="username">Username</label>
         <input
-          id="id"
+          id="username"
           type="text"
-          value={userProfile?.id || ''}
+          value={userProfile?.username || ''}
           readOnly
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -102,7 +102,7 @@ function SettingsApp() {
         <input
           id="email"
           type="email"
-          value={userProfile?.email || ''}
+          value={userProfile?.email || (userProfile?.username && `${userProfile.username}@cogniflight.com`) || ''}
           readOnly
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -133,6 +133,21 @@ function SettingsApp() {
           id="role"
           type="text"
           value={userProfile?.role || ''}
+          readOnly
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            color: '#ccc',
+            cursor: 'not-allowed'
+          }}
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="tags">Tags</label>
+        <input
+          id="tags"
+          type="text"
+          value={userProfile?.tags ? userProfile.tags.join(', ') : ''}
           readOnly
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.05)',

@@ -399,19 +399,6 @@ export class PipeCmdClient {
     }
   }
 
-  /**
-   * @typedef {Object} AuthStatus
-   * @property {type} string // always user
-   * @property {string} id // mongodb hex string
-   * @property {string} email
-   * @property {string} phone
-   * @property {string} role // sysadmin, atc or pilot
-   */
-
-  /**
-   * Fetches the current user's AuthStatus
-   * @returns {Promise<AuthStatus>}
-   */
   async whoami() {
     const cmd = await this.run_command("whoami");
 
