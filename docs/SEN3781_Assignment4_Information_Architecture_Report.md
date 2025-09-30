@@ -510,7 +510,7 @@ Login → Open Flights App
 │  │                                                          [View>]│        │
 │  └────────────────────────────────────────────────────────────────┘        │
 │                                                                              │
-│  Showing 3 of 23 functions                                    [Load More]  │
+│  Functions List                                              [Load More]  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -567,7 +567,7 @@ Login → Open Flights App
 │                                                                              │
 │ [View Details] [Monitor] [Generate Report] [Export Data]                   │
 │                                                                              │
-│ Showing 4 of 247 flights                           Pages: [1] 2 3 ... 42   │
+│ All Flights                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -595,7 +595,7 @@ Login → Open Flights App
 │                                                                              │
 │ [View Selected] [Update Status] [Generate Report]                          │
 │                                                                              │
-│ Showing 5 of 156 pilots                            Pages: [1] 2 3 ... 23   │
+│ All Pilots                                                               │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -621,7 +621,7 @@ Login → Open Flights App
 │                                                                              │
 │ [Change Role] [Deactivate] [Reset Password]                                │
 │                                                                              │
-│ Showing 4 of 102 users                              Pages: [1] 2 3 ... 15  │
+│ All Users                                                                │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
