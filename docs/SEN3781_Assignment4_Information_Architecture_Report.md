@@ -187,13 +187,13 @@ Click User Menu → Select Logout Option
 Login (ATC Role) → Desktop with Enhanced Monitoring Tools
 → Open Dashboard → View Live Aircraft Grid
 → Monitor Pilot Status Cards (Sorted by Fatigue Level)
+  → Each Card Shows:
+    • Live Pilot Video Feed from Edge Node
+    • Fatigue Level Progress Bar
+    • Cabin Environmental Data
+    • Flight Number & Tail Number
 → Identify Critical Fatigue Levels
-→ Click on Critical Flight Card
-→ View Detailed Information:
-  → Live Pilot Video Feed from Edge Node
-  → Fatigue Level Progress Bar
-  → Cabin Environmental Data
-  → Flight Status
+→ Click on Critical Flight Card for Detailed View
 → Take Action if Critical Thresholds Exceeded
 → Continue Monitoring Grid
 → Log Critical Events
@@ -312,11 +312,13 @@ Login → Open Flights App → View Assigned Flights
 ```
 Login → Open Dashboard App
 → View Live Aircraft Grid with Pilot Monitoring
+  → Cards Display Live Data:
+    • Live Pilot Video Feed
+    • Fatigue Progress Bars
+    • Environmental Conditions
 → Identify Patterns in Fatigue Levels
-→ Click on Flight Card → View Details:
-  • Live Pilot Feed
+→ Click on Flight Card for Detailed View:
   • Fatigue Trends
-  • Environmental Conditions
   • Historical Data
 → Analyze Correlation Patterns
 → Export Combined Data
@@ -421,7 +423,7 @@ Login → Open Dashboard App
 │ │ [View Details]   │  │ [View Details]   │  │ [View Details]   │         │
 │ └──────────────────┘  └──────────────────┘  └──────────────────┘         │
 │                                                                              │
-│ Grid sorted by fatigue level (highest first) • Auto-refresh every 5 seconds│
+│ Grid sorted by fatigue level (highest first) • Live data streaming        │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
