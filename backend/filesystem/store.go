@@ -207,6 +207,9 @@ func (s Store) WriteDirectory(ctx context.Context, parentID primitive.ObjectID, 
 	}
 	for _, entry := range parent.Entries {
 		dir := types.FsEntry{}
+		if entry.Name != directoryName {
+			continue
+		}
 		if err := s.Col.FindOne(ctx, bson.M{"_id": entry.RefID}).Decode(&dir); err != nil {
 			if err != mongo.ErrNoDocuments {
 				return nil, err
