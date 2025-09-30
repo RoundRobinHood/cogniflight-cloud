@@ -159,7 +159,7 @@ function StartMenu({ isOpen, onClose }) {
               <User size={20} />
             </div>
             <div className="start-menu-user-info">
-              <div className="start-menu-user-name">{systemState.userProfile.name}</div>
+              <div className="start-menu-user-name">{systemState.userProfile.username}</div>
               <div className="start-menu-user-email">{systemState.userProfile.email}</div>
             </div>
           </div>

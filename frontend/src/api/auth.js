@@ -18,12 +18,14 @@ export async function Login({ username, password }) {
   switch (response.status) {
     case 200:
       return { authorized: true, reason: 200 };
-    case 400:
+    case 400: {
+      const response_body = await response.json().catch(() => ({}));
       return {
         authorized: false,
         reason: 400,
         message: response_body.error ?? "invalid request",
       };
+    }
     case 401:
       return { authorized: false, reason: 401 };
     case 403:
