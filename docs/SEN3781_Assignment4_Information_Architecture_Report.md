@@ -187,13 +187,13 @@ Click User Menu → Select Logout Option
 Login (ATC Role) → Desktop with Enhanced Monitoring Tools
 → Open Dashboard → View Live Aircraft Grid
 → Monitor Pilot Status Cards (Sorted by Fatigue Level)
-→ Identify Critical Fatigue (85%+ on Red Progress Bar)
-→ Click on Critical Flight Card (e.g., CF1234)
+→ Identify Critical Fatigue Levels
+→ Click on Critical Flight Card
 → View Detailed Information:
   → Live Pilot Video Feed from Edge Node
   → Fatigue Level Progress Bar
-  → Cabin Environmental Data (Temp/Humidity/Pressure)
-  → Flight Route and Status
+  → Cabin Environmental Data
+  → Flight Status
 → Take Action if Critical Thresholds Exceeded
 → Continue Monitoring Grid
 → Log Critical Events
@@ -209,23 +209,22 @@ Login (ATC Role) → Desktop with Enhanced Monitoring Tools
 
 ```
 Login → Open MLEngine App → View Function List
-→ Use Search Bar: "risk analysis"
-→ Browse Available Functions → Select "Risk Analysis"
+→ Search for Analysis Function
+→ Browse Available Functions → Select Function
 → View Function Details:
   • Description
   • Required Inputs
   • Expected Outputs
 → Enter Parameters:
-  • Flight ID: CF1234
-  • Departure: JFK
-  • Arrival: LAX
-  • Time: 14:30
+  • Flight Information
+  • Route Details
+  • Time Parameters
 → Execute Function → Processing Indicator
 → View Results:
-  • Risk Score: 72
-  • Category: High
-  • Factors: Weather, Traffic
-→ Export Results (JSON/CSV)
+  • Risk Score
+  • Category Assessment
+  • Contributing Factors
+→ Export Results
 → Return to Function List
 ```
 
@@ -238,19 +237,19 @@ Login → Open MLEngine App → View Function List
 #### 2.2.3 Administrator Task Flow: User Access Management
 
 ```
-Login → Open Users App → View Active Users (87)
-→ Search for Specific User: "j.doe"
-→ Select Jane Doe → View Details:
-  • Current Role: Pilot
-  • Last Active: 5 minutes ago
-  • Permissions: Standard
-→ Change Role to "Data Analyst"
+Login → Open Users App → View Active Users
+→ Search for Specific User
+→ Select User → View Details:
+  • Current Role
+  • Activity Status
+  • Permissions
+→ Modify Role Assignment
 → Update Permissions → Save Changes
 → System Sends Notification to User
 OR
 → Click "Invite User" → Enter Details:
-  • Email: new.user@cf.com
-  • Proposed Role: Pilot
+  • Email Address
+  • Proposed Role
 → Send Invitation → Track Pending Status
 ```
 
@@ -263,13 +262,13 @@ OR
 #### 2.2.4 Administrator Task Flow: Pilot Registry Management
 
 ```
-Login → Open Pilots App → View Registry (156 pilots)
-→ Filter: "Available" → Shows 42 Pilots
-→ Select Pilot: John Smith → View Details:
-  • License: ATP-234
-  • Aircraft: A320, A350
-  • Hours: 8,542
-  • Status: Available
+Login → Open Pilots App → View Registry
+→ Filter by Availability
+→ Select Pilot → View Details:
+  • License Information
+  • Aircraft Qualifications
+  • Flight Hours
+  • Current Status
 → Update Certification → Upload New Certificate
 → Verify Expiry Date → Save Changes
 OR
@@ -288,17 +287,17 @@ OR
 
 ```
 Login → Open Flights App → View Assigned Flights
-→ Filter: "My Flights" → See Personal Schedule
-→ Select Flight CF1234 → View Details:
-  • Route: JFK → LAX
-  • Aircraft: A320-214
-  • Departure: 14:30
-  • Status: Boarding
+→ Filter by Personal Schedule
+→ Select Flight → View Details:
+  • Route Information
+  • Aircraft Type
+  • Departure Time
+  • Current Status
 → Monitor Real-Time Updates
 → Generate Flight Report:
-  • Select Report Type: "Pre-Flight"
-  • Include: Weather, Route, Fuel
-→ Download Report (PDF)
+  • Select Report Type
+  • Include Relevant Data
+→ Download Report
 → Close Flight Details
 ```
 
@@ -313,14 +312,14 @@ Login → Open Flights App → View Assigned Flights
 ```
 Login → Open Dashboard App
 → View Live Aircraft Grid with Pilot Monitoring
-→ Identify Patterns in Fatigue Levels Across Flights
-→ Click on Flight CF1234 → View Details:
+→ Identify Patterns in Fatigue Levels
+→ Click on Flight Card → View Details:
   • Live Pilot Feed
-  • Fatigue Trends Over Time
-  • Cabin Environmental Conditions
-  • Historical Flight & Pilot Data
+  • Fatigue Trends
+  • Environmental Conditions
+  • Historical Data
 → Analyze Correlation Patterns
-→ Export Combined Flight/Pilot Data
+→ Export Combined Data
 → Generate Safety Reports
 → Return to Grid View
 ```
@@ -387,12 +386,11 @@ Login → Open Dashboard App
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ Dashboard - Live Aircraft Monitoring                              - □ X   │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ Active Flights: 47 | Critical: 3 | Warning: 8 | Normal: 36    [Refresh ↻]  │
+│ Active Flights | Critical | Warning | Normal                               │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │ ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐         │
 │ │ CF1234 🔴        │  │ CF1235 🟡        │  │ CF1236 🟡        │         │
-│ │ JFK → LAX        │  │ LAX → ORD        │  │ ORD → DFW        │         │
 │ │ ┌──────────────┐ │  │ ┌──────────────┐ │  │ ┌──────────────┐ │         │
 │ │ │ 📹 Live Feed │ │  │ │ 📹 Live Feed │ │  │ │ 📹 Live Feed │ │         │
 │ │ │              │ │  │ │              │ │  │ │              │ │         │
@@ -409,7 +407,6 @@ Login → Open Dashboard App
 │                                                                              │
 │ ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐         │
 │ │ CF1237 🟢        │  │ CF1238 🟢        │  │ CF1239 🟢        │         │
-│ │ DFW → ATL        │  │ ATL → BOS        │  │ BOS → JFK        │         │
 │ │ ┌──────────────┐ │  │ ┌──────────────┐ │  │ ┌──────────────┐ │         │
 │ │ │ 📹 Live Feed │ │  │ │ 📹 Live Feed │ │  │ │ 📹 Live Feed │ │         │
 │ │ │              │ │  │ │              │ │  │ │              │ │         │
