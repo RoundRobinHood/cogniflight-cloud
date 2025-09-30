@@ -132,7 +132,7 @@ Start → Navigate to Platform URL → Login Screen Displayed
 ```
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[Start] --> B[Navigate to Platform]
     B --> C[Login Screen]
     C --> D[Enter Credentials]
@@ -166,7 +166,7 @@ Desktop Loaded → View Available Applications
 ```
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[Desktop Ready] --> B[View App Icons]
     B --> C{Select App}
     C -->|Double-Click| D[Open Window]
@@ -199,7 +199,7 @@ Open Settings App → View Current Profile
 ```
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[Open Settings] --> B[View Profile]
     B --> C{Edit?}
     C -->|Profile| D[Update Info]
@@ -226,7 +226,7 @@ Click User Menu → Select Logout Option
 ```
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[User Menu] --> B[Select Logout]
     B --> C{Confirm?}
     C -->|Yes| D[Disconnect WebSocket]
@@ -286,7 +286,7 @@ Login → Open MLEngine App → View Function List
 ```
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[Open MLEngine] --> B[Browse Functions]
     B --> C[Search/Filter]
     C --> D[Select Function]
@@ -329,7 +329,7 @@ OR
 ```
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[Open Users App] --> B[View Users]
     B --> C{Action?}
     C -->|Search| D[Find User]
@@ -370,7 +370,7 @@ OR
 ```
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[Open Pilots App] --> B[View Registry]
     B --> C[Filter/Search]
     C --> D{Action?}
@@ -410,7 +410,7 @@ Login → Open Flights App → View Assigned Flights
 ```
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[Open Flights App] --> B[View Assigned]
     B --> C[Filter Schedule]
     C --> D[Select Flight]
@@ -454,7 +454,7 @@ Login → Open Flights App
 ```
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[Open Flights App] --> B[View All Flights]
     B --> C[Search/Filter]
     C --> D[Select Flights]
