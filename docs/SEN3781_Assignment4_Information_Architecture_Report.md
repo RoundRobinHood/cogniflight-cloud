@@ -133,16 +133,11 @@ Start → Navigate to Platform URL → Login Screen Displayed
 
 ```mermaid
 flowchart LR
-    A[Start] --> B[Navigate to Platform]
-    B --> C[Login Screen]
-    C --> D[Enter Credentials]
-    D --> E{Validate}
-    E -->|Valid| F[WebSocket Connection]
+    A[Start] --> B[Navigate to Platform] --> C[Login Screen]
+    C --> D[Enter Credentials] --> E{Validate}
+    E -->|Valid| F[WebSocket Connection] --> G[Load User Profile]
+    G --> H[Initialize Desktop] --> I[Load Role UI] --> J[Ready]
     E -->|Invalid| C
-    F --> G[Load User Profile]
-    G --> H[Initialize Desktop]
-    H --> I[Load Role UI]
-    I --> J[Ready]
 ```
 
 **Decision Points:**
@@ -167,19 +162,13 @@ Desktop Loaded → View Available Applications
 
 ```mermaid
 flowchart LR
-    A[Desktop Ready] --> B[View App Icons]
-    B --> C{Select App}
-    C -->|Double-Click| D[Open Window]
-    C -->|Right-Click| E[Context Menu]
-    E --> D
-    D --> F[Window Management]
+    A[Desktop Ready] --> B[View App Icons] --> C{Select App}
+    C -->|Double-Click| D[Open Window] --> F[Window Management]
+    C -->|Right-Click| E[Context Menu] --> D
     F --> G{Action?}
-    G -->|Resize| F
-    G -->|Minimize| H[Taskbar]
-    G -->|Switch| I[Other Window]
+    G -->|Resize/Minimize| F
+    G -->|Switch| I[Other Window] --> F
     G -->|Close| B
-    H --> I
-    I --> F
 ```
 
 **Decision Points:**
@@ -200,17 +189,11 @@ Open Settings App → View Current Profile
 
 ```mermaid
 flowchart LR
-    A[Open Settings] --> B[View Profile]
-    B --> C{Edit?}
-    C -->|Profile| D[Update Info]
-    C -->|Theme| E[Select Theme]
-    C -->|Password| F[Change Password]
-    D --> G[Save Changes]
-    E --> G
-    F --> G
-    G --> H[Confirmation]
-    H --> I[Apply Theme]
-    I --> J[Close]
+    A[Open Settings] --> B[View Profile] --> C{Edit?}
+    C -->|Profile| D[Update Info] --> G[Save Changes]
+    C -->|Theme| E[Select Theme] --> G
+    C -->|Password| F[Change Password] --> G
+    G --> H[Confirmation] --> I[Apply Theme] --> J[Close]
 ```
 
 **Decision Points:**
@@ -227,13 +210,9 @@ Click User Menu → Select Logout Option
 
 ```mermaid
 flowchart LR
-    A[User Menu] --> B[Select Logout]
-    B --> C{Confirm?}
-    C -->|Yes| D[Disconnect WebSocket]
-    C -->|No| E[Cancel]
-    D --> F[Terminate Session]
-    F --> G[Login Screen]
-    E --> A
+    A[User Menu] --> B[Select Logout] --> C{Confirm?}
+    C -->|Yes| D[Disconnect WebSocket] --> F[Terminate Session] --> G[Login Screen]
+    C -->|No| E[Cancel] --> A
 ```
 
 ### 2.2 Role-Specific Task Flows
@@ -254,6 +233,16 @@ Login (ATC Role) → Desktop with Enhanced Monitoring Tools
 → Take Action if Critical Thresholds Exceeded
 → Continue Monitoring Grid
 → Log Critical Events
+```
+
+```mermaid
+flowchart LR
+    A[ATC Login] --> B[Open Dashboard] --> C[View Live Grid]
+    C --> D[Monitor Cards] --> E{Critical Level?}
+    E -->|Yes| F[View Details] --> G{Take Action?}
+    G -->|Yes| H[Execute Protocol] --> I[Log Event] --> D
+    G -->|No| I
+    E -->|No| D
 ```
 
 **Decision Points:**
@@ -287,20 +276,13 @@ Login → Open MLEngine App → View Function List
 
 ```mermaid
 flowchart LR
-    A[Open MLEngine] --> B[Browse Functions]
-    B --> C[Search/Filter]
-    C --> D[Select Function]
-    D --> E[View Details]
-    E --> F{Configure?}
-    F -->|Yes| G[Enter Parameters]
+    A[Open MLEngine] --> B[Browse Functions] --> C[Search/Filter]
+    C --> D[Select Function] --> E[View Details] --> F{Configure?}
+    F -->|Yes| G[Enter Parameters] --> H[Execute]
+    H --> I[Processing] --> J[View Results] --> K{Export?}
+    K -->|Yes| L[Export Data] --> M[Return to List]
+    K -->|No| M
     F -->|No| C
-    G --> H[Execute]
-    H --> I[Processing]
-    I --> J[View Results]
-    J --> K{Export?}
-    K -->|Yes| L[Export Data]
-    K -->|No| M[Return to List]
-    L --> M
 ```
 
 **Decision Points:**
@@ -330,19 +312,11 @@ OR
 
 ```mermaid
 flowchart LR
-    A[Open Users App] --> B[View Users]
-    B --> C{Action?}
-    C -->|Search| D[Find User]
-    C -->|Invite| E[New User Form]
-    D --> F[View Details]
-    F --> G{Modify?}
-    G -->|Role| H[Update Role]
-    G -->|Permissions| I[Update Permissions]
-    H --> J[Save Changes]
-    I --> J
-    J --> K[Notify User]
-    E --> L[Send Invitation]
-    L --> M[Track Status]
+    A[Open Users App] --> B[View Users] --> C{Action?}
+    C -->|Search| D[Find User] --> F[View Details] --> G{Modify?}
+    G -->|Role| H[Update Role] --> J[Save Changes] --> K[Notify User]
+    G -->|Permissions| I[Update Permissions] --> J
+    C -->|Invite| E[New User Form] --> L[Send Invitation] --> M[Track Status]
 ```
 
 **Decision Points:**
@@ -371,18 +345,11 @@ OR
 
 ```mermaid
 flowchart LR
-    A[Open Pilots App] --> B[View Registry]
-    B --> C[Filter/Search]
-    C --> D{Action?}
-    D -->|Select| E[View Pilot]
-    D -->|Invite| F[New Pilot Form]
-    E --> G[Check Details]
-    G --> H{Update?}
-    H -->|Yes| I[Update Certificate]
+    A[Open Pilots App] --> B[View Registry] --> C[Filter/Search] --> D{Action?}
+    D -->|Select| E[View Pilot] --> G[Check Details] --> H{Update?}
+    H -->|Yes| I[Update Certificate] --> K[Verify & Save]
     H -->|No| J[Back to List]
-    I --> K[Verify & Save]
-    F --> L[Enter Details]
-    L --> M[Send Invitation]
+    D -->|Invite| F[New Pilot Form] --> L[Enter Details] --> M[Send Invitation]
 ```
 
 **Decision Points:**
@@ -411,17 +378,10 @@ Login → Open Flights App → View Assigned Flights
 
 ```mermaid
 flowchart LR
-    A[Open Flights App] --> B[View Assigned]
-    B --> C[Filter Schedule]
-    C --> D[Select Flight]
-    D --> E[View Details]
-    E --> F{Action?}
-    F -->|Monitor| G[Real-Time Updates]
-    F -->|Report| H[Generate Report]
-    G --> E
-    H --> I[Select Type]
-    I --> J[Download]
-    J --> K[Close]
+    A[Open Flights App] --> B[View Assigned] --> C[Filter Schedule]
+    C --> D[Select Flight] --> E[View Details] --> F{Action?}
+    F -->|Monitor| G[Real-Time Updates] --> E
+    F -->|Report| H[Generate Report] --> I[Select Type] --> J[Download] --> K[Close]
 ```
 
 **Decision Points:**
@@ -455,18 +415,11 @@ Login → Open Flights App
 
 ```mermaid
 flowchart LR
-    A[Open Flights App] --> B[View All Flights]
-    B --> C[Search/Filter]
-    C --> D[Select Flights]
-    D --> E[View Details]
-    E --> F[Analyze Data]
+    A[Open Flights App] --> B[View All Flights] --> C[Search/Filter]
+    C --> D[Select Flights] --> E[View Details] --> F[Analyze Data]
     F --> G{Generate Report?}
-    G -->|Yes| H[Select Type]
-    G -->|No| J[Continue Analysis]
-    H --> I[Export Format]
-    I --> K[Save/Share]
-    J --> F
-    K --> L[Done]
+    G -->|Yes| H[Select Type] --> I[Export Format] --> K[Save/Share] --> L[Done]
+    G -->|No| J[Continue Analysis] --> F
 ```
 
 **Decision Points:**
