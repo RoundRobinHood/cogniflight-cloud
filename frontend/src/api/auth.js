@@ -1,6 +1,6 @@
 import paths from "./paths";
 
-export async function Login({ email, pwd }) {
+export async function Login({ username, password }) {
   let response;
   try {
     response = await fetch(paths.login, {
@@ -8,7 +8,7 @@ export async function Login({ email, pwd }) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, pwd }),
+      body: JSON.stringify({ username, password }),
     });
   } catch (err) {
     console.error("Failed to initialize login request:", err);
