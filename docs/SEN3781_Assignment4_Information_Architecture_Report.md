@@ -452,7 +452,7 @@ Login → Open Flights App → View Assigned Flights
 flowchart TB
     subgraph s1["Flight Selection"]
         direction LR
-        A[Open Flights App] --> B[View Assigned] --> C[Filter Schedule] --> D[Select Flight]
+        A[Open Flights App] --> B[View Flights] --> C[Filter] --> D[Select Flight]
     end
     subgraph s2["Flight Actions"]
         direction LR
