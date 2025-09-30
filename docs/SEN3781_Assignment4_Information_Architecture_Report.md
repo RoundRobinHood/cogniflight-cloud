@@ -131,6 +131,20 @@ Start → Navigate to Platform URL → Login Screen Displayed
 → Ready for Operations
 ```
 
+```mermaid
+flowchart TD
+    A[Start] --> B[Navigate to Platform]
+    B --> C[Login Screen]
+    C --> D[Enter Credentials]
+    D --> E{Validate}
+    E -->|Valid| F[WebSocket Connection]
+    E -->|Invalid| C
+    F --> G[Load User Profile]
+    G --> H[Initialize Desktop]
+    H --> I[Load Role UI]
+    I --> J[Ready]
+```
+
 **Decision Points:**
 - Credential validation
 - Session establishment
@@ -151,6 +165,23 @@ Desktop Loaded → View Available Applications
 → Use Start Menu for Additional Apps
 ```
 
+```mermaid
+flowchart TD
+    A[Desktop Ready] --> B[View App Icons]
+    B --> C{Select App}
+    C -->|Double-Click| D[Open Window]
+    C -->|Right-Click| E[Context Menu]
+    E --> D
+    D --> F[Window Management]
+    F --> G{Action?}
+    G -->|Resize| F
+    G -->|Minimize| H[Taskbar]
+    G -->|Switch| I[Other Window]
+    G -->|Close| B
+    H --> I
+    I --> F
+```
+
 **Decision Points:**
 - Application selection
 - Window arrangement
@@ -167,6 +198,21 @@ Open Settings App → View Current Profile
 → Close Settings
 ```
 
+```mermaid
+flowchart TD
+    A[Open Settings] --> B[View Profile]
+    B --> C{Edit?}
+    C -->|Profile| D[Update Info]
+    C -->|Theme| E[Select Theme]
+    C -->|Password| F[Change Password]
+    D --> G[Save Changes]
+    E --> G
+    F --> G
+    G --> H[Confirmation]
+    H --> I[Apply Theme]
+    I --> J[Close]
+```
+
 **Decision Points:**
 - Information accuracy
 - Theme preference
@@ -177,6 +223,17 @@ Open Settings App → View Current Profile
 Click User Menu → Select Logout Option
 → Confirm Logout → WebSocket Disconnected
 → Session Terminated → Return to Login Screen
+```
+
+```mermaid
+flowchart TD
+    A[User Menu] --> B[Select Logout]
+    B --> C{Confirm?}
+    C -->|Yes| D[Disconnect WebSocket]
+    C -->|No| E[Cancel]
+    D --> F[Terminate Session]
+    F --> G[Login Screen]
+    E --> A
 ```
 
 ### 2.2 Role-Specific Task Flows
@@ -228,6 +285,24 @@ Login → Open MLEngine App → View Function List
 → Return to Function List
 ```
 
+```mermaid
+flowchart TD
+    A[Open MLEngine] --> B[Browse Functions]
+    B --> C[Search/Filter]
+    C --> D[Select Function]
+    D --> E[View Details]
+    E --> F{Configure?}
+    F -->|Yes| G[Enter Parameters]
+    F -->|No| C
+    G --> H[Execute]
+    H --> I[Processing]
+    I --> J[View Results]
+    J --> K{Export?}
+    K -->|Yes| L[Export Data]
+    K -->|No| M[Return to List]
+    L --> M
+```
+
 **Decision Points:**
 - Function selection based on need
 - Parameter completeness
@@ -251,6 +326,23 @@ OR
   • Email Address
   • Proposed Role
 → Send Invitation → Track Pending Status
+```
+
+```mermaid
+flowchart TD
+    A[Open Users App] --> B[View Users]
+    B --> C{Action?}
+    C -->|Search| D[Find User]
+    C -->|Invite| E[New User Form]
+    D --> F[View Details]
+    F --> G{Modify?}
+    G -->|Role| H[Update Role]
+    G -->|Permissions| I[Update Permissions]
+    H --> J[Save Changes]
+    I --> J
+    J --> K[Notify User]
+    E --> L[Send Invitation]
+    L --> M[Track Status]
 ```
 
 **Decision Points:**
@@ -277,6 +369,22 @@ OR
 → Send Invitation → Await Acceptance
 ```
 
+```mermaid
+flowchart TD
+    A[Open Pilots App] --> B[View Registry]
+    B --> C[Filter/Search]
+    C --> D{Action?}
+    D -->|Select| E[View Pilot]
+    D -->|Invite| F[New Pilot Form]
+    E --> G[Check Details]
+    G --> H{Update?}
+    H -->|Yes| I[Update Certificate]
+    H -->|No| J[Back to List]
+    I --> K[Verify & Save]
+    F --> L[Enter Details]
+    L --> M[Send Invitation]
+```
+
 **Decision Points:**
 - Certification validity
 - Pilot availability
@@ -299,6 +407,21 @@ Login → Open Flights App → View Assigned Flights
   • Include Relevant Data
 → Download Report
 → Close Flight Details
+```
+
+```mermaid
+flowchart TD
+    A[Open Flights App] --> B[View Assigned]
+    B --> C[Filter Schedule]
+    C --> D[Select Flight]
+    D --> E[View Details]
+    E --> F{Action?}
+    F -->|Monitor| G[Real-Time Updates]
+    F -->|Report| H[Generate Report]
+    G --> E
+    H --> I[Select Type]
+    I --> J[Download]
+    J --> K[Close]
 ```
 
 **Decision Points:**
@@ -328,6 +451,22 @@ Login → Open Flights App
   • Performance Metrics
 → Export Reports in Various Formats
 → Save or Share Analysis Results
+```
+
+```mermaid
+flowchart TD
+    A[Open Flights App] --> B[View All Flights]
+    B --> C[Search/Filter]
+    C --> D[Select Flights]
+    D --> E[View Details]
+    E --> F[Analyze Data]
+    F --> G{Generate Report?}
+    G -->|Yes| H[Select Type]
+    G -->|No| J[Continue Analysis]
+    H --> I[Export Format]
+    I --> K[Save/Share]
+    J --> F
+    K --> L[Done]
 ```
 
 **Decision Points:**
