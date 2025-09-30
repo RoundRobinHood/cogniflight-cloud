@@ -134,12 +134,18 @@ Start → Navigate to Platform URL → Login Screen Displayed
 ```mermaid
 flowchart LR
     subgraph row1[" "]
-        A[Start] --> B[Navigate to Platform] --> C[Login Screen] --> D[Enter Credentials]
+        direction TB
+        A[Start] --> B[Navigate to Platform]
+        B --> C[Login Screen]
+        C --> D[Enter Credentials]
         D --> E{Validate}
     end
     subgraph row2[" "]
-        F[WebSocket Connection] --> G[Load User Profile] --> H[Initialize Desktop]
-        H --> I[Load Role UI] --> J[Ready]
+        direction TB
+        F[WebSocket Connection] --> G[Load User Profile]
+        G --> H[Initialize Desktop]
+        H --> I[Load Role UI]
+        I --> J[Ready]
     end
     E -->|Valid| F
     E -->|Invalid| C
@@ -168,11 +174,15 @@ Desktop Loaded → View Available Applications
 ```mermaid
 flowchart LR
     subgraph row1[" "]
-        A[Desktop Ready] --> B[View App Icons] --> C{Select App}
+        direction TB
+        A[Desktop Ready] --> B[View App Icons]
+        B --> C{Select App}
         C -->|Right-Click| E[Context Menu]
     end
     subgraph row2[" "]
-        D[Open Window] --> F[Window Management] --> G{Action?}
+        direction TB
+        D[Open Window] --> F[Window Management]
+        F --> G{Action?}
         G -->|Switch| I[Other Window]
     end
     C -->|Double-Click| D
@@ -201,13 +211,18 @@ Open Settings App → View Current Profile
 ```mermaid
 flowchart LR
     subgraph row1[" "]
-        A[Open Settings] --> B[View Profile] --> C{Edit?}
+        direction TB
+        A[Open Settings] --> B[View Profile]
+        B --> C{Edit?}
     end
     subgraph row2[" "]
+        direction TB
         D[Update Info] -.-> G[Save Changes]
         E[Select Theme] -.-> G
         F[Change Password] -.-> G
-        G --> H[Confirmation] --> I[Apply Theme] --> J[Close]
+        G --> H[Confirmation]
+        H --> I[Apply Theme]
+        I --> J[Close]
     end
     C -->|Profile| D
     C -->|Theme| E  
@@ -256,16 +271,21 @@ Login (ATC Role) → Desktop with Enhanced Monitoring Tools
 ```mermaid
 flowchart LR
     subgraph row1[" "]
-        A[ATC Login] --> B[Open Dashboard] --> C[View Live Grid] --> D[Monitor Cards]
+        direction TB
+        A[ATC Login] --> B[Open Dashboard]
+        B --> C[View Live Grid]
+        C --> D[Monitor Cards]
         D --> E{Critical Level?}
     end
     subgraph row2[" "]
-        F[View Details] --> G{Take Action?} --> H[Execute Protocol]
-        G --> I[Log Event]
+        direction TB
+        F[View Details] --> G{Take Action?}
+        G -->|Yes| H[Execute Protocol]
+        G -->|No| I[Log Event]
+        H --> I
     end
     E -->|Yes| F
     E -->|No| D
-    H --> I
     I --> D
 ```
 
@@ -301,22 +321,28 @@ Login → Open MLEngine App → View Function List
 ```mermaid
 flowchart LR
     subgraph row1[" "]
-        A[Open MLEngine] --> B[Browse Functions] --> C[Search/Filter] --> D[Select Function]
+        direction TB
+        A[Open MLEngine] --> B[Browse Functions]
+        B --> C[Search/Filter]
+        C --> D[Select Function]
     end
     subgraph row2[" "]
-        E[View Details] --> F{Configure?} --> G[Enter Parameters] --> H[Execute]
+        direction TB
+        E[View Details] --> F{Configure?}
+        F -->|Yes| G[Enter Parameters]
+        G --> H[Execute]
     end
     subgraph row3[" "]
-        I[Processing] --> J[View Results] --> K{Export?} --> L[Export Data]
-        K --> M[Return to List]
+        direction TB
+        I[Processing] --> J[View Results]
+        J --> K{Export?}
+        K -->|Yes| L[Export Data]
+        K -->|No| M[Return to List]
+        L --> M
     end
     D --> E
     F -->|No| C
-    F -->|Yes| G
     H --> I
-    K -->|Yes| L
-    K -->|No| M
-    L --> M
 ```
 
 **Decision Points:**
@@ -347,15 +373,22 @@ OR
 ```mermaid
 flowchart LR
     subgraph col1[" "]
-        A[Open Users App] --> B[View Users] --> C{Action?}
+        direction TB
+        A[Open Users App] --> B[View Users]
+        B --> C{Action?}
     end
     subgraph col2[" "]
-        D[Find User] --> F[View Details] --> G{Modify?}
-        E[New User Form] --> L[Send Invitation] --> M[Track Status]
+        direction TB
+        D[Find User] --> F[View Details]
+        F --> G{Modify?}
+        E[New User Form] --> L[Send Invitation]
+        L --> M[Track Status]
     end
     subgraph col3[" "]
-        H[Update Role] --> J[Save Changes] --> K[Notify User]
+        direction TB
+        H[Update Role] --> J[Save Changes]
         I[Update Permissions] --> J
+        J --> K[Notify User]
     end
     C -->|Search| D
     C -->|Invite| E
@@ -390,13 +423,20 @@ OR
 ```mermaid
 flowchart LR
     subgraph col1[" "]
-        A[Open Pilots App] --> B[View Registry] --> C[Filter/Search] --> D{Action?}
+        direction TB
+        A[Open Pilots App] --> B[View Registry]
+        B --> C[Filter/Search]
+        C --> D{Action?}
     end
     subgraph col2[" "]
-        E[View Pilot] --> G[Check Details] --> H{Update?}
-        F[New Pilot Form] --> L[Enter Details] --> M[Send Invitation]
+        direction TB
+        E[View Pilot] --> G[Check Details]
+        G --> H{Update?}
+        F[New Pilot Form] --> L[Enter Details]
+        L --> M[Send Invitation]
     end
     subgraph col3[" "]
+        direction TB
         I[Update Certificate] --> K[Verify & Save]
         J[Back to List]
     end
@@ -433,17 +473,22 @@ Login → Open Flights App → View Assigned Flights
 ```mermaid
 flowchart LR
     subgraph row1[" "]
-        A[Open Flights App] --> B[View Assigned] --> C[Filter Schedule]
+        direction TB
+        A[Open Flights App] --> B[View Assigned]
+        B --> C[Filter Schedule]
         C --> D[Select Flight]
     end
     subgraph row2[" "]
-        E[View Details] --> F{Action?} --> G[Real-Time Updates]
-        F --> H[Generate Report] --> I[Select Type] --> J[Download] --> K[Close]
+        direction TB
+        E[View Details] --> F{Action?}
+        F -->|Monitor| G[Real-Time Updates]
+        F -->|Report| H[Generate Report]
+        H --> I[Select Type]
+        I --> J[Download]
+        J --> K[Close]
     end
     D --> E
-    F -->|Monitor| G
     G --> E
-    F -->|Report| H
 ```
 
 **Decision Points:**
@@ -478,17 +523,25 @@ Login → Open Flights App
 ```mermaid
 flowchart LR
     subgraph row1[" "]
-        A[Open Flights App] --> B[View All Flights] --> C[Search/Filter] --> D[Select Flights]
+        direction TB
+        A[Open Flights App] --> B[View All Flights]
+        B --> C[Search/Filter]
+        C --> D[Select Flights]
     end
     subgraph row2[" "]
-        E[View Details] --> F[Analyze Data] --> G{Generate Report?} --> J[Continue Analysis]
+        direction TB
+        E[View Details] --> F[Analyze Data]
+        F --> G{Generate Report?}
+        G -->|No| J[Continue Analysis]
     end
     subgraph row3[" "]
-        H[Select Type] --> I[Export Format] --> K[Save/Share] --> L[Done]
+        direction TB
+        H[Select Type] --> I[Export Format]
+        I --> K[Save/Share]
+        K --> L[Done]
     end
     D --> E
     G -->|Yes| H
-    G -->|No| J
     J --> F
 ```
 
