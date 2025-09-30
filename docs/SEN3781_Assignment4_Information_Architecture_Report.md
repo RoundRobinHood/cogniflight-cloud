@@ -658,9 +658,9 @@ Login → Open Flights App
 
 ## 4. RESPONSIVE DESIGN STRATEGY
 
-### 4.1 Desktop-First Optimization
+### 4.1 Desktop-First UI Optimization
 
-**Primary Design Targets:**
+**Target Display Environments:**
 ```css
 /* Desktop-First Breakpoints */
 - Control Center: 2560px+ (4K monitors)
@@ -670,20 +670,52 @@ Login → Open Flights App
 - Tablet: 768px - 1023px (Emergency only)
 ```
 
-### 4.2 Application Window Management
+### 4.2 Window Management & UI Flexibility
 
-```
-Window Snap Zones:
-┌─────────────────────────────────┐
-│         Full Screen            │
-├────────────┬────────────────────┤
-│ Left Half  │   Right Half       │
-├────────────┼────────────────────┤
-│  Quarter   │    Quarter         │
-├────────────┼────────────────────┤
-│  Quarter   │    Quarter         │
-└────────────┴────────────────────┘
-```
+**Resizable Windows:**
+- All application windows support dynamic resizing from edges and corners
+- Minimum window sizes enforce usability (800x600px default)
+- Content reflows intelligently as windows resize
+- Scrollbars appear automatically when content exceeds viewport
+
+**Window Snap Zones:**
+- **Drag to Top**: Maximize window to full screen
+- **Drag to Left**: Snap to exactly 50% width on left side
+- **Drag to Right**: Snap to exactly 50% width on right side
+- Double-click title bar to maximize/restore
+- Windows remember last position and size when reopened
+
+### 4.3 Responsive Application UI
+
+**Adaptive Components:**
+- **Grid Layouts**: Dashboard cards automatically reflow based on window width
+  - 4K displays: 6+ cards per row
+  - Full HD: 4 cards per row  
+  - Compact: 2-3 cards per row
+  
+- **Tables**: Column visibility adapts to available width
+  - Essential columns always visible
+  - Secondary columns hide at smaller widths
+  - Horizontal scroll for data integrity
+
+- **Forms**: Responsive field layouts
+  - Wide screens: Multi-column forms
+  - Narrow screens: Single column stack
+  - Labels position dynamically (side vs. top)
+
+- **Navigation**: Collapsible menus and toolbars
+  - Full toolbar at standard widths
+  - Icon-only mode at compact widths
+  - Dropdown overflow menu for hidden items
+
+### 4.4 Typography & Spacing
+
+**Scalable UI Elements:**
+- Base font size: 14px (desktop) to 16px (4K)
+- Touch targets: Minimum 44x44px click areas
+- Padding scales proportionally with viewport
+- Line height adjusts for readability
+- Icon sizes scale with interface density
 
 ---
 
