@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math/rand"
@@ -8,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -33,12 +34,19 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func CmdWebhook(userStore types.UserStore) gin.HandlerFunc {
+func CmdWebhook(filestore filesystem.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		auth_status := auth.CheckAuthStatus(c)
-		available_commands := InitCommands(userStore)
+		auth_get, ok := c.Get("auth")
+		if !ok {
+			log.Println("missing auth middleware")
+			c.Status(401)
+			return
+		}
+		auth_status := auth_get.(types.AuthorizationStatus)
+		available_commands := InitCommands(filestore)
 
 		clients := map[string]types.ClientInfo{}
+		client_cancels := map[string]context.CancelFunc{}
 		wg := new(sync.WaitGroup)
 
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -52,8 +60,8 @@ func CmdWebhook(userStore types.UserStore) gin.HandlerFunc {
 		in_ch := make(chan types.WebSocketMessage)
 		out_ch := make(chan types.WebSocketMessage)
 		defer func() {
-			for _, client := range clients {
-				close(client.StopChannel)
+			for _, cancel := range client_cancels {
+				cancel()
 			}
 		}()
 
@@ -121,6 +129,8 @@ func CmdWebhook(userStore types.UserStore) gin.HandlerFunc {
 						if incoming.SetEnv != nil {
 							client_map = incoming.SetEnv
 						}
+
+						ctx, cancel := context.WithCancel(c.Request.Context())
 						new_client := types.ClientInfo{
 							Client: types.Client{
 								ClientID:   incoming.ClientID,
@@ -129,10 +139,11 @@ func CmdWebhook(userStore types.UserStore) gin.HandlerFunc {
 								Out:        out_ch,
 								AuthStatus: auth_status,
 							},
-							StopChannel:    make(chan struct{}),
+							Ctx:            ctx,
 							InputWaitGroup: new(sync.WaitGroup),
 						}
 						clients[incoming.ClientID] = new_client
+						client_cancels[incoming.ClientID] = cancel
 
 						wg.Add(1)
 						go func() {
@@ -163,12 +174,13 @@ func CmdWebhook(userStore types.UserStore) gin.HandlerFunc {
 				} else {
 					if incoming.MessageType == types.MsgDisconnect {
 						client.InputWaitGroup.Add(1)
-						go func() {
+						go func(cancel context.CancelFunc) {
 							defer client.InputWaitGroup.Done()
 							client.Client.In <- incoming
-							close(client.StopChannel)
-						}()
+							cancel()
+						}(client_cancels[incoming.ClientID])
 						delete(clients, incoming.ClientID)
+						delete(client_cancels, incoming.ClientID)
 					} else {
 						client.InputWaitGroup.Add(1)
 						go func() {

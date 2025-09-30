@@ -12,28 +12,28 @@ func (CmdEcho) Identifier() string {
 	return "echo"
 }
 
-func (CmdEcho) Run(args []string, in, out chan types.WebSocketMessage, env map[string]string, stopChannel chan struct{}, ClientID, CommandMsgID string, auth_status types.AuthorizationStatus) int {
-	out <- types.WebSocketMessage{
+func (CmdEcho) Run(ctx types.CommandContext) int {
+	ctx.Out <- types.WebSocketMessage{
 		MessageID:   GenerateMessageID(20),
-		ClientID:    ClientID,
+		ClientID:    ctx.ClientID,
 		MessageType: types.MsgOpenStdOut,
-		RefID:       CommandMsgID,
+		RefID:       ctx.CommandMsgID,
 	}
 
-	out_string := strings.Join(args[1:], " ")
-	out <- types.WebSocketMessage{
+	out_string := strings.Join(ctx.Args[1:], " ")
+	ctx.Out <- types.WebSocketMessage{
 		MessageID:   GenerateMessageID(20),
-		ClientID:    ClientID,
-		RefID:       CommandMsgID,
+		ClientID:    ctx.ClientID,
+		RefID:       ctx.CommandMsgID,
 		MessageType: types.MsgOutputStream,
 
 		OutputStream: out_string,
 	}
 
-	out <- types.WebSocketMessage{
+	ctx.Out <- types.WebSocketMessage{
 		MessageID:   GenerateMessageID(20),
-		ClientID:    ClientID,
-		RefID:       CommandMsgID,
+		ClientID:    ctx.ClientID,
+		RefID:       ctx.CommandMsgID,
 		MessageType: types.MsgCloseStdout,
 	}
 

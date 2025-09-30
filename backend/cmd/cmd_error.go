@@ -12,26 +12,26 @@ func (CmdError) Identifier() string {
 	return "error"
 }
 
-func (CmdError) Run(args []string, in, out chan types.WebSocketMessage, env map[string]string, stopChannel chan struct{}, ClientID, CommandMsgID string, auth_status types.AuthorizationStatus) int {
-	err_string := strings.Join(args[1:], " ")
-	out <- types.WebSocketMessage{
+func (CmdError) Run(ctx types.CommandContext) int {
+	err_string := strings.Join(ctx.Args[1:], " ")
+	ctx.Out <- types.WebSocketMessage{
 		MessageID:   GenerateMessageID(20),
-		ClientID:    ClientID,
-		RefID:       CommandMsgID,
+		ClientID:    ctx.ClientID,
+		RefID:       ctx.CommandMsgID,
 		MessageType: types.MsgOpenStderr,
 	}
-	out <- types.WebSocketMessage{
+	ctx.Out <- types.WebSocketMessage{
 		MessageID:   GenerateMessageID(20),
-		ClientID:    ClientID,
-		RefID:       CommandMsgID,
+		ClientID:    ctx.ClientID,
+		RefID:       ctx.CommandMsgID,
 		MessageType: types.MsgErrorStream,
 
 		ErrorStream: err_string,
 	}
-	out <- types.WebSocketMessage{
+	ctx.Out <- types.WebSocketMessage{
 		MessageID:   GenerateMessageID(20),
-		ClientID:    ClientID,
-		RefID:       CommandMsgID,
+		ClientID:    ctx.ClientID,
+		RefID:       ctx.CommandMsgID,
 		MessageType: types.MsgCloseStderr,
 	}
 

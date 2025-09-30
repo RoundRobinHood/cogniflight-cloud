@@ -13,19 +13,10 @@ import (
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/crud"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/db"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/edge"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/images"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/keys"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/pilot"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/settings"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
 	"github.com/sourcegraph/jsonrpc2"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/gridfs"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -48,12 +39,7 @@ func main() {
 		log.Fatalf("Couldn't create gridFS bucket: %v", err)
 	}
 
-	userStore := db.DBUserStore{Col: database.Collection("users")}
-	sessionStore := db.DBSessionStore{Col: database.Collection("sessions")}
-	signupTokenStore := db.DBSignupTokenStore{Col: database.Collection("signup_tokens")}
-	nodeStore := db.DBEdgeNodeStore{Col: database.Collection("edge_nodes")}
-	keyStore := db.DBAPIKeyStore{Col: database.Collection("api_keys")}
-	imageStore := db.DBUserImageStore{Col: database.Collection("user_images"), Bucket: bucket}
+	fileStore := filesystem.Store{Col: database.Collection("vfs"), Bucket: bucket}
 
 	go func() {
 		for {
@@ -62,51 +48,31 @@ func main() {
 				time.Sleep(2 * time.Second)
 			} else {
 				log.Println("[MongoDB] Connection established!")
-				cur, err := userStore.Col.Find(context.Background(), bson.D{})
 
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to query user table: %v\n", err)
-
-				} else {
-					if !cur.Next(context.Background()) {
-						if err := cur.Err(); err != nil {
-							fmt.Fprintf(os.Stderr, "Failed to iterate user table query: %v\n", err)
-						} else {
-							// Landing here means there are no users
-							fmt.Fprintln(os.Stderr, "No users in the database. Checking for bootstrap credentials...")
-
-							user := os.Getenv("BOOTSTRAP_USERNAME")
-							email := os.Getenv("BOOTSTRAP_EMAIL")
-							phone := os.Getenv("BOOTSTRAP_PHONE")
-							pwd := os.Getenv("BOOTSTRAP_PWD")
-
-							hashed_pwd, err := util.HashPwd(pwd)
-							if err != nil {
-								fmt.Fprintln(os.Stderr, "Failed to hash pwd: ", err)
-								return
-							}
-
-							if user != "" && email != "" && phone != "" && pwd != "" {
-
-								if _, err := userStore.CreateUser(types.User{
-									Name:  user,
-									Role:  types.RoleSysAdmin,
-									Email: email,
-									Phone: phone,
-									Pwd:   hashed_pwd,
-								}, context.Background()); err != nil {
-									fmt.Fprintln(os.Stderr, "Failed to create user: ", err)
-									return
-								}
-								fmt.Fprintln(os.Stderr, "Bootstrap user created successfully")
-
-							}
-						}
+				if _, err := fileStore.Lookup(context.Background(), nil, "/"); err != nil {
+					if err != os.ErrNotExist {
+						log.Fatal("Couldn't check for filesystem (exiting): ", err)
 					}
+
+					// No filesystem
+					log.Println("No filesystem found. Looking for bootstrap credentials for init...")
+
+					username := os.Getenv("BOOTSTRAP_USERNAME")
+					email := os.Getenv("BOOTSTRAP_EMAIL")
+					phone := os.Getenv("BOOTSTRAP_PHONE")
+					pwd := os.Getenv("BOOTSTRAP_PWD")
+
+					if username == "" || email == "" || phone == "" || pwd == "" {
+						log.Fatal("No bootstrap credentials found. Nothing to provide users. exiting")
+					}
+
+					if err := InitFilesystem(fileStore, username, email, phone, pwd); err != nil {
+						log.Fatal("Failed to init file system: ", err)
+					}
+
+					fmt.Println("Successfully initialized file system")
 				}
-
 				break
-
 			}
 
 		}
@@ -135,52 +101,11 @@ func main() {
 	r.SetTrustedProxies(strings.Split(os.Getenv("TRUSTED_PROXIES"), ","))
 	r.Use(jlogging.Middleware())
 
-	r.POST("/login", auth.Login(userStore, sessionStore))
-	r.POST("/logout", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-		types.RoleATC:      {},
-		types.RolePilot:    {},
-	}), auth.Logout(sessionStore))
-	r.POST("/signup-tokens", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{types.RoleSysAdmin: {}}), auth.CreateSignupToken(signupTokenStore))
-	r.GET("/signup-tokens/:id", auth.GetSignupToken(signupTokenStore))
-	r.POST("/signup", auth.Signup(userStore, signupTokenStore, sessionStore))
-	r.GET("/whoami", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-		types.RoleATC:      {},
-		types.RolePilot:    {},
-	}), auth.WhoAmI(sessionStore, userStore))
-	r.PATCH("/settings", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-		types.RoleATC:      {},
-		types.RolePilot:    {},
-	}), settings.Settings(userStore))
-	r.POST("/edge-nodes", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-	}), edge.CreateEdgeNode(nodeStore))
-	r.GET("/pilots/:id", auth.KeyAuthMiddleware(keyStore), pilot.FetchPilotByID(userStore))
-	r.POST("/my/images", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-		types.RoleATC:      {},
-		types.RolePilot:    {},
-	}), images.UploadImage(imageStore))
-	r.POST("/check-api-key", keys.CheckKey(keyStore))
+	r.POST("/check-mqtt-user", auth.CheckMQTTUser(fileStore))
 	r.POST("/hi", func(c *gin.Context) { c.String(200, "hello") })
-	r.GET("/cmd-socket", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-		types.RoleATC:      {},
-		types.RolePilot:    {},
-	}), cmd.CmdWebhook(userStore))
 
-	key_group := r.Group("/api-keys/", auth.UserAuthMiddleware(sessionStore, map[types.Role]struct{}{
-		types.RoleSysAdmin: {},
-	}))
-
-	key_repo := &keys.KeyRepository{Store: keyStore}
-
-	key_group.GET("", crud.List(key_repo, 10))
-	key_group.GET(":id", crud.Get(key_repo, "id"))
-	key_group.POST("", crud.Create(key_repo))
-	key_group.DELETE(":id", crud.Delete(key_repo, "id"))
+	r.POST("/login", auth.Login(fileStore))
+	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore))
 
 	server := &http.Server{
 		Addr:    ":8080",

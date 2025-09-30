@@ -157,11 +157,11 @@ func main() {
 		}
 	}()
 
-	fmt.Print("email: ")
+	fmt.Print("username: ")
 	should_echo.Set(true)
-	email := ""
+	username := ""
 	select {
-	case email = <-lines_in:
+	case username = <-lines_in:
 	case <-done:
 		return
 	}
@@ -180,7 +180,7 @@ func main() {
 	client := &http.Client{
 		Jar: jar,
 	}
-	body := fmt.Sprintf(`{"email": %q, "pwd": %q}`, email, pwd)
+	body := fmt.Sprintf(`{"username": %q, "password": %q}`, username, pwd)
 	resp, err := client.Post(api_url+"/login", "application/json", strings.NewReader(body))
 	if err != nil {
 		fmt.Print("Login request error:", err, "\r\n")
@@ -188,7 +188,7 @@ func main() {
 		return
 	}
 	if resp.StatusCode == 401 {
-		fmt.Print("Incorrect email/password", err, "\r\n")
+		fmt.Print("Incorrect username/password", err, "\r\n")
 		close(done)
 		return
 	}
