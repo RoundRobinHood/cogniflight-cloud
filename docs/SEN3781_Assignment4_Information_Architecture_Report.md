@@ -310,24 +310,28 @@ Login → Open Flights App → View Assigned Flights
 #### 2.2.6 Data Analyst Task Flow: Flight Data Analysis
 
 ```
-Login → Open Dashboard App
-→ View Live Aircraft Grid with Pilot Monitoring
-  → Cards Display Live Data:
-    • Live Pilot Video Feed
-    • Fatigue Progress Bars
-    • Environmental Conditions
-→ Identify Patterns in Fatigue Levels
-→ Click on Flight Card for Detailed View:
-  • Fatigue Trends
-  • Historical Data
-→ Analyze Correlation Patterns
-→ Export Combined Data
-→ Generate Safety Reports
-→ Return to Grid View
+Login → Open Flights App
+→ View Complete Flight List (All Flights)
+→ Use Search and Filter Options:
+  • By Date Range
+  • By Flight Status
+  • By Aircraft
+  • By Pilot
+→ Select Flights for Analysis
+→ View Flight Details:
+  • Historical Performance Data
+  • Fatigue Patterns
+  • Environmental Conditions
+→ Generate Reports:
+  • Safety Analysis
+  • Trend Reports
+  • Performance Metrics
+→ Export Reports in Various Formats
+→ Save or Share Analysis Results
 ```
 
 **Decision Points:**
-- Alert prioritization
+- Filter criteria selection
 - Threshold configuration
 - Monitoring focus
 - Data export needs
