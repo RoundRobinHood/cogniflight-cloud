@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { AlertTriangle, Shield, User } from 'lucide-react'
+import { useSystem } from './useSystem'
 
 // FATCON System Configuration
 const FATCON_LEVELS = {
@@ -56,53 +57,78 @@ const FATCON_LEVELS = {
 }
 
 function FatconWidget({ onLevelChange }) {
+  const { systemState } = useSystem()
   const [currentData, setCurrentData] = useState({
-    totalPilots: 100,
-    fatiguredPilots: 3,
+    mild: 0,
+    moderate: 0,
+    severe: 0,
+    totalFatigued: 0,
+    totalPilots: 0,
     fatconLevel: 5,
     lastUpdated: new Date()
   })
   
   const previousLevel = useRef(5)
 
-  // Calculate FATCON level based on percentage of fatigued pilots
-  const calculateFatconLevel = (fatiguredPilots, totalPilots) => {
-    const percentage = (fatiguredPilots / totalPilots) * 100
+  // Calculate FATCON level based on severity and count of fatigued pilots
+  const calculateFatconLevel = (mild, moderate, severe, totalPilots) => {
+    if (totalPilots === 0) return 5 // Default to lowest risk if no pilots
+    
+    // Weight the severity levels (severe has more impact than moderate, moderate more than mild)
+    const weightedFatigue = (mild * 1) + (moderate * 2) + (severe * 3)
+    const maxPossibleWeight = totalPilots * 3 // If all pilots were severe
+    const weightedPercentage = (weightedFatigue / maxPossibleWeight) * 100
+    
+    // Also consider total percentage of fatigued pilots
+    const totalFatigued = mild + moderate + severe
+    const totalPercentage = (totalFatigued / totalPilots) * 100
+    
+    // Combine weighted and total percentages (70% weight on severity, 30% on count)
+    const combinedScore = (weightedPercentage * 0.7) + (totalPercentage * 0.3)
     
     for (const [level, config] of Object.entries(FATCON_LEVELS)) {
-      if (percentage >= config.triggerRange[0] && percentage <= config.triggerRange[1]) {
+      if (combinedScore >= config.triggerRange[0] && combinedScore <= config.triggerRange[1]) {
         return parseInt(level)
       }
     }
     return 5 // Default to lowest risk
   }
 
-  // Simulate real-time pilot fatigue monitoring
-  useEffect(() => {
-    const updateFatconData = () => {
-      const totalPilots = Math.floor(Math.random() * 50) + 80 // 80-130 pilots
-      const fatiguredPilots = Math.floor(Math.random() * Math.floor(totalPilots * 0.6)) // 0-60% can be fatigued
-      const newLevel = calculateFatconLevel(fatiguredPilots, totalPilots)
-      
-      setCurrentData({
-        totalPilots,
-        fatiguredPilots,
-        fatconLevel: newLevel,
-        lastUpdated: new Date()
-      })
-    }
+  // Update FATCON data when received from socket or system state
+  const updateFatconData = (data) => {
+    const { mild = 0, moderate = 0, severe = 0, totalPilots = 0 } = data
+    const totalFatigued = mild + moderate + severe
+    const newLevel = calculateFatconLevel(mild, moderate, severe, totalPilots)
+    
+    setCurrentData({
+      mild,
+      moderate,
+      severe,
+      totalFatigued,
+      totalPilots,
+      fatconLevel: newLevel,
+      lastUpdated: new Date()
+    })
+  }
 
-    // Update every 15 seconds for demonstration
-    const interval = setInterval(updateFatconData, 15000)
-    
-    // Initial update after 3 seconds
-    const initialTimeout = setTimeout(updateFatconData, 3000)
-    
-    return () => {
-      clearInterval(interval)
-      clearTimeout(initialTimeout)
+  // Listen for FATCON updates from system state or socket
+  useEffect(() => {
+    // Check if system state has FATCON data
+    if (systemState?.fatconData) {
+      updateFatconData(systemState.fatconData)
     }
-  }, [])
+  }, [systemState?.fatconData])
+
+  // TODO: Add socket listener for real-time FATCON updates
+  // This will be implemented when socket integration is added
+  // Example:
+  // useEffect(() => {
+  //   const handleFatconUpdate = (data) => {
+  //     updateFatconData(data)
+  //   }
+  //   socket.on('fatcon:update', handleFatconUpdate)
+  //   return () => socket.off('fatcon:update', handleFatconUpdate)
+  // }, [])
 
   // Monitor level changes in a separate effect
   useEffect(() => {
@@ -123,7 +149,14 @@ function FatconWidget({ onLevelChange }) {
           <IconComponent size={16} />
         </div>
         <div className="fatcon-count">
-          {currentData.fatiguredPilots}
+          <div className="fatcon-count-total">{currentData.totalFatigued}</div>
+          {currentData.totalFatigued > 0 && (
+            <div className="fatcon-count-breakdown">
+              {currentData.mild > 0 && <span className="fatcon-mild">M:{currentData.mild}</span>}
+              {currentData.moderate > 0 && <span className="fatcon-moderate">Mo:{currentData.moderate}</span>}
+              {currentData.severe > 0 && <span className="fatcon-severe">S:{currentData.severe}</span>}
+            </div>
+          )}
         </div>
       </div>
       <div className="fatcon-details">
@@ -132,6 +165,9 @@ function FatconWidget({ onLevelChange }) {
         </div>
         <div className="fatcon-status">
           {currentConfig.status}
+          {currentData.totalPilots > 0 && (
+            <span className="fatcon-pilot-count"> ({currentData.totalPilots} pilots)</span>
+          )}
         </div>
       </div>
     </div>

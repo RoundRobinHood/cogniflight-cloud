@@ -32,10 +32,48 @@
 }
 
 .fatcon-count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 20px;
+}
+
+.fatcon-count-total {
   font-size: 14px;
   font-weight: var(--font-bold);
   color: var(--text-primary);
-  min-width: 20px;
+}
+
+.fatcon-count-breakdown {
+  display: flex;
+  gap: 4px;
+  font-size: 9px;
+  margin-top: 2px;
+  opacity: 0.9;
+}
+
+.fatcon-count-breakdown span {
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-weight: var(--font-medium);
+}
+
+.fatcon-mild {
+  background: rgba(234, 179, 8, 0.2);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.fatcon-moderate {
+  background: rgba(249, 115, 22, 0.2);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.fatcon-severe {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .fatcon-details {
@@ -54,6 +92,15 @@
   font-size: 10px;
   color: var(--text-tertiary);
   line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fatcon-pilot-count {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: var(--font-normal);
 }
 
 /* FATCON Level Colors */
