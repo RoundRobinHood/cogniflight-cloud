@@ -213,7 +213,7 @@ flowchart TB
         D[Update Info] --> G[Save Changes]
         E[Select Theme] --> G
         F[Change Password] --> G
-        G --> H[Confirmation] --> I[Apply Theme] --> J[Close]
+        G --> H[Confirmation] --> I[Apply Updates] --> J[Close]
     end
     C -->|Profile| D
     C -->|Theme| E  
