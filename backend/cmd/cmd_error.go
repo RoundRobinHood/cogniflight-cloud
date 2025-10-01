@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
@@ -14,26 +15,8 @@ func (CmdError) Identifier() string {
 
 func (CmdError) Run(ctx types.CommandContext) int {
 	err_string := strings.Join(ctx.Args[1:], " ")
-	ctx.Out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ctx.ClientID,
-		RefID:       ctx.CommandMsgID,
-		MessageType: types.MsgOpenStderr,
+	if _, err := ctx.Stderr.Write([]byte(err_string)); err != nil {
+		fmt.Fprintf(ctx.Stderr, "error: %v", err)
 	}
-	ctx.Out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ctx.ClientID,
-		RefID:       ctx.CommandMsgID,
-		MessageType: types.MsgErrorStream,
-
-		ErrorStream: err_string,
-	}
-	ctx.Out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ctx.ClientID,
-		RefID:       ctx.CommandMsgID,
-		MessageType: types.MsgCloseStderr,
-	}
-
 	return 1
 }

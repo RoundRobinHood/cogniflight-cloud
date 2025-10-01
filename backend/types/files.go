@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"os"
 	"slices"
 	"time"
 
@@ -141,4 +142,39 @@ type FsEntry struct {
 	Timestamps    FileTimestamps      `bson:"timestamps"`
 	Entries       FsReferenceList     `bson:"entries"`  // Represents a directory's contents as FsEntry references
 	FileReference *primitive.ObjectID `bson:"file_ref"` // GridFS file reference (for files)
+}
+
+type FsStat struct {
+	FileName    string
+	FileSize    int64
+	FileModTime time.Time
+	FileIsDir   bool
+}
+
+func (f FsStat) Name() string {
+	return f.FileName
+}
+
+func (f FsStat) Size() int64 {
+	return f.FileSize
+}
+
+func (f FsStat) Mode() os.FileMode {
+	if f.FileIsDir {
+		return os.ModeDir
+	} else {
+		return 0
+	}
+}
+
+func (f FsStat) ModTime() time.Time {
+	return f.FileModTime
+}
+
+func (f FsStat) IsDir() bool {
+	return f.FileIsDir
+}
+
+func (f FsStat) Sys() any {
+	return nil
 }

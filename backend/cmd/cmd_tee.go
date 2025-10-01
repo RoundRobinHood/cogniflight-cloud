@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
@@ -28,26 +29,22 @@ func (c *CmdTee) Run(ctx types.CommandContext) int {
 	for _, path := range ctx.Args[1:] {
 		folder_path, filename, err := filesystem.DirUp(path)
 		if err != nil {
-			error_ctx := ctx
-			error_ctx.Args = []string{"error", fmt.Sprintf("error: invalid path (%q): %v", path, err)}
-			return CmdError{}.Run(error_ctx)
+			fmt.Fprintf(ctx.Stderr, "error: invalid path (%q): %v", path, err)
+			return 1
 		}
 
 		if parent, err := c.FileStore.Lookup(ctx.Ctx, ctx.ParentTags, folder_path); err != nil {
-			error_ctx := ctx
-			error_ctx.Args = []string{"error", fmt.Sprintf("error: failed to get folder (%q): %v", folder_path, err)}
-			return CmdError{}.Run(error_ctx)
+			fmt.Fprintln(ctx.Stderr, "error: failed to get folder (%q): %v", folder_path, err)
+			return 1
 		} else {
 			// Early permissions check (to help avoid problems later)
 			if !parent.Permissions.IsAllowed(types.WriteMode, ctx.ParentTags) {
-				error_ctx := ctx
-				error_ctx.Args = []string{"error", fmt.Sprintf("error: cannot write to folder (%q): %v", folder_path, types.ErrCantAccessFs)}
-				return CmdError{}.Run(error_ctx)
+				fmt.Fprintf(ctx.Stderr, "error: cannot write to folder (%q): %v", err)
+				return 1
 			}
 			if !parent.Permissions.IsAllowed(types.ExecuteMode, ctx.ParentTags) {
-				error_ctx := ctx
-				error_ctx.Args = []string{"error", fmt.Sprintf("error: cannot descend into folder (%q): %v", folder_path, types.ErrCantAccessFs)}
-				return CmdError{}.Run(error_ctx)
+				fmt.Fprintf(ctx.Stderr, "error: cannot descend into folder (%q): %v", folder_path, err)
+				return 1
 			}
 			parents = append(parents, *parent)
 			filenames = append(filenames, filename)
@@ -57,108 +54,24 @@ func (c *CmdTee) Run(ctx types.CommandContext) int {
 	fileRef := primitive.NewObjectID()
 	stream, err := c.FileStore.Bucket.OpenUploadStreamWithID(fileRef, "")
 	if err != nil {
-		error_ctx := ctx
-		error_ctx.Args = []string{"error", fmt.Sprintf("error: failed to open upload stream: %v", err)}
-		return CmdError{}.Run(error_ctx)
+		fmt.Fprintf(ctx.Stderr, "error: failed to open upload stream: %v", err)
+		return 1
 	}
 
-	ctx.Out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ctx.ClientID,
-		RefID:       ctx.CommandMsgID,
-		MessageType: types.MsgOpenStdOut,
+	if _, err := io.Copy(stream, ctx.Stdin); err != nil {
+		fmt.Fprintf(ctx.Stderr, "error: failed to write to upload stream: %v", err)
+		stream.Close()
+		return 1
 	}
-	ctx.Out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ctx.ClientID,
-		RefID:       ctx.CommandMsgID,
-		MessageType: types.MsgOpenStdin,
+	if err := stream.Close(); err != nil {
+		fmt.Fprintf(ctx.Stderr, "error: failed to close upload stream: %v", err)
+		return 1
 	}
 
-	stdinOpen := true
-	for stdinOpen {
-		select {
-		case incoming := <-ctx.In:
-			switch incoming.MessageType {
-			case types.MsgInputStream:
-				if _, err := stream.Write([]byte(incoming.InputStream)); err != nil {
-					error_ctx := ctx
-					error_ctx.Args = []string{"error", fmt.Sprintf("error: failed to write to upload stream: %v", err)}
-					CmdError{}.Run(error_ctx)
-					stream.Close()
-					ctx.Out <- types.WebSocketMessage{
-						MessageID:   GenerateMessageID(20),
-						ClientID:    ctx.ClientID,
-						RefID:       ctx.CommandMsgID,
-						MessageType: types.MsgCloseStdout,
-					}
-					ctx.Out <- types.WebSocketMessage{
-						MessageID:   GenerateMessageID(20),
-						ClientID:    ctx.ClientID,
-						RefID:       ctx.CommandMsgID,
-						MessageType: types.MsgCloseStdin,
-					}
-					return 1
-				}
-				ctx.Out <- types.WebSocketMessage{
-					MessageID:   GenerateMessageID(20),
-					ClientID:    ctx.ClientID,
-					RefID:       ctx.CommandMsgID,
-					MessageType: types.MsgOutputStream,
-
-					OutputStream: incoming.InputStream,
-				}
-			case types.MsgInputEOF:
-				stdinOpen = false
-				if err := stream.Close(); err != nil {
-					error_ctx := ctx
-					error_ctx.Args = []string{"error", fmt.Sprintf("error: failed to finalize file upload: %v", err)}
-					CmdError{}.Run(error_ctx)
-					ctx.Out <- types.WebSocketMessage{
-						MessageID:   GenerateMessageID(20),
-						ClientID:    ctx.ClientID,
-						RefID:       ctx.CommandMsgID,
-						MessageType: types.MsgCloseStdout,
-					}
-
-					return 1
-				}
-			}
-		case <-ctx.Ctx.Done():
-			stdinOpen = false
-			ctx.Out <- types.WebSocketMessage{
-				MessageID:   GenerateMessageID(20),
-				ClientID:    ctx.ClientID,
-				RefID:       ctx.CommandMsgID,
-				MessageType: types.MsgCloseStdin,
-			}
-			ctx.Out <- types.WebSocketMessage{
-				MessageID:   GenerateMessageID(20),
-				ClientID:    ctx.ClientID,
-				RefID:       ctx.CommandMsgID,
-				MessageType: types.MsgCloseStdout,
-			}
-			error_ctx := ctx
-			if err := stream.Close(); err != nil {
-				error_ctx.Args = []string{"error", fmt.Sprintf("error: failed to finalize file upload: %v", err)}
-			} else {
-				error_ctx.Args = []string{"error", fmt.Sprintf("error: context end: %v", ctx.Ctx.Err())}
-			}
-			return CmdError{}.Run(error_ctx)
-		}
-	}
-
-	ctx.Out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ctx.ClientID,
-		RefID:       ctx.CommandMsgID,
-		MessageType: types.MsgCloseStdout,
-	}
 	for i := range parents {
 		if _, err := c.FileStore.WriteFile(ctx.Ctx, parents[i].ID, filenames[i], fileRef, ctx.ParentTags); err != nil {
-			error_ctx := ctx
-			error_ctx.Args = []string{"error", fmt.Sprintf("error: failed to write file (%q): %v", filenames[i], err)}
-			return CmdError{}.Run(error_ctx)
+			fmt.Fprintf(ctx.Stderr, "error: failed to write file (%q): %v", filenames[i], err)
+			return 1
 		}
 	}
 

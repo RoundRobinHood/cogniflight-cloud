@@ -356,8 +356,6 @@ func main() {
 		if len(strings.TrimSpace(input)) == 0 {
 			continue
 		}
-
-		should_echo.Set(false)
 		// Send command
 		env_map := map[string]string{}
 		env.Range(func(k, v any) bool { env_map[k.(string)] = v.(string); return true })
@@ -413,13 +411,9 @@ func main() {
 			}
 		}()
 
-		stdinOpen, stdoutOpen, stderrOpen := false, false, false
 		command_running := true
 		for command_running {
 			tmp_in_lines := cmd_in_lines
-			if !stdinOpen {
-				tmp_in_lines = nil
-			}
 
 			select {
 			case line := <-tmp_in_lines:
@@ -440,65 +434,13 @@ func main() {
 				}
 			case incoming := <-in:
 				switch incoming.MessageType {
-				case types.MsgOpenStdin:
-					if stdinOpen {
-						fmt.Print("Server tried to open stdin, already open", "\r\n")
-						close(done)
-						return
-					}
-					stdinOpen = true
-				case types.MsgCloseStdin:
-					if !stdinOpen {
-						fmt.Print("Server tried to close stdin, already closed", "\r\n")
-						close(done)
-						return
-					}
-					stdinOpen = false
-				case types.MsgOpenStdOut:
-					if stdoutOpen {
-						fmt.Print("Server tried to open stdout, already open", "\r\n")
-						close(done)
-						return
-					}
-					stdoutOpen = true
-				case types.MsgCloseStdout:
-					if !stdoutOpen {
-						fmt.Print("Server tried to close stdout, already closed", "\r\n")
-						close(done)
-						return
-					}
-					stdoutOpen = false
-				case types.MsgOpenStderr:
-					if stderrOpen {
-						fmt.Print("Server tried to open stderr, already open", "\r\n")
-						close(done)
-						return
-					}
-					stderrOpen = true
-				case types.MsgCloseStderr:
-					if !stderrOpen {
-						fmt.Print("Server tried to close stderr, already closed", "\r\n")
-						close(done)
-						return
-					}
-					stderrOpen = false
 				case types.MsgOutputStream:
-					if !stdoutOpen {
-						fmt.Print("Server tried to stream stdout, stdout closed", "\r\n")
-						close(done)
-						return
-					}
 					if _, err := os.Stdout.WriteString(incoming.OutputStream); err != nil {
 						fmt.Print("Failed to write to stdout:", err, "\r\n")
 						close(done)
 						return
 					}
 				case types.MsgErrorStream:
-					if !stderrOpen {
-						fmt.Print("Server tried to stream stderr, stderr closed", "\r\n")
-						close(done)
-						return
-					}
 					if _, err := os.Stderr.WriteString(incoming.ErrorStream); err != nil {
 						fmt.Print("Failed to write to stderr:", err, "\r\n")
 						close(done)
@@ -517,8 +459,6 @@ func main() {
 					return
 				}
 			}
-
-			should_echo.Set(stdinOpen)
 		}
 	}
 }

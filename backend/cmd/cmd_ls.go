@@ -21,27 +21,8 @@ func (c *CmdLs) Run(ctx types.CommandContext) int {
 		error_ctx.Args = []string{"error", fmt.Sprintf("error looking up directory: %v", err)}
 		return CmdError{}.Run(error_ctx)
 	} else {
-		ctx.Out <- types.WebSocketMessage{
-			MessageID:   GenerateMessageID(20),
-			ClientID:    ctx.ClientID,
-			RefID:       ctx.CommandMsgID,
-			MessageType: types.MsgOpenStdOut,
-		}
 		for _, reference := range node.Entries {
-			ctx.Out <- types.WebSocketMessage{
-				MessageID:   GenerateMessageID(20),
-				ClientID:    ctx.ClientID,
-				RefID:       ctx.CommandMsgID,
-				MessageType: types.MsgOutputStream,
-
-				OutputStream: reference.Name + "\r\n",
-			}
-		}
-		ctx.Out <- types.WebSocketMessage{
-			MessageID:   GenerateMessageID(20),
-			ClientID:    ctx.ClientID,
-			RefID:       ctx.CommandMsgID,
-			MessageType: types.MsgCloseStdout,
+			fmt.Fprintf(ctx.Stdout, "%s\r\n", reference.Name)
 		}
 		return 0
 	}
