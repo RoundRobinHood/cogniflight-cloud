@@ -130,6 +130,7 @@ func CmdWebhook(filestore filesystem.Store) gin.HandlerFunc {
 							client_map = incoming.SetEnv
 						}
 						client_map["PWD"] = fmt.Sprintf("/home/%s", auth_status.Username)
+						client_map["HOME"] = fmt.Sprintf("/home/%s", auth_status.Username)
 
 						ctx, cancel := context.WithCancel(c.Request.Context())
 						new_client := types.ClientInfo{

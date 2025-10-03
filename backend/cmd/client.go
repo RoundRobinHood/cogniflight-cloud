@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -10,26 +11,23 @@ import (
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
-	"mvdan.cc/sh/v3/expand"
-	"mvdan.cc/sh/v3/interp"
-	"mvdan.cc/sh/v3/syntax"
+	"github.com/RoundRobinHood/sh"
 )
 
-func RunClient(info types.ClientInfo, commands map[string]types.Command, filestore filesystem.Store, wg *sync.WaitGroup) {
+func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesystem.Store, wg *sync.WaitGroup) {
 	defer wg.Done()
 	defer log.Printf("[client %q] - closing", info.Client.ClientID)
-	stdin := &ChannelReader{Chan: make(chan string)}
+	stdin := &ChannelReader{}
 	stdout := make(ChannelWriter)
 	defer close(stdout)
 	stderr := make(ChannelWriter)
 	defer close(stderr)
-	runner := CommandRunner{
-		AuthStatus: info.Client.AuthStatus,
-		Commands:   commands,
-		FileStore:  filestore,
-		Stdin:      stdin,
-		Stdout:     stdout,
-		Stderr:     stderr,
+	runner := &sh.Runner{
+		Env:      info.Client.Env,
+		Commands: commands,
+		Stdin:    stdin,
+		Stdout:   stdout,
+		Stderr:   stderr,
 	}
 
 	env := map[string]string{}
@@ -48,37 +46,10 @@ func RunClient(info types.ClientInfo, commands map[string]types.Command, filesto
 			log.Printf("[client %q] - received msg: %v", info.Client.ClientID, msg)
 			switch msg.MessageType {
 			case types.MsgRunCommand:
-				file, err := syntax.NewParser().Parse(strings.NewReader(msg.Command), "")
-				if err != nil {
-					info.Client.Out <- types.WebSocketMessage{
-						MessageID:   GenerateMessageID(20),
-						ClientID:    info.Client.ClientID,
-						MessageType: types.MsgCommandRunning,
-						RefID:       msg.MessageID,
-					}
-					info.Client.Out <- types.WebSocketMessage{
-						MessageID:   GenerateMessageID(20),
-						ClientID:    info.Client.ClientID,
-						MessageType: types.MsgErrorStream,
-						RefID:       msg.MessageID,
-
-						ErrorStream: fmt.Sprintf("invalid command: %v", err),
-					}
-					result := 1
-					info.Client.Out <- types.WebSocketMessage{
-						MessageID:   GenerateMessageID(20),
-						ClientID:    info.Client.ClientID,
-						MessageType: types.MsgCommandFinished,
-						RefID:       msg.MessageID,
-
-						CommandResult: &result,
-					}
-					continue
-				}
-
 				cmd_stop := make(chan struct{})
 				cmd_wg := new(sync.WaitGroup)
 				cmd_wg.Add(3)
+				stdin.Chan = make(chan string)
 				go func() {
 					defer cmd_wg.Done()
 					for {
@@ -135,35 +106,23 @@ func RunClient(info types.ClientInfo, commands map[string]types.Command, filesto
 					}
 				}()
 
-				log.Printf("Providing stdin: %v", stdin)
+				cmd_ctx := context.WithValue(info.Ctx, "auth_status", info.Client.AuthStatus)
+				cmd_ctx = context.WithValue(cmd_ctx, "tags", info.Client.UserTags)
+
 				info.Client.Out <- types.WebSocketMessage{
 					MessageID:   GenerateMessageID(20),
 					ClientID:    info.Client.ClientID,
 					MessageType: types.MsgCommandRunning,
 					RefID:       msg.MessageID,
 				}
-				if runner_err := runner.InitRunner(env); runner_err != nil {
-					fmt.Fprintf(stderr, "Failed to init command runner")
-					log.Printf("Failed to init command runner: %v\n", runner_err)
-					err = interp.ExitStatus(1)
-				} else {
-					err = runner.Runner.Run(info.Ctx, file)
-
-					runner.Runner.Env.Each(func(name string, vr expand.Variable) bool {
-						env[name] = vr.String()
-						return true
-					})
-					runner.Runner = nil
-				}
-
+				err := runner.RunText(cmd_ctx, strings.NewReader(msg.Command))
 				close(cmd_stop)
 				cmd_wg.Wait()
 
-				stdin.Chan = make(chan string)
-
 				result := 0
 				if err != nil {
-					var exit interp.ExitStatus
+					var exit sh.ExitStatus
+					result = 1
 					if errors.As(err, &exit) {
 						result = int(exit)
 					} else {

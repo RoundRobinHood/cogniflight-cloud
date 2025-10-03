@@ -2,7 +2,6 @@ package types
 
 import (
 	"context"
-	"io"
 	"sync"
 )
 
@@ -78,25 +77,4 @@ type ClientInfo struct {
 	Client         Client
 	Ctx            context.Context
 	InputWaitGroup *sync.WaitGroup
-}
-
-type CommandContext struct {
-	Args           []string
-	Stdin          io.Reader
-	Stdout, Stderr io.Writer
-	Env            map[string]string
-	Ctx            context.Context
-	AuthStatus     AuthorizationStatus
-	ParentTags     []string
-}
-
-type Command interface {
-	Identifier() string
-	Run(ctx CommandContext) int
-}
-
-type CmdEOF struct{}
-
-func (CmdEOF) Error() string {
-	return "Temporary EOF"
 }

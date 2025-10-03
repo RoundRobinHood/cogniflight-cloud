@@ -5,6 +5,8 @@ import (
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
+	"github.com/RoundRobinHood/sh"
 )
 
 type CmdMkdir struct {
@@ -15,7 +17,7 @@ func (*CmdMkdir) Identifier() string {
 	return "mkdir"
 }
 
-func (c *CmdMkdir) Run(ctx types.CommandContext) int {
+func (c *CmdMkdir) Run(ctx sh.CommandContext) int {
 	folder_path, filename, err := filesystem.DirUp(ctx.Args[1])
 	if err != nil {
 		error_ctx := ctx
@@ -23,7 +25,8 @@ func (c *CmdMkdir) Run(ctx types.CommandContext) int {
 		return CmdError{}.Run(error_ctx)
 	}
 
-	folder, err := c.FileStore.Lookup(ctx.Ctx, ctx.ParentTags, folder_path)
+	tags := util.GetTags(ctx.Ctx)
+	folder, err := c.FileStore.Lookup(ctx.Ctx, tags, folder_path)
 	if err != nil {
 		error_ctx := ctx
 		error_ctx.Args = []string{"error", fmt.Sprintf("error looking for folder (%q): %v", folder_path, err)}
@@ -36,7 +39,7 @@ func (c *CmdMkdir) Run(ctx types.CommandContext) int {
 		return CmdError{}.Run(error_ctx)
 	}
 
-	if _, err := c.FileStore.WriteDirectory(ctx.Ctx, folder.ID, filename, ctx.ParentTags, nil); err != nil {
+	if _, err := c.FileStore.WriteDirectory(ctx.Ctx, folder.ID, filename, tags, nil); err != nil {
 		error_ctx := ctx
 		error_ctx.Args = []string{"error", fmt.Sprintf("error creating directory: %v", err)}
 		return CmdError{}.Run(error_ctx)

@@ -6,7 +6,8 @@ import (
 	"log"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
+	"github.com/RoundRobinHood/sh"
 )
 
 type CmdCat struct {
@@ -17,7 +18,7 @@ func (*CmdCat) Identifier() string {
 	return "cat"
 }
 
-func (c *CmdCat) Run(ctx types.CommandContext) int {
+func (c *CmdCat) Run(ctx sh.CommandContext) int {
 	if len(ctx.Args) > 1 {
 		files := ctx.Args[1:]
 		for i, filepath := range files {
@@ -28,12 +29,13 @@ func (c *CmdCat) Run(ctx types.CommandContext) int {
 				return CmdError{}.Run(error_ctx)
 			}
 
-			if node, err := c.FileStore.Lookup(ctx.Ctx, ctx.ParentTags, abs_path); err != nil {
+			tags := util.GetTags(ctx.Ctx)
+			if node, err := c.FileStore.Lookup(ctx.Ctx, tags, abs_path); err != nil {
 				error_ctx := ctx
 				error_ctx.Args = []string{"error", fmt.Sprintf("error (arg %d): couldnt lookup file: %v", i, err)}
 				return CmdError{}.Run(error_ctx)
 			} else {
-				if stream, err := c.FileStore.ReadFileObj(ctx.Ctx, *node, ctx.ParentTags); err != nil {
+				if stream, err := c.FileStore.ReadFileObj(ctx.Ctx, *node, tags); err != nil {
 					error_ctx := ctx
 					error_ctx.Args = []string{"error", fmt.Sprintf("error (arg %d): couldnt open file for reading: %v", i, err)}
 					return CmdError{}.Run(error_ctx)

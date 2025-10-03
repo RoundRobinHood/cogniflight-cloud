@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/sh"
 )
 
-func InitCommands(filestore filesystem.Store) map[string]types.Command {
-	cmds := []types.Command{
+func InitCommands(filestore filesystem.Store) []sh.Command {
+	return []sh.Command{
 		&CmdLs{FileStore: filestore},
 		&CmdMkdir{FileStore: filestore},
 		&CmdCat{FileStore: filestore},
@@ -15,11 +15,4 @@ func InitCommands(filestore filesystem.Store) map[string]types.Command {
 		CmdError{},
 		&CmdWhoami{FileStore: filestore},
 	}
-
-	output := make(map[string]types.Command)
-	for _, cmd := range cmds {
-		output[cmd.Identifier()] = cmd
-	}
-
-	return output
 }
