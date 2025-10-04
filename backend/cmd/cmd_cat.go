@@ -19,10 +19,15 @@ func (*CmdCat) Identifier() string {
 }
 
 func (c *CmdCat) Run(ctx sh.CommandContext) int {
+	cwd, ok := ctx.Env["PWD"]
+	if !ok {
+		fmt.Fprint(ctx.Stderr, "error: no PWD available")
+		return 1
+	}
 	if len(ctx.Args) > 1 {
 		files := ctx.Args[1:]
 		for i, filepath := range files {
-			abs_path, err := filesystem.AbsPath("/", filepath)
+			abs_path, err := filesystem.AbsPath(cwd, filepath)
 			if err != nil {
 				error_ctx := ctx
 				error_ctx.Args = []string{"error", fmt.Sprintf("error (arg %d): invalid filepath: %v", i, err)}

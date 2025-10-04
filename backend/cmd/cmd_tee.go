@@ -26,23 +26,33 @@ func (c *CmdTee) Run(ctx sh.CommandContext) int {
 		return (&CmdCat{FileStore: c.FileStore}).Run(cat_ctx)
 	}
 
+	cwd, ok := ctx.Env["PWD"]
+	if !ok {
+		fmt.Fprint(ctx.Stderr, "error: no PWD available")
+		return 1
+	}
 	tags := util.GetTags(ctx.Ctx)
 	parents := make([]types.FsEntry, 0, len(ctx.Args)-1)
 	filenames := make([]string, 0, len(ctx.Args)-1)
 	for _, path := range ctx.Args[1:] {
-		folder_path, filename, err := filesystem.DirUp(path)
+		abs_path, err := filesystem.AbsPath(cwd, path)
 		if err != nil {
 			fmt.Fprintf(ctx.Stderr, "error: invalid path (%q): %v", path, err)
 			return 1
 		}
+		folder_path, filename, err := filesystem.DirUp(abs_path)
+		if err != nil {
+			fmt.Fprintf(ctx.Stderr, "error: invalid path (%q): %v", abs_path, err)
+			return 1
+		}
 
 		if parent, err := c.FileStore.Lookup(ctx.Ctx, tags, folder_path); err != nil {
-			fmt.Fprintln(ctx.Stderr, "error: failed to get folder (%q): %v", folder_path, err)
+			fmt.Fprintf(ctx.Stderr, "error: failed to get folder (%q): %v", folder_path, err)
 			return 1
 		} else {
 			// Early permissions check (to help avoid problems later)
 			if !parent.Permissions.IsAllowed(types.WriteMode, tags) {
-				fmt.Fprintf(ctx.Stderr, "error: cannot write to folder (%q): %v", err)
+				fmt.Fprintf(ctx.Stderr, "error: cannot write to folder (%q): %v", folder_path, err)
 				return 1
 			}
 			if !parent.Permissions.IsAllowed(types.ExecuteMode, tags) {
@@ -61,7 +71,8 @@ func (c *CmdTee) Run(ctx sh.CommandContext) int {
 		return 1
 	}
 
-	if _, err := io.Copy(stream, ctx.Stdin); err != nil {
+	writer := io.MultiWriter(stream, ctx.Stdout)
+	if _, err := io.Copy(writer, ctx.Stdin); err != nil {
 		fmt.Fprintf(ctx.Stderr, "error: failed to write to upload stream: %v", err)
 		stream.Close()
 		return 1

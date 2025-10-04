@@ -1,7 +1,7 @@
 github.com/RoundRobinHood/jlogging v0.0.0-20250725150259-379944c99c8a h1:CEd2CwOjGmoY8ISqwQ0xsXWHbVAz9GFi3S1xHkvwWrg=
 github.com/RoundRobinHood/jlogging v0.0.0-20250725150259-379944c99c8a/go.mod h1:tckfAuSA+45WI8JWU1bWMjF1A/SrD61FtLFd3F2zYsU=
-github.com/RoundRobinHood/sh v0.0.0-20251003154839-14732747e042 h1:GHabCo36mozogA1l3fqVxlIbhOvKY4jcFQFbtfK1JlE=
-github.com/RoundRobinHood/sh v0.0.0-20251003154839-14732747e042/go.mod h1:NKQzNbdsQaVujxvzVW12WCha9W76O67xlgdtB8Q1Rg0=
+github.com/RoundRobinHood/sh v0.0.0-20251004113158-5b0cd4929d1d h1:3vKwG45tVruKmaD/LvJAMD2VmWZl5GNUET+4HU7VW38=
+github.com/RoundRobinHood/sh v0.0.0-20251004113158-5b0cd4929d1d/go.mod h1:NKQzNbdsQaVujxvzVW12WCha9W76O67xlgdtB8Q1Rg0=
 github.com/bytedance/sonic v1.13.3 h1:MS8gmaH16Gtirygw7jV91pDCN33NyMrPbN7qiYhEsF0=
 github.com/bytedance/sonic v1.13.3/go.mod h1:o68xyaF9u2gvVBuGHPlUVCy+ZfmNNO5ETf1+KgkJhz4=
 github.com/bytedance/sonic/loader v0.1.1/go.mod h1:ncP89zfokxS5LZrJxl5z0UJcsk4M4yY2JpfqGeCtNLU=
