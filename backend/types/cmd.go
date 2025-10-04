@@ -21,19 +21,13 @@ const (
 	MsgSetEnv          MessageType = "set_env"
 
 	// Stdout
-	MsgOpenStdOut   MessageType = "open_stdout"
-	MsgCloseStdout  MessageType = "close_stdout"
 	MsgOutputStream MessageType = "output_stream"
 
 	// Stdin
-	MsgOpenStdin   MessageType = "open_stdin"
-	MsgCloseStdin  MessageType = "close_stdin"
 	MsgInputStream MessageType = "input_stream"
 	MsgInputEOF    MessageType = "stdin_eof"
 
 	// Stderr
-	MsgOpenStderr  MessageType = "open_stderr"
-	MsgCloseStderr MessageType = "close_stderr"
 	MsgErrorStream MessageType = "error_stream"
 
 	// Error response
@@ -83,19 +77,4 @@ type ClientInfo struct {
 	Client         Client
 	Ctx            context.Context
 	InputWaitGroup *sync.WaitGroup
-}
-
-type CommandContext struct {
-	Args                   []string
-	In, Out                chan WebSocketMessage
-	Env                    map[string]string
-	Ctx                    context.Context
-	CommandMsgID, ClientID string
-	AuthStatus             AuthorizationStatus
-	ParentTags             []string
-}
-
-type Command interface {
-	Identifier() string
-	Run(ctx CommandContext) int
 }

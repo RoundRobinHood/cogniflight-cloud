@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/sh"
 )
 
 type CmdError struct{}
@@ -12,28 +13,10 @@ func (CmdError) Identifier() string {
 	return "error"
 }
 
-func (CmdError) Run(ctx types.CommandContext) int {
+func (CmdError) Run(ctx sh.CommandContext) int {
 	err_string := strings.Join(ctx.Args[1:], " ")
-	ctx.Out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ctx.ClientID,
-		RefID:       ctx.CommandMsgID,
-		MessageType: types.MsgOpenStderr,
+	if _, err := ctx.Stderr.Write([]byte(err_string)); err != nil {
+		fmt.Fprintf(ctx.Stderr, "error: %v", err)
 	}
-	ctx.Out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ctx.ClientID,
-		RefID:       ctx.CommandMsgID,
-		MessageType: types.MsgErrorStream,
-
-		ErrorStream: err_string,
-	}
-	ctx.Out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ctx.ClientID,
-		RefID:       ctx.CommandMsgID,
-		MessageType: types.MsgCloseStderr,
-	}
-
 	return 1
 }

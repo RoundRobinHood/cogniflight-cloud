@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/sh"
 )
 
 type CmdEcho struct{}
@@ -12,30 +13,12 @@ func (CmdEcho) Identifier() string {
 	return "echo"
 }
 
-func (CmdEcho) Run(ctx types.CommandContext) int {
-	ctx.Out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ctx.ClientID,
-		MessageType: types.MsgOpenStdOut,
-		RefID:       ctx.CommandMsgID,
-	}
-
+func (CmdEcho) Run(ctx sh.CommandContext) int {
 	out_string := strings.Join(ctx.Args[1:], " ")
-	ctx.Out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ctx.ClientID,
-		RefID:       ctx.CommandMsgID,
-		MessageType: types.MsgOutputStream,
-
-		OutputStream: out_string,
+	if _, err := ctx.Stdout.Write([]byte(out_string)); err != nil {
+		fmt.Fprintf(ctx.Stderr, "error: %v", err)
+		return 1
+	} else {
+		return 0
 	}
-
-	ctx.Out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ctx.ClientID,
-		RefID:       ctx.CommandMsgID,
-		MessageType: types.MsgCloseStdout,
-	}
-
-	return 0
 }
