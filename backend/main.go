@@ -104,6 +104,8 @@ func main() {
 	r.POST("/check-mqtt-user", auth.CheckMQTTUser(fileStore))
 	r.POST("/hi", func(c *gin.Context) { c.String(200, "hello") })
 
+	r.GET("/signup/check-username/:username", auth.SignupCheckUsername(fileStore))
+	r.POST("/signup", auth.Signup(fileStore))
 	r.POST("/login", auth.Login(fileStore))
 	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore))
 
