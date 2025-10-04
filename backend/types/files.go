@@ -21,10 +21,10 @@ const (
 var ErrCantAccessFs = errors.New("error: cannot access file/directory (access denied)")
 
 type FsEntryPermissions struct {
-	ReadTags             []string `bson:"read_tags"`
-	WriteTags            []string `bson:"write_tags"`
-	ExecuteTags          []string `bson:"execute_tags"`
-	UpdatePermissionTags []string `bson:"updatetag_tags"`
+	ReadTags             []string `bson:"read_tags" yaml:"read_tags"`
+	WriteTags            []string `bson:"write_tags" yaml:"write_tags"`
+	ExecuteTags          []string `bson:"execute_tags" yaml:"execute_tags"`
+	UpdatePermissionTags []string `bson:"updatetag_tags" yaml:"updatetag_tags"`
 }
 
 func (p FsEntryPermissions) IsAllowed(mode FsAccessMode, tags []string) bool {
@@ -54,7 +54,7 @@ func (p FsEntryPermissions) IsAllowed(mode FsAccessMode, tags []string) bool {
 }
 
 func (p FsEntryPermissions) CanUpdatePermTags(new_perms []string, user_tags []string) bool {
-	if user_tags == nil {
+	if user_tags == nil || slices.Contains(user_tags, "sysadmin") {
 		return true
 	}
 

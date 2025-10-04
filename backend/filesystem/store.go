@@ -22,6 +22,7 @@ type Store struct {
 }
 
 func (s Store) Lookup(ctx context.Context, tags []string, abs_path string) (*types.FsEntry, error) {
+	now := time.Now()
 	clean_path, err := CleanupAbsPath(abs_path)
 	if err != nil {
 		return nil, err
@@ -55,7 +56,11 @@ func (s Store) Lookup(ctx context.Context, tags []string, abs_path string) (*typ
 		var next types.FsEntry
 		if reference, ok := current.Entries.Get(split); !ok {
 			return nil, os.ErrNotExist
-		} else if err := s.Col.FindOne(ctx, bson.M{"_id": reference.RefID}).Decode(&next); err != nil {
+		} else if err := s.Col.FindOneAndUpdate(ctx, bson.M{"_id": reference.RefID}, bson.M{
+			"$set": bson.M{
+				"timestamps.accessed_at": now,
+			},
+		}).Decode(&next); err != nil {
 			if err == mongo.ErrNoDocuments {
 				return nil, os.ErrNotExist
 			} else {
@@ -239,9 +244,52 @@ func (s Store) WriteDirectory(ctx context.Context, parentID primitive.ObjectID, 
 		bson.M{"$addToSet": bson.M{"entries": types.FsEntryReference{
 			Name:  directoryName,
 			RefID: created.ID,
-		}}}).Err(); err != nil {
+		}},
+			"$set": bson.M{
+				"timestamps.modified_at": now,
+				"timestamps.accessed_at": now,
+			}}).Err(); err != nil {
 		return nil, err
 	}
 
 	return &created, nil
+}
+
+func (s Store) RemoveChild(ctx context.Context, parentID primitive.ObjectID, childName string, tags []string) (*types.FsEntry, error) {
+	now := time.Now()
+	parent := types.FsEntry{}
+	if err := s.Col.FindOne(ctx, bson.M{"_id": parentID}).Decode(&parent); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, os.ErrNotExist
+		} else {
+			return nil, err
+		}
+	}
+
+	if !parent.Permissions.IsAllowed(types.WriteMode, tags) {
+		return nil, types.ErrCantAccessFs
+	}
+	if parent.EntryType != types.Directory {
+		return nil, fmt.Errorf("parent isn't a directory")
+	}
+
+	if _, exists := parent.Entries.Get(childName); !exists {
+		return nil, os.ErrNotExist
+	}
+
+	updated := types.FsEntry{}
+	if err := s.Col.FindOneAndUpdate(ctx, bson.M{"_id": parentID},
+		bson.M{"$pull": bson.M{"entries": bson.M{"name": childName}},
+			"$set": bson.M{
+				"timestamps.modified_at": now,
+				"timestamps.accessed_at": now,
+			}}).Decode(&updated); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, os.ErrNotExist
+		} else {
+			return nil, err
+		}
+	}
+
+	return &updated, nil
 }

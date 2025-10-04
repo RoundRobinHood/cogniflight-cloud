@@ -28,6 +28,10 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 		Stdin:    stdin,
 		Stdout:   stdout,
 		Stderr:   stderr,
+		FS: &filesystem.FSContext{
+			Store:    filestore,
+			UserTags: info.Client.UserTags,
+		},
 	}
 
 	env := map[string]string{}
