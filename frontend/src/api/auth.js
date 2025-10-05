@@ -43,6 +43,46 @@ export async function Login({ username, password }) {
   }
 }
 
+export async function Signup({ token, username, password }) {
+  let response;
+  try {
+    response = await fetch(paths.signup.signup, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token, username, password }),
+    });
+  } catch (err) {
+    console.error("Failed to initialize signup request:", err);
+    return { success: false, reason: err };
+  }
+
+  switch (response.status) {
+    case 200:
+    case 201:
+      return { success: true, reason: response.status };
+    case 400: {
+      const response_body = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        reason: 400,
+        message: response_body.error ?? "invalid request",
+      };
+    }
+    case 401:
+      return { success: false, reason: 401, message: "Invalid or expired token" };
+    case 409:
+      return { success: false, reason: 409, message: "Username or email already exists" };
+    default:
+      return {
+        success: false,
+        reason: 400,
+        message: "Unknown status code received: " + response.status,
+      };
+  }
+}
+
 export async function IsAuthorized() {
   let response;
   try {
