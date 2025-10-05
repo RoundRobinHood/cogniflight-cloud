@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react'
-import { Login, Signup } from '../api/auth'
+import { Login, Signup, CheckSignupUsername } from '../api/auth'
 
 function LoginScreen({ onLogin, isSignupMode = false, signupToken = null }) {
   const [currentTime, setCurrentTime] = useState(new Date())
@@ -12,9 +12,24 @@ function LoginScreen({ onLogin, isSignupMode = false, signupToken = null }) {
   const [step, setStep] = useState('username') // 'username' or 'password' or 'signup-details'
   
   // Signup-specific state
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [passwordMatch, setPasswordMatch] = useState(true)
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordMatch, setPasswordMatch] = useState(true);
+  const [isValidToken, setIsValidToken] = useState(null);
+
+  useEffect(() => {
+    if(isSignupMode && isValidToken === null) {
+      CheckSignupUsername({ token: signupToken, username: 'test' })
+      .then(result => {
+        if(result.success || result.reason === 409)
+          setIsValidToken(true)
+        else {
+          setIsValidToken(false)
+          setError('signup link invalid')
+        }
+      });
+    }
+  }, [signupToken])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -62,8 +77,19 @@ function LoginScreen({ onLogin, isSignupMode = false, signupToken = null }) {
 
   const handleUsernameSubmit = (e) => {
     e.preventDefault()
-    if (username.trim()) {
-      setStep(isSignupMode ? 'signup-details' : 'password')
+    if (!username.trim()) return
+    if(isSignupMode) {
+      CheckSignupUsername({ token: signupToken, username: username })
+        .then(result => {
+          if(result.success) {
+            setStep('signup-details')
+            setError('')
+          } else {
+            setError(result.message || 'failed to validate username')
+          }
+        });
+    } else {
+      setStep('password')
       setError('')
     }
   }
@@ -175,6 +201,8 @@ function LoginScreen({ onLogin, isSignupMode = false, signupToken = null }) {
                 autoComplete="username"
               />
             </div>
+
+            {error && <div className="login-error">{error}</div>}
 
             <button type="submit" className="login-button" disabled={!username.trim()}>
               <span>Next</span>

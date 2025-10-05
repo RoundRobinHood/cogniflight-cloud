@@ -9,7 +9,7 @@ export default {
   socket: API_PREFIX + '/cmd-socket',
 
   signup: {
-    create_token: API_PREFIX + '/signup-tokens',
+    checkUsername: API_PREFIX + '/signup/check-username',
     signup: API_PREFIX + '/signup',
   }
 }
