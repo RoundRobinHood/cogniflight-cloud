@@ -73,7 +73,6 @@
 
 /* Window content */
 .window-content {
-  padding: var(--space-md);
   color: var(--text-primary);
   height: calc(100% - var(--window-header-height));
   overflow: auto;

@@ -427,6 +427,31 @@ function TerminalApp() {
     }
   }, [instance, client, isInitialized])
 
+  // Handle terminal resizing
+  useEffect(() => {
+    if (!instance || !ref.current) return
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (instance && ref.current) {
+        // Get the container dimensions
+        const rect = ref.current.getBoundingClientRect()
+        const cols = Math.floor((rect.width - 16) / 9) // Approximate character width
+        const rows = Math.floor((rect.height - 16) / 17) // Approximate line height
+
+        // Resize the terminal
+        if (cols > 0 && rows > 0) {
+          instance.resize(cols, rows)
+        }
+      }
+    })
+
+    resizeObserver.observe(ref.current)
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [instance, ref])
+
   return (
     <div
       ref={ref}
