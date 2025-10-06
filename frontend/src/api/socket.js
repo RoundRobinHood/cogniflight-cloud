@@ -51,6 +51,44 @@ function EventListener() {
   };
 }
 
+function makeAsyncQueue() {
+  const values = [];
+  const resolvers = [];
+  let done = false;
+
+  return {
+    push(value) {
+      if (done) return;
+      if (resolvers.length) {
+        // Someone is awaiting next() — resolve immediately
+        const resolve = resolvers.shift();
+        resolve({ value, done: false });
+      } else {
+        // No one is waiting — queue the value
+        values.push(value);
+      }
+    },
+    close() {
+      done = true;
+      while (resolvers.length) resolvers.shift()({ value: undefined, done: true });
+    },
+    [Symbol.asyncIterator]() {
+      return {
+        next() {
+          if (values.length) {
+            return Promise.resolve({ value: values.shift(), done: false });
+          }
+          if (done) {
+            return Promise.resolve({ value: undefined, done: true });
+          }
+          // Wait for a push
+          return new Promise(resolve => resolvers.push(resolve));
+        }
+      };
+    }
+  };
+}
+
 export function GenerateMessageID(length=20) {
   const hex = '0123456789abcdef';
 
@@ -205,24 +243,6 @@ export class PipeCmdClient {
               case 'disconnect_acknowledged':
                 this.emit('disconnected');
                 break;
-              case 'open_stdin':
-                this.emit('stream_open', 'stdin');
-                break;
-              case 'open_stdout':
-                this.emit('stream_open', 'stdout');
-                break;
-              case 'open_stderr':
-                this.emit('stream_open', 'stderr');
-                break;
-              case 'close_stdin':
-                this.emit('stream_close', 'stdin');
-                break;
-              case 'close_stdout':
-                this.emit('stream_close', 'stdout');
-                break;
-              case 'close_stderr':
-                this.emit('stream_close', 'stderr');
-                break;
               case 'command_running':
                 this.emit('command_running');
                 break;
@@ -244,7 +264,6 @@ export class PipeCmdClient {
     const close = () => {
       this.emit('disconnected')
       if (websocket) {
-        websocket.removeEventListener('open', open);
         websocket.removeEventListener('message', message);
         websocket.removeEventListener('error', error);
         websocket.removeEventListener('close', close);
@@ -284,15 +303,9 @@ export class PipeCmdClient {
     const listen_stdout = (str) =>  (output += str);
     const listen_stderr = (str) => error += str;
 
-    let stdin_open = false;
-    let notify_stdin_open = () => null;
     const input_reader = (async () => {
-      let stream_used = false;
       for await (const in_str of input) {
-        if(!stdin_open)
-          await new Promise(r => notify_stdin_open = r);
         if(this.command_running) {
-          stream_used = true;
           this.send({
             message_id: GenerateMessageID(),
             client_id: this.clientID,
@@ -303,7 +316,7 @@ export class PipeCmdClient {
         }
       }
 
-      if(this.command_running && stream_used)
+      if(this.command_running)
         this.send({
           message_id: GenerateMessageID(),
           client_id: this.clientID,
@@ -311,28 +324,6 @@ export class PipeCmdClient {
           message_type: "stdin_eof",
         });
     })
-
-    const input_promise = input_reader();
-
-    const pipe_opener = (stream_name) => {
-      switch(stream_name) {
-        case 'stdin':
-          stdin_open = true;
-          notify_stdin_open();
-          break;
-      }
-    }
-
-    const pipe_closer = (stream_name) => {
-      switch(stream_name) {
-        case 'stdin':
-          stdin_open = false;
-          break;
-      }
-    }
-
-    this.on('stream_open', pipe_opener);
-    this.on('stream_close', pipe_closer);
 
     this.on('output_stream', listen_stdout);
     this.on('error_stream', listen_stderr);
@@ -360,14 +351,11 @@ export class PipeCmdClient {
       command: command,
     });
 
+    await this.until('command_running')
+    const input_promise = input_reader();
     command_result = await command_result;
-    stdin_open = true;
-    notify_stdin_open()
     this.command_running = false;
     await input_promise;
-
-    this.off('stream_open', pipe_opener);
-    this.off('stream_close', pipe_closer);
 
     this.off('output_stream', listen_stdout);
     this.off('error_stream', listen_stderr);
@@ -410,10 +398,288 @@ export class PipeCmdClient {
   }
 }
 
+export class StreamCmdClient {
+  #handler = EventListener();
+
+  on(event, handler) {
+    return this.#handler.on(event, handler);
+  }
+
+  off(event, handler) {
+    return this.#handler.off(event, handler);
+  }
+
+  until(event, predicate) {
+    return this.#handler.until(event, predicate);
+  }
+
+  emit(event, data) {
+    return this.#handler.emit(event, data);
+  }
+
+  constructor() {
+    this.clientID = `term-${++max_client_id_num}`;
+
+    this.connected = false;
+
+    this.on('connected', () => this.connected = true);
+    this.on('disconnected', () => this.connected = false);
+
+    this.command_running = false;
+
+    this.on('command_running', () => this.command_running = true);
+    this.on('command_finished', () => this.command_running = false);
+
+    this.on('raw_message', (msg) => console.log(`incoming [${this.clientID}]:`, msg));
+
+    Connect();
+
+    console.log('client created: ', this.clientID);
+  }
+
+  #connecting = false;
+  async connect() {
+    if (this.connected) return;
+    if (this.#connecting) return this.until('connected');
+
+    this.#connecting = true;
+    await Connect();
+    const message = (event) => {
+      try {
+        const decoded = decode(new Uint8Array(event.data));
+        if(decoded.client_id === this.clientID) {
+          this.emit('raw_message', decoded);
+
+          switch(decoded.message_type) {
+            case 'output_stream':
+              this.emit('output_stream', decoded.output_stream);
+              break;
+            case 'error_stream':
+              this.emit('error_stream', decoded.error_stream);
+              break;
+            case 'connect_acknowledged':
+              this.emit('connected');
+              break;
+            case 'disconnect_acknowledged':
+              this.emit('disconnected');
+              break;
+            case 'command_running':
+              this.emit('command_running');
+              break;
+            case 'command_finished':
+              this.emit('command_finished', decoded.command_result);
+              break;
+            case 'err_response':
+              this.emit('command_error', decoded.error);
+              this.emit('error', 'Server sent error: ' + decoded.error);
+              break;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to decode message:', error);
+        this.emit('error', error);
+      }
+    }
+    const error = error => this.emit('error', error);
+    const close = () => {
+      this.emit('disconnected');
+      if (websocket) {
+        websocket.removeEventListener('message', message);
+        websocket.removeEventListener('error', error);
+        websocket.removeEventListener('close', close);
+      }
+    }
+    websocket.addEventListener('message', message);
+    websocket.addEventListener('error', error);
+    websocket.addEventListener('close', close);
+
+    this.send({
+      message_id: GenerateMessageID(),
+      client_id: this.clientID,
+
+      message_type: 'connect',
+    });
+
+    await this.until('connected');
+    this.#connecting = false;
+  }
+
+  send(message) {
+    const encoded = encode(message);
+    console.log(`outgoing [${this.clientID}]:`, message);
+    websocket.send(encoded);
+  }
+
+  async run_command(command) {
+    await Connect();
+    if (this.command_running) throw new Error("command already running");
+
+    this.send({
+      message_id: GenerateMessageID(),
+      client_id: this.clientID,
+
+      message_type: 'run_command',
+      command: command,
+    });
+
+    await this.until('command_running');
+
+    return new CommandHandle(this);
+  }
+
+  async disconnect() {
+    if(this.connected) {
+      const disconnect = this.until('disconnected');
+      this.send({
+        message_id: GenerateMessageID(),
+        client_id: this.clientID,
+
+        message_type: "disconnect"
+      })
+      return await disconnect;
+    } else if (this.#connecting) {
+      await this.until('connected');
+      return await this.disconnect();
+    }
+  }
+}
+
+class CommandHandle {
+  #handler = EventListener();
+
+  on(event, handler) {
+    return this.#handler.on(event, handler);
+  }
+
+  off(event, handler) {
+    return this.#handler.off(event, handler);
+  }
+
+  until(event, predicate) {
+    return this.#handler.until(event, predicate);
+  }
+
+  #send = null;
+  constructor(client) {
+    this.#send = client.send;
+    this.clientID = client.clientID;
+    this.command_running = true;
+    this.command_result = null;
+    this.outputStr = "";
+    this.errorStr = "";
+    this.input_is_eof = false;
+
+    client.on('command_finished', result => {
+      this.command_result = result;
+      this.command_running = false;
+      this.#handler.emit('command_finished', result);
+    });
+
+    client.on('disconnected', () => {
+      this.command_running = false;
+      this.#handler.emit('command_finished', result);
+      this.#handler.emit('disconnected');
+    });
+
+    client.on('output_stream', str => {
+      this.outputStr += str;
+      this.#handler.emit('output_stream', str);
+    });
+
+    client.on('error_stream', str => {
+      this.errorStr += str;
+      this.#handler.emit('error_stream', str);
+    });
+  }
+
+  input(str) {
+    if(!this.command_running)
+      throw new Error("Command not running");
+    if(this.input_is_eof)
+      throw new Error("Stdin already EOF");
+    this.#send({
+      message_id: GenerateMessageID(),
+      client_id: this.clientID,
+
+      message_type: "input_stream",
+      input_stream: str,
+    });
+  }
+
+  input_eof() {
+    if(!this.command_running)
+      throw new Error("Command not running");
+    if(!this.input_is_eof) {
+      this.#send({
+        message_id: GenerateMessageID(),
+        client_id: this.clientID,
+
+        message_type: "stdin_eof",
+      });
+      this.input_is_eof = true;
+    }
+  }
+
+  async *iter_output() {
+    if(!this.command_running) 
+      throw new Error("Command not running");
+    const queue = makeAsyncQueue()
+    queue.push(this.outputStr);
+    const push = str => queue.push(str)
+    const finish = () => {
+      this.off('output_stream', push);
+      this.off('command_finished', finish);
+      queue.close()
+    }
+    this.on('output_stream', push);
+    this.on('command_finished', finish);
+
+    for await (const chunk of queue) yield chunk;
+  }
+
+  async *iter_error() {
+    if(!this.command_running)
+      throw new Error("Command not running");
+    const queue = makeAsyncQueue();
+    queue.push(this.errorStr);
+    const push = str => queue.push(str);
+    const finish = () => {
+      this.off('error_stream', push);
+      this.off('command_finished', finish);
+      queue.close();
+    }
+    this.on('error_stream', push);
+    this.on('command_finished', finish);
+
+    for await (const chunk of queue) yield chunk;
+  }
+
+  async result() {
+    if(this.command_result !== null)
+      return this.command_result
+    else
+      return await this.until('command_finished');
+  }
+}
+
 export function usePipeClient() {
   const [client, setClient] = useState(null);
   useEffect(() => {
     const client_instance = new PipeCmdClient();
+
+    client_instance.connect();
+    setClient(client_instance);
+
+    return () => client_instance.disconnect().catch(err => console.error(err));
+  }, []);
+
+  return client;
+}
+
+export function useStreamClient() {
+  const [client, setClient] = useState(null);
+  useEffect(() => {
+    const client_instance = new StreamCmdClient();
 
     client_instance.connect();
     setClient(client_instance);
