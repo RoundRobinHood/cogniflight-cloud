@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useSystem } from '../useSystem'
 import { useXTerm } from 'react-xtermjs'
-import { usePipeClient } from '../../api/socket.js'
+import { useStreamClient } from '../../api/socket.js'
 
 function TerminalApp() {
   const { instance, ref } = useXTerm()
-  const client = usePipeClient()
+  const client = useStreamClient()
   const [currentDir, setCurrentDir] = useState('~')
   const [homeDir, setHomeDir] = useState('')
   const [commandHistory, setCommandHistory] = useState([])
@@ -13,8 +13,10 @@ function TerminalApp() {
   const [isExecuting, setIsExecuting] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
   const [welcomeShown, setWelcomeShown] = useState(false)
+  const [isAwaitingInput, setIsAwaitingInput] = useState(false)
   const inputBufferRef = useRef('')
   const cursorPositionRef = useRef(0)
+  const commandHandleRef = useRef(null)
 
   const { addNotification } = useSystem()
 
@@ -24,23 +26,50 @@ function TerminalApp() {
     return dir.startsWith(homeDir) ? dir.replace(homeDir, '~') : dir
   }, [homeDir])
 
+  // Send input to running command
+  const sendInput = useCallback((line) => {
+    if (commandHandleRef.current && commandHandleRef.current.command_running) {
+      commandHandleRef.current.input(line + '\r\n')
+    }
+  }, [])
+
+  // Send EOF to running command
+  const sendEOF = useCallback(() => {
+    if (commandHandleRef.current && commandHandleRef.current.command_running) {
+      commandHandleRef.current.input_eof()
+      setIsAwaitingInput(false)
+    }
+  }, [])
+
   // Initialize terminal when client is available
   useEffect(() => {
     if (client && !isInitialized) {
       const initializeTerminal = async () => {
         try {
           // Get home directory first
-          const homeResult = await client.run_command('echo $HOME')
+          const homeHandle = await client.run_command('echo $HOME')
+          let homeOutput = ''
+          for await (const chunk of homeHandle.iter_output()) {
+            homeOutput += chunk
+          }
+          await homeHandle.result()
+
           let home = ''
-          if (homeResult.command_result === 0) {
-            home = homeResult.output.trim()
+          if (homeHandle.command_result === 0) {
+            home = homeOutput.trim()
             setHomeDir(home)
           }
 
           // Get initial working directory
-          const pwdResult = await client.run_command('echo $PWD')
-          if (pwdResult.command_result === 0) {
-            const dir = pwdResult.output.trim()
+          const pwdHandle = await client.run_command('echo $PWD')
+          let pwdOutput = ''
+          for await (const chunk of pwdHandle.iter_output()) {
+            pwdOutput += chunk
+          }
+          await pwdHandle.result()
+
+          if (pwdHandle.command_result === 0) {
+            const dir = pwdOutput.trim()
             // Format directory immediately with the home we just got
             const formattedDir = home && dir.startsWith(home) ? dir.replace(home, '~') : dir
             setCurrentDir(formattedDir)
@@ -79,6 +108,10 @@ function TerminalApp() {
     setIsExecuting(true)
     instance.writeln('')
 
+    // Clear input buffer immediately when starting command
+    inputBufferRef.current = ''
+    cursorPositionRef.current = 0
+
     // Add to history
     if (command.trim() !== '') {
       setCommandHistory(prev => [...prev, command.trim()])
@@ -94,33 +127,62 @@ function TerminalApp() {
         return
       }
 
-      // Execute command via websocket
-      const result = await client.run_command(command)
+      // Execute command via streaming client
+      const commandHandle = await client.run_command(command)
+      commandHandleRef.current = commandHandle
+      setIsAwaitingInput(true)
 
-      // Display output
-      if (result.output) {
-        const lines = result.output.split('\n')
-        lines.forEach((line, index) => {
-          if (index === lines.length - 1 && line === '') return // Skip empty last line
-          instance.writeln(line)
-        })
-      }
+      // Stream output in real-time
+      const outputStreamer = (async () => {
+        try {
+          for await (const chunk of commandHandle.iter_output()) {
+            if (chunk) {
+              instance.write(chunk)
+            }
+          }
+        } catch (error) {
+          console.error('Output stream error:', error)
+        }
+      })()
 
-      // Display errors
-      if (result.error) {
-        const errorLines = result.error.split('\n')
-        errorLines.forEach((line, index) => {
-          if (index === errorLines.length - 1 && line === '') return
-          instance.writeln(`\x1b[31m${line}\x1b[0m`) // Red color for errors
-        })
-      }
+      // Stream errors in real-time
+      const errorStreamer = (async () => {
+        try {
+          for await (const chunk of commandHandle.iter_error()) {
+            if (chunk) {
+              instance.write(chunk) // Don't override ANSI codes - write as-is
+            }
+          }
+        } catch (error) {
+          console.error('Error stream error:', error)
+        }
+      })()
 
-      // Update current directory if command was cd
+      // Wait for command to finish
+      await commandHandle.result()
+
+      // Wait for all streams to finish
+      await Promise.all([outputStreamer, errorStreamer])
+
+      // Add newline after command output for clean prompt separation
+      instance.writeln('')
+
+      // Clean up command handle
+      commandHandleRef.current = null
+      setIsAwaitingInput(false)
+
+      // Update current directory if command was cd (do this BEFORE displaying prompt)
       if (command.trim().startsWith('cd')) {
         try {
-          const pwdResult = await client.run_command('echo $PWD')
-          if (pwdResult.command_result === 0) {
-            const dir = pwdResult.output.trim()
+          const pwdHandle = await client.run_command('echo $PWD')
+          let pwdOutput = ''
+          for await (const chunk of pwdHandle.iter_output()) {
+            pwdOutput += chunk
+          }
+          await pwdHandle.result()
+
+          if (pwdHandle.command_result === 0) {
+            const dir = pwdOutput.trim()
             const formattedDir = formatDirectory(dir)
             setCurrentDir(formattedDir)
 
@@ -130,7 +192,7 @@ function TerminalApp() {
             instance.write(prompt)
             inputBufferRef.current = ''
             cursorPositionRef.current = 0
-            return
+            return // Exit early to avoid displaying prompt twice
           }
         } catch (error) {
           console.error('Failed to update directory:', error)
@@ -140,6 +202,9 @@ function TerminalApp() {
     } catch (error) {
       console.error('Command execution failed:', error)
       instance.writeln(`\x1b[31mError: ${error.message}\x1b[0m`)
+      // Clean up on error
+      commandHandleRef.current = null
+      setIsAwaitingInput(false)
     }
 
     setIsExecuting(false)
@@ -149,12 +214,60 @@ function TerminalApp() {
   // Handle keyboard input - use ref to get current value
   const handleInputRef = useRef()
   handleInputRef.current = (data) => {
-    if (!instance || isExecuting || !isInitialized) return
+    if (!instance || !isInitialized) return
+
+    const code = data.charCodeAt(0)
+
+    // Handle stdin input mode (when waiting for user input to commands)
+    if (isAwaitingInput) {
+      switch (code) {
+        case 4: // Ctrl+D (EOF)
+          instance.writeln('^D')
+          sendEOF()
+          break
+
+        case 13: // Enter - send line to stdin
+          const line = inputBufferRef.current
+          instance.writeln('')
+          sendInput(line)
+          inputBufferRef.current = ''
+          cursorPositionRef.current = 0
+          break
+
+        case 127: // Backspace
+          if (cursorPositionRef.current > 0) {
+            inputBufferRef.current =
+              inputBufferRef.current.slice(0, cursorPositionRef.current - 1) +
+              inputBufferRef.current.slice(cursorPositionRef.current)
+            cursorPositionRef.current--
+            instance.write('\b \b')
+          }
+          break
+
+        case 3: // Ctrl+C - cancel stdin
+          instance.writeln('^C')
+          sendEOF()
+          break
+
+        default:
+          if (code >= 32 && code <= 126) { // Printable characters
+            inputBufferRef.current =
+              inputBufferRef.current.slice(0, cursorPositionRef.current) +
+              data +
+              inputBufferRef.current.slice(cursorPositionRef.current)
+            cursorPositionRef.current++
+            instance.write(data)
+          }
+          break
+      }
+      return
+    }
+
+    // Normal command input mode
+    if (isExecuting) return
 
     // Check for arrow keys first
     if (handleArrowKeys(data)) return
-
-    const code = data.charCodeAt(0)
 
     switch (code) {
       case 13: // Enter
@@ -201,7 +314,7 @@ function TerminalApp() {
 
   // Handle arrow keys for command history
   const handleArrowKeys = useCallback((data) => {
-    if (isExecuting || !isInitialized) return false
+    if (isExecuting || !isInitialized || isAwaitingInput) return false
 
     if (data === '\x1b[A') { // Up arrow
       if (commandHistory.length > 0) {
@@ -252,7 +365,7 @@ function TerminalApp() {
       return true
     }
     return false
-  }, [instance, commandHistory, historyIndex, currentDir, isExecuting, isInitialized])
+  }, [instance, commandHistory, historyIndex, currentDir, isExecuting, isInitialized, isAwaitingInput])
 
   // Initialize terminal display on mount (only once)
   useEffect(() => {
