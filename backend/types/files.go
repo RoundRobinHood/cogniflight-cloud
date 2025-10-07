@@ -134,6 +134,17 @@ const (
 	Directory
 )
 
+func (f FsEntryType) String() string {
+	switch f {
+	case File:
+		return "file"
+	case Directory:
+		return "directory"
+	default:
+		return "unknown"
+	}
+}
+
 type FsEntry struct {
 	ID            primitive.ObjectID  `bson:"_id"`
 	IsRoot        bool                `bson:"is_root"`

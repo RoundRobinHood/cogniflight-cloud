@@ -78,3 +78,15 @@ type ClientInfo struct {
 	Ctx            context.Context
 	InputWaitGroup *sync.WaitGroup
 }
+
+type OptionDescriptor struct {
+	// Identifier is the back-end name for the option
+	Identifier string
+
+	// Aliases should not include dashes. If len() = 1, it's a single-dash flag.
+	// If len() > 1, it's a double-dash flag
+	Aliases []string
+
+	// If Default is true/false, the option is a flag. If it's a string, the option takes a parameter
+	Default any
+}
