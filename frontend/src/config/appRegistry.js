@@ -1,4 +1,4 @@
-import { Settings, FolderOpen, FileText, Terminal } from 'lucide-react'
+import { Settings, FolderOpen, FileText, Terminal, Camera } from 'lucide-react'
 
 // Lazy load components for better performance
 const loadComponent = (componentName) => {
@@ -7,6 +7,7 @@ const loadComponent = (componentName) => {
     FileExplorerApp: () => import('../components/apps/FileExplorerApp'),
     NotepadApp: () => import('../components/apps/NotepadApp'),
     TerminalApp: () => import('../components/apps/TerminalApp'),
+    CameraApp: () => import('../components/apps/CameraApp'),
   }
   return components[componentName]
 }
@@ -58,6 +59,16 @@ class AppRegistry {
       component: 'TerminalApp',
       defaultTitle: 'Terminal',
       defaultSize: { width: 700, height: 450 },
+    })
+
+    this.register({
+      id: 'camera',
+      label: 'Camera',
+      icon: Camera,
+      color: '#ff6b6b',
+      component: 'CameraApp',
+      defaultTitle: 'Camera',
+      defaultSize: { width: 800, height: 600 }
     })
   }
 
