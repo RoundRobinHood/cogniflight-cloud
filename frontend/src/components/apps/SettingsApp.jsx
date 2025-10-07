@@ -97,6 +97,9 @@ function SettingsApp() {
       // Set the value
       current[keys[keys.length - 1]] = value;
 
+      // Create a clean copy without username and tags for saving
+      const { username, tags, ...dataToSave } = updated;
+
       // Clear existing timeout
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
@@ -104,7 +107,7 @@ function SettingsApp() {
 
       // Set new timeout for debounced save
       saveTimeoutRef.current = setTimeout(() => {
-        saveUserProfile(updated);
+        saveUserProfile(dataToSave);
       }, 1000);
 
       return updated;
