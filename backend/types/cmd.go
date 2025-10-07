@@ -68,7 +68,8 @@ type WebSocketMessage struct {
 type Client struct {
 	ClientID   string
 	Env        map[string]string
-	In, Out    chan WebSocketMessage
+	In         <-chan WebSocketMessage
+	Out        chan WebSocketMessage
 	AuthStatus AuthorizationStatus
 	UserTags   []string
 }

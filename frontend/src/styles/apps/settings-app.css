@@ -1,0 +1,266 @@
+/* Settings App Styles */
+
+.settings-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  background: var(--glass-bg-dark);
+  overflow: hidden;
+}
+
+/* Sidebar Navigation */
+.settings-sidebar {
+  width: 240px;
+  background: var(--glass-bg-darker);
+  border-right: 1px solid var(--glass-border);
+  padding: var(--space-lg);
+  overflow-y: auto;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-title {
+  font-size: 1.5rem;
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-lg) 0;
+}
+
+.saving-indicator {
+  font-size: 0.875rem;
+  font-weight: var(--font-normal);
+  color: var(--color-primary);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.settings-nav-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.settings-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.settings-nav-bottom {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--glass-border);
+}
+
+.settings-nav-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.settings-nav-button:hover {
+  background: var(--glass-bg-light);
+  color: var(--text-primary);
+}
+
+.settings-nav-button.active {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.nav-icon {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+}
+
+.nav-label {
+  flex: 1;
+}
+
+/* Content Area */
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg);
+}
+
+/* Settings Sections */
+.settings-section {
+  margin-bottom: var(--space-xl);
+}
+
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.settings-section-title {
+  font-size: 1.25rem;
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-xs) 0;
+}
+
+.settings-section-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  margin: 0 0 var(--space-lg) 0;
+}
+
+/* Divider between sections */
+.settings-divider {
+  height: 1px;
+  background: var(--glass-border);
+  margin: var(--space-2xl) 0;
+}
+
+/* Form Vertical Layout - All inputs flow vertically */
+.settings-form-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: var(--font-medium);
+}
+
+/* Input Styles */
+.form-group input,
+.settings-select {
+  padding: var(--space-sm);
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  transition: all var(--transition-fast);
+}
+
+.form-group input:focus,
+.settings-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: var(--glass-bg-lighter);
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
+}
+
+/* Readonly Input Styles */
+.readonly-input {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-tertiary) !important;
+  cursor: not-allowed;
+}
+
+/* Select Dropdown */
+.settings-select {
+  cursor: pointer;
+}
+
+.settings-select option {
+  background: var(--color-dark-solid);
+  color: var(--text-primary);
+}
+
+/* Checkbox Label */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.9rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+.checkbox-label span {
+  color: var(--text-secondary);
+}
+
+/* Loading and Error States */
+.settings-loading,
+.settings-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--space-xl);
+  text-align: center;
+}
+
+.settings-loading {
+  color: var(--text-tertiary);
+  font-size: 1rem;
+}
+
+.settings-error {
+  color: var(--color-accent-red);
+  font-size: 1rem;
+}
+
+/* Smooth scrolling */
+.settings-sidebar,
+.settings-content {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for webkit browsers */
+.settings-sidebar::-webkit-scrollbar,
+.settings-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-sidebar::-webkit-scrollbar-track,
+.settings-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settings-sidebar::-webkit-scrollbar-thumb,
+.settings-content::-webkit-scrollbar-thumb {
+  background: var(--glass-bg-lighter);
+  border-radius: var(--radius-sm);
+}
+
+.settings-sidebar::-webkit-scrollbar-thumb:hover,
+.settings-content::-webkit-scrollbar-thumb:hover {
+  background: var(--glass-border-hover);
+}
