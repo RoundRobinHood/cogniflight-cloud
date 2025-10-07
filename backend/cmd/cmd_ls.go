@@ -99,7 +99,7 @@ func (c *CmdLs) Run(ctx sh.CommandContext) int {
 	}
 
 	for i, path := range clean_paths {
-		if len(clean_paths) > 1 || yaml_output {
+		if len(clean_paths) > 1 {
 			fmt.Fprintf(ctx.Stdout, "%s:\r\n", ls_paths[i])
 		}
 		type EntryInfo struct {
