@@ -1,6 +1,6 @@
 json-rpc==1.15.0
-insightface==0.7.3
-opencv-python==4.10.0.84
-numpy==1.24.3
-onnxruntime==1.16.3
-pymongo==4.6.0
+# insightface
+# opencv-python
+# numpy
+# onnxruntime
+# pymongo
