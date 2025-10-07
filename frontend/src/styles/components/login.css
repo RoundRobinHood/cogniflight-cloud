@@ -251,6 +251,16 @@
   color: #999999;
 }
 
+.login-input-error {
+  border-color: rgba(255, 107, 107, 0.8) !important;
+  background: rgba(255, 107, 107, 0.05) !important;
+}
+
+.login-input-error:focus {
+  border-color: rgba(255, 107, 107, 1) !important;
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2), 0 0 20px rgba(255, 107, 107, 0.3) !important;
+}
+
 .login-input-toggle {
   position: absolute;
   right: var(--space-md);
