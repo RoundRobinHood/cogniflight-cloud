@@ -1,2 +1,1 @@
 import handlers.test_handlers
-import handlers.face_embedding_handlers
