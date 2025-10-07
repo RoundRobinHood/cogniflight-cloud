@@ -8,16 +8,56 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(null)
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [client, setClient] = useState(null);
+  const [client, setClient] = useState(null)
+  const [signupToken, setSignupToken] = useState(null)
+  const [isSignupMode, setIsSignupMode] = useState(false)
 
   useEffect(() => {
-    // Check for authentication
-    IsAuthorized().then(auth => {
-      setIsAuthenticated(auth)
-      if(!auth)
-        setIsLoading(false);
-    });
-  }, []);
+    const checkUrlToken = () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const token = urlParams.get('token') || hashParams.get('token')
+      
+      if (token) {
+        setSignupToken(token)
+        setIsSignupMode(true)
+        setIsLoading(false)
+        return true
+      } else {
+        // No token found, reset signup mode
+        setSignupToken(null)
+        setIsSignupMode(false)
+        return false
+      }
+    }
+
+    // Check for signup token in URL
+    const hasToken = checkUrlToken()
+    
+    if (!hasToken) {
+      // Only check authentication if no signup token
+      IsAuthorized().then(auth => {
+        setIsAuthenticated(auth)
+        if(!auth)
+          setIsLoading(false);
+      });
+    }
+
+    // Listen for URL changes (for SPA navigation, though this app doesn't use routing)
+    const handlePopState = () => {
+      const hasToken = checkUrlToken()
+      if (!hasToken && !isAuthenticated) {
+        IsAuthorized().then(auth => {
+          setIsAuthenticated(auth)
+          if(!auth)
+            setIsLoading(false);
+        });
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -65,7 +105,7 @@ function App() {
   }
 
   if (!isAuthenticated || user === null) {
-    return <LoginScreen onLogin={handleLogin} />
+    return <LoginScreen onLogin={handleLogin} isSignupMode={isSignupMode} signupToken={signupToken} />
   }
 
   return <Desktop user={user} onLogout={handleLogout} />
