@@ -47,6 +47,8 @@ func CmdWebhook(filestore filesystem.Store) gin.HandlerFunc {
 
 		clients := map[string]types.ClientInfo{}
 		client_cancels := map[string]context.CancelFunc{}
+		client_inputs := map[string]*types.UnboundedChan[types.WebSocketMessage]{}
+
 		wg := new(sync.WaitGroup)
 
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -132,12 +134,13 @@ func CmdWebhook(filestore filesystem.Store) gin.HandlerFunc {
 						client_map["PWD"] = fmt.Sprintf("/home/%s", auth_status.Username)
 						client_map["HOME"] = fmt.Sprintf("/home/%s", auth_status.Username)
 
+						unboundedChan := types.NewUnboundedChan[types.WebSocketMessage]()
 						ctx, cancel := context.WithCancel(c.Request.Context())
 						new_client := types.ClientInfo{
 							Client: types.Client{
 								ClientID:   incoming.ClientID,
 								Env:        client_map,
-								In:         make(chan types.WebSocketMessage),
+								In:         unboundedChan.Out(),
 								Out:        out_ch,
 								AuthStatus: auth_status,
 							},
@@ -146,6 +149,7 @@ func CmdWebhook(filestore filesystem.Store) gin.HandlerFunc {
 						}
 						clients[incoming.ClientID] = new_client
 						client_cancels[incoming.ClientID] = cancel
+						client_inputs[incoming.ClientID] = unboundedChan
 
 						wg.Add(1)
 						go func() {
@@ -176,21 +180,16 @@ func CmdWebhook(filestore filesystem.Store) gin.HandlerFunc {
 				} else {
 					if incoming.MessageType == types.MsgDisconnect {
 						client.InputWaitGroup.Add(1)
-						go func(cancel context.CancelFunc) {
-							defer client.InputWaitGroup.Done()
-							client.Client.In <- incoming
-							cancel()
-						}(client_cancels[incoming.ClientID])
+						client_in := client_inputs[incoming.ClientID].In()
+						client_in <- incoming
+						close(client_in)
+						client_cancels[incoming.ClientID]()
 						delete(clients, incoming.ClientID)
 						delete(client_cancels, incoming.ClientID)
+						delete(client_inputs, incoming.ClientID)
 					} else {
 						client.InputWaitGroup.Add(1)
-						go func() {
-							defer client.InputWaitGroup.Done()
-							log.Printf("[system] - sending msg to client %q", client.Client.ClientID)
-							client.Client.In <- incoming
-							log.Printf("[system] - finished sending msg to client %q", client.Client.ClientID)
-						}()
+						client_inputs[incoming.ClientID].In() <- incoming
 					}
 				}
 			}
