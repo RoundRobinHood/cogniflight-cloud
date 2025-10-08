@@ -149,9 +149,11 @@ Establish WebSocket for command execution.
 
 **Authorization**: User authorized if **any** of their tags match required tags for operation
 
-**System Roles**:
+**Example tags**:
 - `sysadmin` - Full access, bypasses all checks
+- `atc` - Access to dashboard & pilot info
 - `pilot` - Human operators
+- `data-analyst` - Read-only access for testing
 - `edge-node` - IoT devices (MQTT access)
 - `user-{username}` - Personal ownership tag
 
@@ -262,7 +264,7 @@ auth_opt_http_getuser_uri /check-mqtt-user
 - JSON-formatted per-request logs
 - No log levels (flat model)
 - Automatic panic recovery with stack traces
-- Example: `{"status": 401, "message": "Failed to read login file", "path": "/login"}`
+- Example: `{"status": 401, "logs": ["Failed to read login file"], "uri": "/login"}`
 
 **Retry Mechanisms**:
 - MongoDB/ML Engine: Infinite retry with 2s backoff
