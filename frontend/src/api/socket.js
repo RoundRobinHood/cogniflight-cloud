@@ -396,6 +396,42 @@ export class PipeCmdClient {
 
     return parse(cmd.output);
   }
+
+  // ls gets the files in the specified directory, defaulting to current if not provided.
+  // Example output:
+  // [
+  //  {
+  //    "file_count":1, // 1 for files, entry-count for directories
+  //    "file_size":97, // in bytes
+  //    "modified_time": new Date("Sep 30 12:47 2025"),
+  //    "name":"user.profile",
+  //    "permissions":{
+  //      "read_tags":["sysadmin","user-CogniAdmin","user"],
+  //       "write_tags":["sysadmin","user-CogniAdmin","user"],
+  //       "execute_tags":["sysadmin","user-CogniAdmin","user"],
+  //       "updatetag_tags":["sysadmin","user-CogniAdmin","user"]
+  //    },
+  //    "type":"file" // "file" or "directory"
+  //  },
+  // ]
+  async ls(dir=".") {
+    const cmd = await this.run_command(`ls -yl -- '${dir.replaceAll(`'`, `'\\''`)}'`);
+
+
+    if(cmd.command_result != 0) {
+      throw new Error(cmd.error);
+    }
+
+    if(cmd.output.length === 0) {
+      return [];
+    }
+    const list = parse(cmd.output);
+    list.forEach(file => {
+      file.modified_time = new Date(file.modified_time);
+    })
+
+    return list;
+  }
 }
 
 export class StreamCmdClient {
