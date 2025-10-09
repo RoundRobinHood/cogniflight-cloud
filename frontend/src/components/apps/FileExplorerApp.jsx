@@ -8,17 +8,18 @@ function FileExplorerApp({ instanceData }) {
   const client = usePipeClient()
   const containerRef = useRef(null)
 
-  const [currentPath, setCurrentPath] = useState(instanceData?.currentPath || '.')
-  const [history, setHistory] = useState(instanceData?.history || ['.'])
+  const [currentPath, setCurrentPath] = useState(instanceData?.currentPath || '~')
+  const [history, setHistory] = useState(instanceData?.history || ['~'])
   const [historyIndex, setHistoryIndex] = useState(instanceData?.historyIndex || 0)
   const [showTreeView, setShowTreeView] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [files, setFiles] = useState([])
   const [treeData, setTreeData] = useState(new Map())
-  const [expandedFolders, setExpandedFolders] = useState(new Set(['.']))
-  const [homeDirectory, setHomeDirectory] = useState('.')
+  const [expandedFolders, setExpandedFolders] = useState(new Set(['~']))
+  const [homeDirectory, setHomeDirectory] = useState('')
   const [absolutePath, setAbsolutePath] = useState('')
+  const [isInitialized, setIsInitialized] = useState(false)
 
   const folders = files.filter(f => f.type === 'directory')
   const regularFiles = files.filter(f => f.type === 'file')
@@ -27,18 +28,21 @@ function FileExplorerApp({ instanceData }) {
     let newPath
     if (currentPath === '.' || currentPath === '') {
       newPath = folderName
+    } else if (currentPath === '/') {
+      newPath = `/${folderName}`
+    } else if (currentPath === '~') {
+      newPath = `~/${folderName}`
     } else {
       newPath = `${currentPath}/${folderName}`
     }
-    setCurrentPath(newPath)
-
-    const newHistory = history.slice(0, historyIndex + 1)
-    newHistory.push(newPath)
-    setHistory(newHistory)
-    setHistoryIndex(newHistory.length - 1)
+    navigateToPath(newPath)
   }
 
   const navigateToPath = (path) => {
+    // Clear current files immediately to show loading state
+    setFiles([])
+    setError(null)
+
     setCurrentPath(path)
     const newHistory = history.slice(0, historyIndex + 1)
     newHistory.push(path)
@@ -47,10 +51,14 @@ function FileExplorerApp({ instanceData }) {
   }
 
   const navigateUp = () => {
-    if (currentPath === '.' || currentPath === '/') return
+    if (currentPath === '.' || currentPath === '/' || currentPath === '~') return
 
     let parentPath
-    if (currentPath.includes('/')) {
+    if (currentPath.startsWith('~/')) {
+      const parts = currentPath.split('/')
+      parts.pop()
+      parentPath = parts.join('/') || '~'
+    } else if (currentPath.includes('/')) {
       const parts = currentPath.split('/')
       parts.pop()
       parentPath = parts.join('/') || '/'
@@ -62,13 +70,42 @@ function FileExplorerApp({ instanceData }) {
   }
 
   const getDisplayPath = (path) => {
-    if (path === '.') return 'Home'
+    if (path === '.') return homeDirectory ? `~` : 'Home'
+    if (path === '~') return '~'
     if (path === '..') return 'Parent'
-    return absolutePath || path
+
+    const displayPath = absolutePath || path
+    if (homeDirectory && displayPath.startsWith(homeDirectory)) {
+      return displayPath.replace(homeDirectory, '~')
+    }
+    return displayPath
+  }
+
+
+  const queryHomeDirectory = async () => {
+    if (!client) return
+
+    try {
+      const result = await client.run_command('echo -n $HOME')
+      if (result.command_result === 0 && result.output.trim()) {
+        const homePath = result.output.trim()
+        setHomeDirectory(homePath)
+        console.log('Home directory set to:', homePath)
+      }
+    } catch (err) {
+      console.error('Error querying home directory:', err)
+    }
+    // Always mark as initialized, even if query failed
+    setIsInitialized(true)
   }
 
   const getParentPath = (path) => {
-    if (path === '.' || path === '/') return null
+    if (path === '.' || path === '/' || path === '~') return null
+    if (path.startsWith('~/')) {
+      const parts = path.split('/')
+      parts.pop()
+      return parts.join('/') || '~'
+    }
     if (path.includes('/')) {
       const parts = path.split('/')
       parts.pop()
@@ -79,15 +116,27 @@ function FileExplorerApp({ instanceData }) {
 
   const navigateBack = () => {
     if (historyIndex > 0) {
-      setHistoryIndex(historyIndex - 1)
-      setCurrentPath(history[historyIndex - 1])
+      const newIndex = historyIndex - 1
+      const newPath = history[newIndex]
+      setHistoryIndex(newIndex)
+
+      // Clear files and error immediately for loading state
+      setFiles([])
+      setError(null)
+      setCurrentPath(newPath)
     }
   }
 
   const navigateForward = () => {
     if (historyIndex < history.length - 1) {
-      setHistoryIndex(historyIndex + 1)
-      setCurrentPath(history[historyIndex + 1])
+      const newIndex = historyIndex + 1
+      const newPath = history[newIndex]
+      setHistoryIndex(newIndex)
+
+      // Clear files and error immediately for loading state
+      setFiles([])
+      setError(null)
+      setCurrentPath(newPath)
     }
   }
 
@@ -95,7 +144,8 @@ function FileExplorerApp({ instanceData }) {
     if (file.type === 'file' && file.name.endsWith('.txt')) {
       openWindow('notepad', `Notepad - ${file.name}`, {
         fileName: file.name,
-        filePath: currentPath === '.' ? file.name : `${currentPath}/${file.name}`
+        filePath: (currentPath === '.' || currentPath === '~') ? file.name :
+                 currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`
       })
       addNotification(`Opened ${file.name} in Notepad`, 'info')
     } else if (file.type === 'file') {
@@ -110,29 +160,26 @@ function FileExplorerApp({ instanceData }) {
     setError(null)
 
     try {
+      // Backend understands tilde paths, so we can use them directly
       const fileList = await client.ls(path)
       setFiles(fileList)
 
-      // Get absolute path for display
-      if (path === '.') {
-        try {
-          const pwdResult = await client.run_command('pwd')
-          if (pwdResult.command_result === 0) {
-            setAbsolutePath(pwdResult.output.trim())
-            setHomeDirectory(pwdResult.output.trim())
-          }
-        } catch (err) {
-          console.error('Error getting current directory:', err)
+      // Get absolute path for display - run this AFTER ls completes
+      try {
+        let pwdCommand
+        if (path === '.') {
+          pwdCommand = 'echo $PWD'
+        } else {
+          // Use supported backend syntax: cd path; echo $PWD
+          pwdCommand = `cd ${path}; echo $PWD`
         }
-      } else if (path === '..') {
-        try {
-          const pwdResult = await client.run_command(`cd '${path}' && pwd`)
-          if (pwdResult.command_result === 0) {
-            setAbsolutePath(pwdResult.output.trim())
-          }
-        } catch (err) {
-          console.error('Error getting parent directory:', err)
+
+        const pwdResult = await client.run_command(pwdCommand)
+        if (pwdResult.command_result === 0) {
+          setAbsolutePath(pwdResult.output.trim())
         }
+      } catch (err) {
+        console.error('Error getting current directory:', err)
       }
 
       if (!treeData.has(path)) {
@@ -151,6 +198,7 @@ function FileExplorerApp({ instanceData }) {
     if (!client || treeData.has(path)) return
 
     try {
+      // Backend understands tilde paths directly
       const fileList = await client.ls(path)
       setTreeData(prev => new Map(prev).set(path, fileList))
     } catch (err) {
@@ -170,25 +218,66 @@ function FileExplorerApp({ instanceData }) {
   }
 
   const goHome = () => {
-    navigateToPath('.')
+    if (currentPath !== '~' && currentPath !== '.') {
+      navigateToPath('~')
+    }
   }
 
   const goToRoot = () => {
-    navigateToPath('/')
+    if (currentPath !== '/') {
+      navigateToPath('/')
+    }
   }
 
   useEffect(() => {
-    if (client) {
-      loadDirectory()
-      loadTreeDirectory('.')
+    if (client && !isInitialized) {
+      // Query home directory first, then load initial directory sequentially
+      queryHomeDirectory().then(async () => {
+        await loadDirectory()
+        await loadTreeDirectory('~')
+      })
     }
-  }, [client])
+  }, [client, isInitialized])
 
   useEffect(() => {
-    if (client && currentPath) {
+    if (client && currentPath && isInitialized) {
       loadDirectory(currentPath)
     }
-  }, [currentPath, client])
+  }, [currentPath, client, isInitialized])
+
+  // Sync expanded folders when navigating
+  useEffect(() => {
+    if (currentPath && !expandedFolders.has(currentPath)) {
+      // Auto-expand current path in tree if it's not already expanded
+      const pathsToExpand = []
+
+      if (currentPath.startsWith('~/')) {
+        pathsToExpand.push('~')
+        const parts = currentPath.split('/')
+        let buildPath = '~'
+        for (let i = 1; i < parts.length; i++) {
+          buildPath += '/' + parts[i]
+          pathsToExpand.push(buildPath)
+        }
+      } else if (currentPath.startsWith('/') && currentPath !== '/') {
+        pathsToExpand.push('/')
+        const parts = currentPath.split('/').filter(p => p)
+        let buildPath = ''
+        for (const part of parts) {
+          buildPath += '/' + part
+          pathsToExpand.push(buildPath)
+        }
+      }
+
+      if (pathsToExpand.length > 0) {
+        setExpandedFolders(prev => {
+          const newSet = new Set(prev)
+          pathsToExpand.forEach(path => newSet.add(path))
+          return newSet
+        })
+      }
+    }
+  }, [currentPath, expandedFolders])
 
   useEffect(() => {
     const handleResize = () => {
@@ -217,7 +306,10 @@ function FileExplorerApp({ instanceData }) {
       <>
         {/* Render directories first */}
         {directories.map(dir => {
-          const fullPath = path === '.' ? dir.name : `${path}/${dir.name}`
+          const fullPath = path === '.' ? dir.name :
+                          path === '/' ? `/${dir.name}` :
+                          path === '~' ? `~/${dir.name}` :
+                          `${path}/${dir.name}`
           const isExpanded = expandedFolders.has(fullPath)
           const childItems = treeData.get(fullPath)
 
@@ -239,12 +331,12 @@ function FileExplorerApp({ instanceData }) {
                 onClick={() => navigateToPath(fullPath)}
                 onMouseEnter={(e) => {
                   if (currentPath !== fullPath) {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.05)'
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (currentPath !== fullPath) {
-                    e.target.style.background = 'transparent'
+                    e.currentTarget.style.background = 'transparent'
                   }
                 }}
               >
@@ -283,7 +375,10 @@ function FileExplorerApp({ instanceData }) {
 
         {/* Render files */}
         {files.map(file => {
-          const fullPath = path === '.' ? file.name : `${path}/${file.name}`
+          const fullPath = path === '.' ? file.name :
+                          path === '/' ? `/${file.name}` :
+                          path === '~' ? `~/${file.name}` :
+                          `${path}/${file.name}`
 
           return (
             <div
@@ -300,10 +395,10 @@ function FileExplorerApp({ instanceData }) {
                 transition: 'background 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(255, 255, 255, 0.03)'
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = 'transparent'
+                e.currentTarget.style.background = 'transparent'
               }}
             >
               <File size={14} color={file.name.endsWith('.txt') ? '#FFD700' : '#87CEEB'} style={{ marginRight: '6px' }} />
@@ -356,41 +451,45 @@ function FileExplorerApp({ instanceData }) {
         </button>
         <button
           onClick={navigateUp}
-          disabled={currentPath === '/' || (currentPath === '.' && !getParentPath(currentPath))}
+          disabled={!getParentPath(currentPath)}
           style={{
             background: 'rgba(255, 255, 255, 0.1)',
             border: 'none',
             color: 'white',
             padding: '4px 8px',
             borderRadius: '4px',
-            cursor: (currentPath === '/' || (currentPath === '.' && !getParentPath(currentPath))) ? 'not-allowed' : 'pointer',
-            opacity: (currentPath === '/' || (currentPath === '.' && !getParentPath(currentPath))) ? 0.5 : 1
+            cursor: !getParentPath(currentPath) ? 'not-allowed' : 'pointer',
+            opacity: !getParentPath(currentPath) ? 0.5 : 1
           }}
         >
           <ArrowUp size={16} />
         </button>
         <button
           onClick={goHome}
+          disabled={currentPath === '~' || currentPath === '.'}
           style={{
             background: 'rgba(255, 255, 255, 0.1)',
             border: 'none',
             color: 'white',
             padding: '4px 8px',
             borderRadius: '4px',
-            cursor: 'pointer'
+            cursor: (currentPath === '~' || currentPath === '.') ? 'not-allowed' : 'pointer',
+            opacity: (currentPath === '~' || currentPath === '.') ? 0.5 : 1
           }}
         >
           <Home size={16} />
         </button>
         <button
           onClick={goToRoot}
+          disabled={currentPath === '/'}
           style={{
             background: 'rgba(255, 255, 255, 0.1)',
             border: 'none',
             color: 'white',
             padding: '4px 8px',
             borderRadius: '4px',
-            cursor: 'pointer'
+            cursor: currentPath === '/' ? 'not-allowed' : 'pointer',
+            opacity: currentPath === '/' ? 0.5 : 1
           }}
         >
           /
@@ -441,12 +540,12 @@ function FileExplorerApp({ instanceData }) {
                 onClick={() => navigateToPath('/')}
                 onMouseEnter={(e) => {
                   if (currentPath !== '/') {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.05)'
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (currentPath !== '/') {
-                    e.target.style.background = 'transparent'
+                    e.currentTarget.style.background = 'transparent'
                   }
                 }}
               >
@@ -485,26 +584,26 @@ function FileExplorerApp({ instanceData }) {
                   cursor: 'pointer',
                   borderRadius: '4px',
                   fontSize: '13px',
-                  color: currentPath === '.' ? '#FFD700' : '#fff',
-                  background: currentPath === '.' ? 'rgba(255, 215, 0, 0.1)' : 'transparent',
+                  color: (currentPath === '.' || currentPath === '~') ? '#FFD700' : '#fff',
+                  background: (currentPath === '.' || currentPath === '~') ? 'rgba(255, 215, 0, 0.1)' : 'transparent',
                   transition: 'background 0.2s'
                 }}
-                onClick={() => navigateToPath('.')}
+                onClick={() => navigateToPath('~')}
                 onMouseEnter={(e) => {
-                  if (currentPath !== '.') {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.05)'
+                  if (currentPath !== '.' && currentPath !== '~') {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (currentPath !== '.') {
-                    e.target.style.background = 'transparent'
+                  if (currentPath !== '.' && currentPath !== '~') {
+                    e.currentTarget.style.background = 'transparent'
                   }
                 }}
               >
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    toggleFolder('.')
+                    toggleFolder('~')
                   }}
                   style={{
                     background: 'none',
@@ -517,15 +616,15 @@ function FileExplorerApp({ instanceData }) {
                     alignItems: 'center'
                   }}
                 >
-                  {expandedFolders.has('.') ?
+                  {expandedFolders.has('~') ?
                     <ChevronDown size={14} /> :
                     <TreeChevronRight size={14} />
                   }
                 </button>
                 <Home size={14} color="#FFD700" style={{ marginRight: '6px' }} />
-                <span>Home</span>
+                <span>~</span>
               </div>
-              {expandedFolders.has('.') && renderTreeNode('.', treeData.get('.'), 1)}
+              {expandedFolders.has('~') && renderTreeNode('~', treeData.get('~'), 1)}
             </div>
           </div>
         )}
@@ -533,9 +632,22 @@ function FileExplorerApp({ instanceData }) {
         <div style={{
           flex: 1,
           padding: '16px',
-          overflow: 'auto'
+          overflow: 'auto',
+          position: 'relative'
         }}>
-          {error ? (
+          {loading && files.length === 0 ? (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '200px',
+              color: '#FFD700'
+            }}>
+              <Loader2 size={32} className="animate-spin" style={{ marginBottom: '12px' }} />
+              <span>Loading directory...</span>
+            </div>
+          ) : error ? (
             <div style={{
               padding: '20px',
               textAlign: 'center',
@@ -545,6 +657,15 @@ function FileExplorerApp({ instanceData }) {
               border: '1px solid rgba(255, 107, 107, 0.3)'
             }}>
               {error}
+            </div>
+          ) : files.length === 0 ? (
+            <div style={{
+              padding: '20px',
+              textAlign: 'center',
+              color: '#ccc',
+              fontStyle: 'italic'
+            }}>
+              This directory is empty
             </div>
           ) : (
             <div style={{
@@ -605,6 +726,32 @@ function FileExplorerApp({ instanceData }) {
                   </span>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Loading overlay for when updating existing directory */}
+          {loading && files.length > 0 && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '8px'
+            }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                color: '#FFD700'
+              }}>
+                <Loader2 size={32} className="animate-spin" style={{ marginBottom: '12px' }} />
+                <span>Loading directory...</span>
+              </div>
             </div>
           )}
         </div>

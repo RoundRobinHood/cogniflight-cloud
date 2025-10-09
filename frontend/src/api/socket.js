@@ -294,7 +294,8 @@ export class PipeCmdClient {
 
   async run_command(command, input=StringIterator("")) {
     await Connect();
-    if (this.command_running) throw new Error("command already running")
+    if (this.command_running) await this.until('command_finished');
+    this.command_running = true
 
     let command_result;
     let output = "";
@@ -415,8 +416,7 @@ export class PipeCmdClient {
   //  },
   // ]
   async ls(dir=".") {
-    const cmd = await this.run_command(`ls -yl -- '${dir.replaceAll(`'`, `'\\''`)}'`);
-
+    const cmd = await this.run_command(`ls -yl -- ${dir}`);
 
     if(cmd.command_result != 0) {
       throw new Error(cmd.error);
@@ -548,7 +548,8 @@ export class StreamCmdClient {
 
   async run_command(command) {
     await Connect();
-    if (this.command_running) throw new Error("command already running");
+    if (this.command_running) await this.until('command_finished');
+    this.command_running = true;
 
     this.send({
       message_id: GenerateMessageID(),
