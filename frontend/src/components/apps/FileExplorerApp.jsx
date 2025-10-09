@@ -362,7 +362,17 @@ function FileExplorerApp({ instanceData }) {
                   }
                 </button>
                 <Folder size={14} color="#FFD700" style={{ marginRight: '6px' }} />
-                <span>{dir.name}</span>
+                <span
+                style={{
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '150px'
+                }}
+                title={dir.name}
+              >
+                {dir.name}
+              </span>
               </div>
               {isExpanded && childItems && (
                 <div>
@@ -402,7 +412,17 @@ function FileExplorerApp({ instanceData }) {
               }}
             >
               <File size={14} color={file.name.endsWith('.txt') ? '#FFD700' : '#87CEEB'} style={{ marginRight: '6px' }} />
-              <span>{file.name}</span>
+              <span
+                style={{
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '150px'
+                }}
+                title={file.name}
+              >
+                {file.name}
+              </span>
             </div>
           )
         })}
@@ -670,7 +690,7 @@ function FileExplorerApp({ instanceData }) {
           ) : (
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
               gap: '16px'
             }}>
               {folders.map(folder => (
@@ -690,7 +710,20 @@ function FileExplorerApp({ instanceData }) {
                   onMouseLeave={(e) => e.target.style.background = 'transparent'}
                 >
                   <FolderOpen size={48} color="#FFD700" />
-                  <span style={{ marginTop: '8px', fontSize: '12px', textAlign: 'center' }}>
+                  <span
+                    style={{
+                      marginTop: '8px',
+                      fontSize: '12px',
+                      textAlign: 'center',
+                      display: 'block',
+                      width: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      wordBreak: 'break-all'
+                    }}
+                    title={folder.name}
+                  >
                     {folder.name}
                   </span>
                   <span style={{ fontSize: '10px', color: '#ccc', marginTop: '2px' }}>
@@ -716,7 +749,20 @@ function FileExplorerApp({ instanceData }) {
                   onMouseLeave={(e) => e.target.style.background = 'transparent'}
                 >
                   <File size={48} color={file.name.endsWith('.txt') ? "#FFD700" : "#87CEEB"} />
-                  <span style={{ marginTop: '8px', fontSize: '12px', textAlign: 'center' }}>
+                  <span
+                    style={{
+                      marginTop: '8px',
+                      fontSize: '12px',
+                      textAlign: 'center',
+                      display: 'block',
+                      width: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      wordBreak: 'break-all'
+                    }}
+                    title={file.name}
+                  >
                     {file.name}
                   </span>
                   <span style={{ fontSize: '10px', color: '#ccc', marginTop: '2px' }}>
