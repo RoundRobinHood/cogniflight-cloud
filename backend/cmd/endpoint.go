@@ -143,6 +143,7 @@ func CmdWebhook(filestore filesystem.Store) gin.HandlerFunc {
 								In:         unboundedChan.Out(),
 								Out:        out_ch,
 								AuthStatus: auth_status,
+								UserTags:   auth_status.Tags,
 							},
 							Ctx:            ctx,
 							InputWaitGroup: new(sync.WaitGroup),
