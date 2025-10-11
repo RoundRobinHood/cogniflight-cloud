@@ -4,12 +4,14 @@ import (
 	"fmt"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/sh"
 )
 
 type CmdWhoami struct {
 	FileStore filesystem.Store
+	Session   *types.SocketSession
 }
 
 func (*CmdWhoami) Identifier() string {
@@ -25,6 +27,10 @@ func (c *CmdWhoami) Run(ctx sh.CommandContext) int {
 		return 1
 	}
 	fmt.Fprintf(ctx.Stdout, "# AuthStatus\r\n%s", string(auth_bytes))
+
+	connectTimestamp := c.Session.ConnectTimestamp()
+	socketID := c.Session.SocketID()
+	fmt.Fprintf(ctx.Stdout, "\r\n# Socket connection\r\nsession:\r\n  connected: %s\r\n  id: %s\r\n", connectTimestamp.Format("Jan _2 15:04 2006"), socketID)
 
 	profileBytes, err := c.FileStore.LookupReadAll(ctx.Ctx, fmt.Sprintf("/home/%s/user.profile", status.Username), tags)
 	if err != nil {

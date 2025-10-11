@@ -34,7 +34,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func CmdWebhook(filestore filesystem.Store) gin.HandlerFunc {
+func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		auth_get, ok := c.Get("auth")
 		if !ok {
@@ -43,7 +43,10 @@ func CmdWebhook(filestore filesystem.Store) gin.HandlerFunc {
 			return
 		}
 		auth_status := auth_get.(types.AuthorizationStatus)
-		available_commands := InitCommands(filestore)
+		socketID := GenerateMessageID(20)
+		session := sessionStore.AttachSession(socketID, auth_status)
+		defer sessionStore.DetachSession(socketID)
+		available_commands := InitCommands(filestore, session)
 
 		clients := map[string]types.ClientInfo{}
 		client_cancels := map[string]context.CancelFunc{}
@@ -147,6 +150,7 @@ func CmdWebhook(filestore filesystem.Store) gin.HandlerFunc {
 							},
 							Ctx:            ctx,
 							InputWaitGroup: new(sync.WaitGroup),
+							ClientHandle:   session.ClientConnected(incoming.ClientID),
 						}
 						clients[incoming.ClientID] = new_client
 						client_cancels[incoming.ClientID] = cancel

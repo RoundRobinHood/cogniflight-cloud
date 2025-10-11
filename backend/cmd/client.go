@@ -15,8 +15,34 @@ import (
 )
 
 func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesystem.Store, wg *sync.WaitGroup) {
+	defer info.ClientHandle.Disconnected()
 	defer wg.Done()
 	defer log.Printf("[client %q] - closing", info.Client.ClientID)
+
+	stdin_log := types.NewUnboundedChan[string]()
+	stdout_log := types.NewUnboundedChan[string]()
+	stderr_log := types.NewUnboundedChan[string]()
+
+	defer stdin_log.Close()
+	defer stdout_log.Close()
+	defer stderr_log.Close()
+
+	go func() {
+		for in := range stdin_log.Out() {
+			info.ClientHandle.Stdin(in)
+		}
+	}()
+	go func() {
+		for out := range stdout_log.Out() {
+			info.ClientHandle.Stdout(out)
+		}
+	}()
+	go func() {
+		for err := range stderr_log.Out() {
+			info.ClientHandle.Stderr(err)
+		}
+	}()
+
 	stdin := &ChannelReader{}
 	stdout := make(ChannelWriter)
 	defer close(stdout)
@@ -50,6 +76,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 			log.Printf("[client %q] - received msg: %v", info.Client.ClientID, msg)
 			switch msg.MessageType {
 			case types.MsgRunCommand:
+				info.ClientHandle.CommandRunning(msg.Command)
 				cmd_stop := make(chan struct{})
 				cmd_wg := new(sync.WaitGroup)
 				cmd_wg.Add(3)
@@ -63,6 +90,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 						case msg := <-info.Client.In:
 							switch msg.MessageType {
 							case types.MsgInputStream:
+								stdin_log.In() <- msg.InputStream
 								if msg.InputStream != "" {
 									stdin.Chan <- msg.InputStream
 								}
@@ -80,6 +108,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 						case <-cmd_stop:
 							return
 						case str := <-stdout:
+							stdout_log.In() <- str
 							info.Client.Out <- types.WebSocketMessage{
 								MessageID:   GenerateMessageID(20),
 								ClientID:    info.Client.ClientID,
@@ -98,6 +127,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 						case <-cmd_stop:
 							return
 						case str := <-stderr:
+							stderr_log.In() <- str
 							info.Client.Out <- types.WebSocketMessage{
 								MessageID:   GenerateMessageID(20),
 								ClientID:    info.Client.ClientID,
@@ -119,6 +149,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 					MessageType: types.MsgCommandRunning,
 					RefID:       msg.MessageID,
 				}
+				log.Printf("running cmd: %q", msg.Command)
 				err := runner.RunText(cmd_ctx, strings.NewReader(msg.Command))
 				close(cmd_stop)
 				cmd_wg.Wait()
@@ -142,6 +173,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 					}
 				}
 
+				info.ClientHandle.CommandFinished(result)
 				info.Client.Out <- types.WebSocketMessage{
 					MessageID:   GenerateMessageID(20),
 					ClientID:    info.Client.ClientID,

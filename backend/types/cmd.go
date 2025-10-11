@@ -78,6 +78,7 @@ type ClientInfo struct {
 	Client         Client
 	Ctx            context.Context
 	InputWaitGroup *sync.WaitGroup
+	ClientHandle   ClientHandle
 }
 
 type OptionDescriptor struct {

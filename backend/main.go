@@ -14,6 +14,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
 	"github.com/sourcegraph/jsonrpc2"
@@ -40,6 +41,7 @@ func main() {
 	}
 
 	fileStore := filesystem.Store{Col: database.Collection("vfs"), Bucket: bucket}
+	sessionStore := types.NewSessionStore()
 
 	go func() {
 		for {
@@ -107,7 +109,7 @@ func main() {
 	r.GET("/signup/check-username/:username", auth.SignupCheckUsername(fileStore))
 	r.POST("/signup", auth.Signup(fileStore))
 	r.POST("/login", auth.Login(fileStore))
-	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore))
+	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore, sessionStore))
 
 	server := &http.Server{
 		Addr:    ":8080",
