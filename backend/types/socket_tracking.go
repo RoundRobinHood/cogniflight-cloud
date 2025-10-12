@@ -8,17 +8,19 @@ import (
 )
 
 type CommandStatus struct {
-	CommandStr           string
-	Input, Output, Error string
-	RunTimestamp         time.Time
-	FinishTimestamp      *time.Time
-	CommandResult        int
+	CommandStr      string     `yaml:"command"`
+	Input           string     `yaml:"input"`
+	Output          string     `yaml:"output"`
+	Error           string     `yaml:"error"`
+	RunTimestamp    time.Time  `yaml:"run_timestamp"`
+	FinishTimestamp *time.Time `yaml:"finish_timestamp"`
+	CommandResult   int        `yaml:"command_result"`
 }
 
 type ClientStatus struct {
-	ClientID         string
-	ConnectTimestamp time.Time
-	CommandStatus    *CommandStatus
+	ClientID         string         `yaml:"client_id"`
+	ConnectTimestamp time.Time      `yaml:"connect_timestamp"`
+	CommandStatus    *CommandStatus `yaml:"command_status"`
 }
 
 func (c ClientStatus) Clone() ClientStatus {
