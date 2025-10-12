@@ -45,8 +45,7 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore) gi
 		auth_status := auth_get.(types.AuthorizationStatus)
 		socketID := GenerateMessageID(20)
 		session := sessionStore.AttachSession(socketID, auth_status)
-		defer sessionStore.DetachSession(socketID)
-		available_commands := InitCommands(filestore, session)
+		available_commands := InitCommands(filestore, session, sessionStore)
 
 		clients := map[string]types.ClientInfo{}
 		client_cancels := map[string]context.CancelFunc{}
@@ -65,9 +64,18 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore) gi
 		in_ch := make(chan types.WebSocketMessage)
 		out_ch := make(chan types.WebSocketMessage)
 		defer func() {
-			for _, cancel := range client_cancels {
+			for clientID, cancel := range client_cancels {
+				go func() {
+					for range clients[clientID].Client.Out {
+					}
+				}()
+				log.Printf("Canceling client ctx during exit (%q)", clientID)
+				client_inputs[clientID].Close()
 				cancel()
 			}
+
+			wg.Wait()
+			sessionStore.DetachSession(socketID)
 		}()
 
 		wg.Add(1)

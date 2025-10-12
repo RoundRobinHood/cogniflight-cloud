@@ -6,7 +6,7 @@ import (
 	"github.com/RoundRobinHood/sh"
 )
 
-func InitCommands(filestore filesystem.Store, socketSession *types.SocketSession) []sh.Command {
+func InitCommands(filestore filesystem.Store, socketSession *types.SocketSession, sessionStore *types.SessionStore) []sh.Command {
 	return []sh.Command{
 		&CmdLs{FileStore: filestore},
 		&CmdMkdir{FileStore: filestore},
@@ -16,5 +16,6 @@ func InitCommands(filestore filesystem.Store, socketSession *types.SocketSession
 		CmdError{},
 		&CmdWhoami{FileStore: filestore, Session: socketSession},
 		&CmdClients{Socket: socketSession},
+		&CmdSockets{SessionStore: sessionStore},
 	}
 }

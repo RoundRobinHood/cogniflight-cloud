@@ -99,7 +99,11 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 						select {
 						case <-cmd_stop:
 							return
-						case msg := <-info.Client.In:
+						case msg, ok := <-info.Client.In:
+							if !ok {
+								close(stdin.Chan)
+								return
+							}
 							switch msg.MessageType {
 							case types.MsgInputStream:
 								stdin_log.In() <- msg.InputStream
@@ -162,6 +166,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 					RefID:       msg.MessageID,
 				}
 				log.Printf("running cmd: %q", msg.Command)
+				log.Printf("Gave stdin: %v", stdin)
 				err := runner.RunText(cmd_ctx, strings.NewReader(msg.Command))
 				close(cmd_stop)
 				cmd_wg.Wait()
