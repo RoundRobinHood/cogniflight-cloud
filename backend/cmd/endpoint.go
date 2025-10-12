@@ -128,7 +128,7 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore) gi
 					return
 				}
 				messageID := GenerateMessageID(20)
-				if client, ok := clients[incoming.ClientID]; !ok {
+				if _, ok := clients[incoming.ClientID]; !ok {
 					if incoming.MessageType == types.MsgConnect {
 						client_map := make(map[string]string)
 						if incoming.SetEnv != nil {
@@ -148,9 +148,8 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore) gi
 								AuthStatus: auth_status,
 								UserTags:   auth_status.Tags,
 							},
-							Ctx:            ctx,
-							InputWaitGroup: new(sync.WaitGroup),
-							ClientHandle:   session.ClientConnected(incoming.ClientID),
+							Ctx:          ctx,
+							ClientHandle: session.ClientConnected(incoming.ClientID),
 						}
 						clients[incoming.ClientID] = new_client
 						client_cancels[incoming.ClientID] = cancel
@@ -184,7 +183,6 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore) gi
 					}
 				} else {
 					if incoming.MessageType == types.MsgDisconnect {
-						client.InputWaitGroup.Add(1)
 						client_in := client_inputs[incoming.ClientID].In()
 						client_in <- incoming
 						close(client_in)
@@ -193,7 +191,6 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore) gi
 						delete(client_cancels, incoming.ClientID)
 						delete(client_inputs, incoming.ClientID)
 					} else {
-						client.InputWaitGroup.Add(1)
 						client_inputs[incoming.ClientID].In() <- incoming
 					}
 				}

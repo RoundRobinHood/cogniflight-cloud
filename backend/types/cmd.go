@@ -2,7 +2,6 @@ package types
 
 import (
 	"context"
-	"sync"
 )
 
 type MessageType string
@@ -75,10 +74,9 @@ type Client struct {
 }
 
 type ClientInfo struct {
-	Client         Client
-	Ctx            context.Context
-	InputWaitGroup *sync.WaitGroup
-	ClientHandle   ClientHandle
+	Client       Client
+	Ctx          context.Context
+	ClientHandle ClientHandle
 }
 
 type OptionDescriptor struct {

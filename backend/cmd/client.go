@@ -15,9 +15,9 @@ import (
 )
 
 func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesystem.Store, wg *sync.WaitGroup) {
+	defer log.Printf("[client %q] - closing", info.Client.ClientID)
 	defer info.ClientHandle.Disconnected()
 	defer wg.Done()
-	defer log.Printf("[client %q] - closing", info.Client.ClientID)
 
 	stdin_log := types.NewUnboundedChan[string]()
 	stdout_log := types.NewUnboundedChan[string]()
@@ -63,14 +63,26 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 	env := map[string]string{}
 	maps.Copy(env, info.Client.Env)
 	for {
-		fmt.Println(info.Client.In)
 		select {
 		case <-info.Ctx.Done():
-			go func() {
-				for range info.Client.In {
+			fmt.Println("context cancelled")
+			var disconnect_msg types.WebSocketMessage
+			// NOTE: if context is cancelled, it's expected that the input channel is finalized and will close soon
+			for in := range info.Client.In {
+				if in.MessageType == types.MsgDisconnect {
+					disconnect_msg = in
 				}
-			}()
-			info.InputWaitGroup.Wait()
+			}
+
+			if disconnect_msg.MessageID != "" {
+				info.Client.Out <- types.WebSocketMessage{
+					MessageID:   GenerateMessageID(20),
+					ClientID:    info.Client.ClientID,
+					MessageType: types.MsgDisconnectAck,
+					RefID:       disconnect_msg.MessageID,
+				}
+			}
+
 			return
 		case msg := <-info.Client.In:
 			log.Printf("[client %q] - received msg: %v", info.Client.ClientID, msg)
@@ -188,7 +200,6 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 					for range info.Client.In {
 					}
 				}()
-				info.InputWaitGroup.Wait()
 				info.Client.Out <- types.WebSocketMessage{
 					MessageID:   GenerateMessageID(20),
 					ClientID:    info.Client.ClientID,
@@ -196,6 +207,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 					RefID:       msg.MessageID,
 				}
 
+				log.Printf("[client %q] - sent disconnectAck", msg.ClientID)
 				return
 			}
 		}
