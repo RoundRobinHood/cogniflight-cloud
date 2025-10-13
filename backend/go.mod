@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/RoundRobinHood/jlogging v0.0.0-20250725150259-379944c99c8a
-	github.com/RoundRobinHood/sh v0.0.0-20251011102239-66cfd9399cbd
+	github.com/RoundRobinHood/sh v0.0.0-20251013132529-1234ee2e18a6
 	github.com/gin-gonic/gin v1.10.1
 	github.com/goccy/go-yaml v1.18.0
 	github.com/gorilla/websocket v1.5.3
