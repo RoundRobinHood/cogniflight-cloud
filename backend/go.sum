@@ -2,6 +2,8 @@ github.com/RoundRobinHood/jlogging v0.0.0-20250725150259-379944c99c8a h1:CEd2CwO
 github.com/RoundRobinHood/jlogging v0.0.0-20250725150259-379944c99c8a/go.mod h1:tckfAuSA+45WI8JWU1bWMjF1A/SrD61FtLFd3F2zYsU=
 github.com/RoundRobinHood/sh v0.0.0-20251004113158-5b0cd4929d1d h1:3vKwG45tVruKmaD/LvJAMD2VmWZl5GNUET+4HU7VW38=
 github.com/RoundRobinHood/sh v0.0.0-20251004113158-5b0cd4929d1d/go.mod h1:NKQzNbdsQaVujxvzVW12WCha9W76O67xlgdtB8Q1Rg0=
+github.com/RoundRobinHood/sh v0.0.0-20251011102239-66cfd9399cbd h1:UF4C1JX7HpbsUGiDfanEbiygpO/VhZqLX4jFKayqu7k=
+github.com/RoundRobinHood/sh v0.0.0-20251011102239-66cfd9399cbd/go.mod h1:NKQzNbdsQaVujxvzVW12WCha9W76O67xlgdtB8Q1Rg0=
 github.com/bytedance/sonic v1.13.3 h1:MS8gmaH16Gtirygw7jV91pDCN33NyMrPbN7qiYhEsF0=
 github.com/bytedance/sonic v1.13.3/go.mod h1:o68xyaF9u2gvVBuGHPlUVCy+ZfmNNO5ETf1+KgkJhz4=
 github.com/bytedance/sonic/loader v0.1.1/go.mod h1:ncP89zfokxS5LZrJxl5z0UJcsk4M4yY2JpfqGeCtNLU=
@@ -10,8 +12,6 @@ github.com/bytedance/sonic/loader v0.2.4/go.mod h1:N8A3vUdtUebEY2/VQC0MyhYeKUFos
 github.com/cloudwego/base64x v0.1.5 h1:XPciSp1xaq2VCSt6lF0phncD4koWyULpl5bUxbfCyP4=
 github.com/cloudwego/base64x v0.1.5/go.mod h1:0zlkT4Wn5C6NdauXdJRhSKRlJvmclQ1hhJgA0rcu/8w=
 github.com/cloudwego/iasm v0.2.0/go.mod h1:8rXZaNYT2n95jn+zTI1sDr+IgcD2GVs0nlbbQPiEFhY=
-github.com/creack/pty v1.1.24 h1:bJrF4RRfyJnbTJqzRLHzcGaZK1NeM5kTC9jGgovnR1s=
-github.com/creack/pty v1.1.24/go.mod h1:08sCNb52WyoAwi2QDyzUCTgcvVFhUzewun7wtTfvcwE=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
