@@ -19,6 +19,7 @@ func (*CmdCat) Identifier() string {
 }
 
 func (c *CmdCat) Run(ctx sh.CommandContext) int {
+	defer log.Printf("cat finished")
 	cwd, ok := ctx.Env["PWD"]
 	if !ok {
 		fmt.Fprint(ctx.Stderr, "error: no PWD available")
