@@ -17,5 +17,6 @@ func InitCommands(filestore filesystem.Store, socketSession *types.SocketSession
 		&CmdWhoami{FileStore: filestore, Session: socketSession},
 		&CmdClients{Socket: socketSession},
 		&CmdSockets{SessionStore: sessionStore},
+		&CmdPilots{FileStore: filestore},
 	}
 }
