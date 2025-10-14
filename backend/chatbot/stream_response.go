@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
@@ -47,7 +46,6 @@ func (k APIKey) StreamResponse(requestObj types.ResponseRequest, output io.Write
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		log.Println("received: ", line)
 
 		if event, ok := strings.CutPrefix(line, "event: "); ok {
 			currentEvent = event

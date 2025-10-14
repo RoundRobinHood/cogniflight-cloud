@@ -19,10 +19,12 @@ func InitCommands(filestore filesystem.Store, socketSession *types.SocketSession
 		&CmdClients{Socket: socketSession},
 		&CmdSockets{SessionStore: sessionStore},
 		&CmdPilots{FileStore: filestore},
+		CmdHelp{},
 	}
 
 	activate_cmd := &CmdActivate{
-		APIKey: apiKey,
+		APIKey:    apiKey,
+		FileStore: filestore,
 	}
 
 	commands = append(commands, activate_cmd)

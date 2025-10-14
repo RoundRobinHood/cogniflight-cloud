@@ -64,6 +64,7 @@ type ResponseRequest struct {
 	Tools              []ToolDefinition `json:"tools"`
 	ToolChoice         string           `json:"tool_choice,omitempty"`
 	Stream             bool             `json:"stream"`
+	Instructions       string           `json:"instructions"`
 }
 
 type ResponseStreamEvent struct {
