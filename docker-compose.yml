@@ -115,6 +115,7 @@ services:
       ML_SOCK_FILE: "/sockets/ml-engine.sock"
 
       MQTT_KEY: "${MQTT_KEY:-mqttpass}"
+      OPENAI_API_KEY: "$OPENAI_API_KEY"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`${SERVER_DOMAIN:-localhost}`) && PathPrefix(`/api`)"
