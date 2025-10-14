@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/gin-gonic/gin"
@@ -34,7 +35,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore) gin.HandlerFunc {
+func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, apiKey chatbot.APIKey) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		auth_get, ok := c.Get("auth")
 		if !ok {
@@ -45,7 +46,7 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore) gi
 		auth_status := auth_get.(types.AuthorizationStatus)
 		socketID := GenerateMessageID(20)
 		session := sessionStore.AttachSession(socketID, auth_status)
-		available_commands := InitCommands(filestore, session, sessionStore)
+		available_commands := InitCommands(filestore, session, sessionStore, apiKey)
 
 		clients := map[string]types.ClientInfo{}
 		client_cancels := map[string]context.CancelFunc{}
