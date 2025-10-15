@@ -12,7 +12,7 @@ Importing all styles in proper order to maintain specificity and functionality
 @import "./utilities/glass.css";
 @import "./utilities/animations.css";
 @import "./utilities/buttons.css";
-@import "./utilities/table.css";
+@import "./utilities/tables.css";
 @import "./utilities/pills.css";
 
 /* Component Styles */

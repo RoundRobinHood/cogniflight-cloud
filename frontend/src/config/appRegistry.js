@@ -90,7 +90,7 @@ class AppRegistry {
       defaultTitle: "Users",
       defaultSize: { width: 900, height: 620 },
       //Hide from non-admin users in Desktop
-      visibleWhen: (systemstate) => systemstate?.currentUser?.role === "admin",
+      visibleWhen: (systemState) => systemState?.userProfile?.role === "sysadmin",
     });
 
     this.register({
@@ -129,8 +129,11 @@ class AppRegistry {
     return this.apps.get(appId);
   }
 
-  getAllApps() {
-    return Array.from(this.apps.values()).map((app) => ({
+  //show apps based on what the logged in user's role is
+  getAllApps(systemState) {
+    return Array.from(this.apps.values())
+    .filter(app => !app.visibleWhen || app.visibleWhen(systemState))
+    .map((app) => ({
       id: app.id,
       label: app.label,
       icon: app.icon,

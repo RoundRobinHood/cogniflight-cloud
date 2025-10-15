@@ -5,7 +5,10 @@ import appRegistry from '../config/appRegistry'
 function DesktopIcons({ onOpenApp }) {
   const { systemState, removeFromDesktop, showContextMenu } = useSystem()
   
-  const allIcons = appRegistry.getAllApps()
+  const allIcons = appRegistry.getAllApps(systemState)
+  console.log("🧭 systemState.userProfile.role =", systemState.userProfile.role);
+  console.log("🧩 all visible apps =", appRegistry.getAllApps(systemState));
+
 
   // Get icons that are pinned to desktop
   const icons = allIcons.filter(icon => systemState.pinnedToDesktop.includes(icon.id))
