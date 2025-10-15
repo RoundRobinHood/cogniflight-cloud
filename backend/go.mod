@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/RoundRobinHood/jlogging v0.0.0-20250725150259-379944c99c8a
-	github.com/RoundRobinHood/sh v0.0.0-20251004113158-5b0cd4929d1d
+	github.com/RoundRobinHood/sh v0.0.0-20251013132529-1234ee2e18a6
 	github.com/gin-gonic/gin v1.10.1
 	github.com/goccy/go-yaml v1.18.0
 	github.com/gorilla/websocket v1.5.3
@@ -13,7 +13,6 @@ require (
 	go.mongodb.org/mongo-driver v1.17.3
 	golang.org/x/crypto v0.39.0
 	golang.org/x/term v0.35.0
-	mvdan.cc/sh/v3 v3.12.0
 )
 
 require (
@@ -50,4 +49,5 @@ require (
 	golang.org/x/text v0.26.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	mvdan.cc/sh/v3 v3.12.0 // indirect
 )

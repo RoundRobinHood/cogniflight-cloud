@@ -29,7 +29,7 @@ type FsEntryPermissions struct {
 
 func (p FsEntryPermissions) IsAllowed(mode FsAccessMode, tags []string) bool {
 	if tags == nil {
-		return true
+		panic("tags cannot be nil")
 	}
 	var check []string
 	switch mode {
@@ -54,7 +54,10 @@ func (p FsEntryPermissions) IsAllowed(mode FsAccessMode, tags []string) bool {
 }
 
 func (p FsEntryPermissions) CanUpdatePermTags(new_perms []string, user_tags []string) bool {
-	if user_tags == nil || slices.Contains(user_tags, "sysadmin") {
+	if user_tags == nil {
+		panic("user_tags cannot be nil")
+	}
+	if slices.Contains(user_tags, "sysadmin") {
 		return true
 	}
 

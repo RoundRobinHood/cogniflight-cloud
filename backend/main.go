@@ -12,8 +12,10 @@ import (
 	"time"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
 	"github.com/sourcegraph/jsonrpc2"
@@ -33,6 +35,11 @@ func main() {
 		log.Fatalf("MongoDB init failed: %v", err)
 	}
 
+	openAIKey := os.Getenv("OPENAI_API_KEY")
+	if openAIKey == "" {
+		log.Fatal("Missing OpenAI key")
+	}
+
 	database := client.Database("cogniflight")
 	bucket, err := gridfs.NewBucket(database)
 	if err != nil {
@@ -40,6 +47,7 @@ func main() {
 	}
 
 	fileStore := filesystem.Store{Col: database.Collection("vfs"), Bucket: bucket}
+	sessionStore := types.NewSessionStore()
 
 	go func() {
 		for {
@@ -107,7 +115,7 @@ func main() {
 	r.GET("/signup/check-username/:username", auth.SignupCheckUsername(fileStore))
 	r.POST("/signup", auth.Signup(fileStore))
 	r.POST("/login", auth.Login(fileStore))
-	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore))
+	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore, sessionStore, chatbot.APIKey(openAIKey)))
 
 	server := &http.Server{
 		Addr:    ":8080",

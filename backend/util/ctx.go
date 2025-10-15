@@ -34,6 +34,8 @@ func GetTags(ctx context.Context) []string {
 		panic("tags missing from context")
 	} else if tags, ok := obj.([]string); !ok {
 		panic("tags wrong type")
+	} else if tags == nil {
+		panic("tags nil")
 	} else {
 		return tags
 	}

@@ -432,6 +432,68 @@ export class PipeCmdClient {
 
     return list;
   }
+
+  // get_pilots gets a list of all the pilots on the system.
+  // If verbose=true (which is the default), get_pilots also fetches all their user profiles.
+  // Depending on which information the pilot has already provided, it could look like this:
+  // [
+  //  {
+  //    "username": "Jeremia",
+  //    "email": "jeremia@exequtech.com",
+  //    "phone": "123456789",
+  //    "license_expiry_date": "2025-10-29",
+  //    "license_number": "Jn123",
+  //    "name": "Jeremia",
+  //    "surname": "Fourie",
+  //    "total_flight_hours": 10,
+  //    "role": "pilot",
+  //    "cabin_preferences": {
+  //      "preferred_temperature_celsius": 25,
+  //      "temperature_tolerance_range_celsius": 2
+  //    },
+  //    "cardiovascular_baselines": {
+  //      "resting_heart_rate_bpm": 70,
+  //      "resting_heart_rate_std_dev": 2,
+  //      "max_heart_rate_bpm": 100
+  //    },
+  //    "ocular_baselines": {
+  //      "baseline_blink_rate_per_minute": 12,
+  //      "baseline_blink_duration_ms": 100
+  //    }
+  //  }
+  // ]
+  // For more info, check out settings and the user.profile file for a pilot
+  async get_pilots(verbose=true) {
+    const cmd = await this.run_command('pilots');
+    
+    if(cmd.command_result != 0) {
+      throw new Error(cmd.error);
+    }
+
+    if(cmd.output.length === 0) {
+      return [];
+    }
+
+    const pilots = cmd.output.split('\r\n')
+    if(!verbose) {
+      return pilots.filter(s => s != "")
+    }
+
+    const ret = [];
+    for(let pilot of pilots) {
+      if(pilot === "")
+        continue;
+      const cmd = await this.run_command(`cat /home/${pilot}/user.profile`)
+
+      if(cmd.command_result != 0) {
+        throw new Error(cmd.error);
+      }
+
+      ret.push({ username: pilot, ...parse(cmd.output) });
+    }
+
+    return ret
+  }
 }
 
 export class StreamCmdClient {

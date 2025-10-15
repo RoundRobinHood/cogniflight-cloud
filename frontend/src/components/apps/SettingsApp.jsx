@@ -98,7 +98,7 @@ function SettingsApp() {
       current[keys[keys.length - 1]] = value;
 
       // Create a clean copy without username and tags for saving
-      const { username, tags, ...dataToSave } = updated;
+      const { username, tags, session, ...dataToSave } = updated;
 
       // Clear existing timeout
       if (saveTimeoutRef.current) {
