@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -333,14 +332,12 @@ func (s Store) Mkdir(ctx context.Context, abs_path string, tags []string, perms 
 		return nil, err
 	}
 
-	log.Println("abs_path: ", abs_path)
 	entry, err := s.Lookup(ctx, tags, clean_path)
 	now := time.Now()
 	if err != nil {
 		var lookupStopError ErrLookupStop
 		if errors.As(err, &lookupStopError) {
 			if errors.Is(lookupStopError.Reason, os.ErrNotExist) {
-				log.Println("short stop error: ", lookupStopError)
 				if lookupStopError.LastSuccessfulPath != folder_name && !mkParents {
 					return nil, err
 				} else {
@@ -380,13 +377,10 @@ func (s Store) Mkdir(ctx context.Context, abs_path string, tags []string, perms 
 						new_objects[i] = node
 					}
 
-					log.Println("new objects to save: ", new_objects)
 					if _, err := s.Col.InsertMany(ctx, new_objects); err != nil {
 						return nil, err
 					}
-					log.Println("saved objects")
 
-					log.Println("parent directory ID: ", lookupStopError.LastEntry.ID)
 					if _, err := s.Col.UpdateOne(ctx, bson.M{"_id": lookupStopError.LastEntry.ID}, bson.M{
 						"$set": bson.M{
 							"timestamps.accessed_at": now,
@@ -413,5 +407,56 @@ func (s Store) Mkdir(ctx context.Context, abs_path string, tags []string, perms 
 		}
 	} else {
 		return entry, os.ErrExist
+	}
+}
+
+func (s Store) RemoveFile(ctx context.Context, abs_path string, tags []string, force, rmDirectories bool) (*types.FsEntry, error) {
+	folder_name, filename, err := DirUp(abs_path)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	parent, err := s.Lookup(ctx, tags, folder_name)
+	if err != nil {
+		return nil, err
+	}
+	if parent.EntryType != types.Directory {
+		return nil, fmt.Errorf("%w: parent not a directory", os.ErrInvalid)
+	}
+	if !parent.Permissions.IsAllowed(types.WriteMode, tags) {
+		if !force || !parent.Permissions.IsAllowed(types.UpdatePermissionsMode, tags) {
+			return nil, types.ErrCantAccessFs
+		}
+	}
+
+	if entryReference, exists := parent.Entries.Get(filename); !exists {
+		return nil, os.ErrNotExist
+	} else {
+		var entry types.FsEntry
+		if err := s.Col.FindOne(ctx, bson.M{"_id": entryReference.RefID}).Decode(&entry); err != nil {
+			return nil, err
+		}
+		if entry.EntryType == types.Directory && !rmDirectories {
+			return nil, fmt.Errorf("%w: file is a directory", os.ErrInvalid)
+		}
+		if _, err := s.Col.DeleteOne(ctx, bson.M{"_id": entry.ID}); err != nil {
+			return nil, err
+		}
+
+		if err := s.Col.FindOneAndUpdate(ctx, bson.M{"_id": parent.ID}, bson.M{
+			"$set": bson.M{
+				"timestamps.modified_at": now,
+				"timestamps.accessed_at": now,
+			},
+			"$pull": bson.M{
+				"entries": bson.M{
+					"name": filename,
+				},
+			},
+		}).Err(); err != nil {
+			return nil, err
+		}
+		return &entry, nil
 	}
 }
