@@ -13,6 +13,7 @@ func InitCommands(filestore filesystem.Store, fsctx filesystem.FSContext, socket
 		&CmdMkdir{FileStore: filestore},
 		&CmdCat{FSCtx: fsctx},
 		&CmdTee{FileStore: filestore},
+		&CmdRm{FileStore: filestore},
 		CmdEcho{},
 		CmdError{},
 		&CmdWhoami{FileStore: filestore, Session: socketSession},
