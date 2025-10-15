@@ -1,0 +1,186 @@
+/* Users App Styles */
+
+.users-container {
+  background: var(--glass-bg-dark);
+}
+
+/* Header */
+.users-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* Toolbar */
+.users-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--glass-bg-darker);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.users-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 1;
+}
+
+.users-search-field {
+  position: relative;
+  flex: 1;
+}
+
+.users-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.7;
+}
+
+.users-search-input {
+  width: 100%;
+  padding-left: 36px; /* space for icon */
+}
+
+/* Invite/New User button on the right; uses  .btn + .btn-primary */
+
+/* Content states */
+.users-state,
+.users-error {
+  text-align: center;
+  padding: var(--space-lg);
+  color: var(--text-tertiary);
+}
+.users-error {
+  color: var(--color-accent-red);
+}
+
+/* Table */
+.users-table-wrap {
+  padding: 0;
+  overflow: hidden;
+}
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.users-table thead th {
+  text-align: left;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--glass-bg-darker);
+  border-bottom: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-weight: var(--font-semibold);
+}
+
+.users-table tbody td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.users-table tbody tr:hover {
+  background: var(--glass-bg-lighter);
+}
+
+.users-col-actions {
+  width: 160px;
+}
+.users-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.users-empty {
+  text-align: center;
+  color: var(--text-tertiary);
+  padding: var(--space-lg);
+}
+
+/* Role pill + status dot (local to Users app) */
+.users-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-light);
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.users-pill--admin {
+  background: rgba(255, 95, 87, 0.12);
+  border-color: rgba(255, 95, 87, 0.35);
+}
+.users-pill--ops {
+  background: rgba(0, 120, 212, 0.12);
+  border-color: rgba(0, 120, 212, 0.35);
+}
+.users-pill--pilot {
+  background: rgba(40, 202, 66, 0.12);
+  border-color: rgba(40, 202, 66, 0.35);
+}
+.users-pill--ground {
+  background: rgba(255, 189, 46, 0.14);
+  border-color: rgba(255, 189, 46, 0.35);
+}
+
+.users-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.users-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--text-muted);
+}
+.users-status-dot--ok {
+  background: var(--color-accent-green);
+}
+.users-status-dot--off {
+  background: var(--color-accent-red);
+}
+
+/* Pager */
+.users-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--glass-bg-darker);
+  border-top: 1px solid var(--glass-border);
+}
+.users-page-indicator {
+  color: var(--text-secondary);
+}
+
+/* Forbidden view */
+.users-forbidden {
+  display: grid;
+  place-items: center;
+}
+.users-forbidden-card {
+  max-width: 420px;
+  text-align: center;
+  padding: var(--space-xl);
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+.users-forbidden-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--space-md);
+  opacity: 0.9;
+}
