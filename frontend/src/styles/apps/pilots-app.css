@@ -1,0 +1,9 @@
+.pilots-app .app-toolbar {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.pilots-app .btn--primary {
+  background: var(--color-accent-blue);
+}
