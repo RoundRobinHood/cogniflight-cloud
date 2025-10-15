@@ -1,77 +1,97 @@
-import { Settings, FolderOpen, FileText, Terminal, Camera, Radio, Activity } from 'lucide-react'
+import {
+  Settings,
+  FolderOpen,
+  FileText,
+  Terminal,
+  Camera, Radio, Activity,
+  UserSquare2,
+} from "lucide-react";
 
 // Lazy load components for better performance
 const loadComponent = (componentName) => {
   const components = {
-    SettingsApp: () => import('../components/apps/SettingsApp'),
-    FileExplorerApp: () => import('../components/apps/FileExplorerApp'),
-    NotepadApp: () => import('../components/apps/NotepadApp'),
-    TerminalApp: () => import('../components/apps/TerminalApp'),
-    CameraApp: () => import('../components/apps/CameraApp'),
+    SettingsApp: () => import("../components/apps/SettingsApp"),
+    FileExplorerApp: () => import("../components/apps/FileExplorerApp"),
+    NotepadApp: () => import("../components/apps/NotepadApp"),
+    TerminalApp: () => import("../components/apps/TerminalApp"),
+    CameraApp: () => import("../components/apps/CameraApp"),
+    UsersApp: () => import("../components/apps/UsersApp"),
     N420HHApp: () => import('../components/apps/N420HHApp'),
     N420HHVisualApp: () => import('../components/apps/N420HHVisualApp'),
-  }
-  return components[componentName]
-}
+  };
+  return components[componentName];
+};
 
 // Single source of truth for all app configuration
 class AppRegistry {
   constructor() {
-    this.apps = new Map()
-    this.initializeApps()
+    this.apps = new Map();
+    this.initializeApps();
   }
 
   initializeApps() {
     // Register all apps in one place
     this.register({
-      id: 'settings',
-      label: 'Settings',
+      id: "settings",
+      label: "Settings",
       icon: Settings,
-      color: '#0078d4',
-      component: 'SettingsApp',
-      defaultTitle: 'Settings',
-      defaultSize: { width: 600, height: 400 }
-    })
+      color: "#0078d4",
+      component: "SettingsApp",
+      defaultTitle: "Settings",
+      defaultSize: { width: 600, height: 400 },
+    });
 
     this.register({
-      id: 'fileexplorer',
-      label: 'File Explorer',
+      id: "fileexplorer",
+      label: "File Explorer",
       icon: FolderOpen,
-      color: '#FFD700',
-      component: 'FileExplorerApp',
-      defaultTitle: 'File Explorer',
-      defaultSize: { width: 800, height: 500 }
-    })
+      color: "#FFD700",
+      component: "FileExplorerApp",
+      defaultTitle: "File Explorer",
+      defaultSize: { width: 800, height: 500 },
+    });
 
     this.register({
-      id: 'notepad',
-      label: 'Notepad',
+      id: "notepad",
+      label: "Notepad",
       icon: FileText,
-      color: '#28ca42',
-      component: 'NotepadApp',
-      defaultTitle: 'Notepad',
-      defaultSize: { width: 700, height: 450 }
-    })
-
-    this.register({
-      id: 'terminal',
-      label: 'Terminal',
-      icon: Terminal,
-      color: '#000000',
-      component: 'TerminalApp',
-      defaultTitle: 'Terminal',
+      color: "#28ca42",
+      component: "NotepadApp",
+      defaultTitle: "Notepad",
       defaultSize: { width: 700, height: 450 },
-    })
+    });
 
     this.register({
-      id: 'camera',
-      label: 'Camera',
+      id: "terminal",
+      label: "Terminal",
+      icon: Terminal,
+      color: "#000000",
+      component: "TerminalApp",
+      defaultTitle: "Terminal",
+      defaultSize: { width: 700, height: 450 },
+    });
+
+    this.register({
+      id: "camera",
+      label: "Camera",
       icon: Camera,
-      color: '#ff6b6b',
-      component: 'CameraApp',
-      defaultTitle: 'Camera',
-      defaultSize: { width: 800, height: 600 }
-    })
+      color: "#ff6b6b",
+      component: "CameraApp",
+      defaultTitle: "Camera",
+      defaultSize: { width: 800, height: 600 },
+    });
+
+    this.register({
+      id: "users",
+      label: "Users",
+      icon: UserSquare2,
+      color: "#7c3aed",
+      component: "UsersApp",
+      defaultTitle: "Users",
+      defaultSize: { width: 900, height: 620 },
+      //Hide from non-admin users in Desktop
+      visibleWhen: (systemstate) => systemstate?.currentUser?.role === "admin",
+    });
 
     this.register({
       id: 'n420hh',
@@ -96,52 +116,52 @@ class AppRegistry {
 
   register(appConfig) {
     if (!appConfig.id) {
-      throw new Error('App must have an ID')
+      throw new Error("App must have an ID");
     }
-    
+
     this.apps.set(appConfig.id, {
       ...appConfig,
-      componentLoader: loadComponent(appConfig.component)
-    })
+      componentLoader: loadComponent(appConfig.component),
+    });
   }
 
   getApp(appId) {
-    return this.apps.get(appId)
+    return this.apps.get(appId);
   }
 
   getAllApps() {
-    return Array.from(this.apps.values()).map(app => ({
+    return Array.from(this.apps.values()).map((app) => ({
       id: app.id,
       label: app.label,
       icon: app.icon,
-      color: app.color
-    }))
+      color: app.color,
+    }));
   }
 
   async getComponent(appId) {
-    const app = this.apps.get(appId)
+    const app = this.apps.get(appId);
     if (!app) {
-      throw new Error(`App ${appId} not found`)
+      throw new Error(`App ${appId} not found`);
     }
-    
-    const module = await app.componentLoader()
-    return module.default
+
+    const module = await app.componentLoader();
+    return module.default;
   }
 
   getMetadata(appId) {
-    const app = this.apps.get(appId)
-    if (!app) return null
-    
+    const app = this.apps.get(appId);
+    if (!app) return null;
+
     return {
       id: app.id,
       label: app.label,
       defaultTitle: app.defaultTitle,
-      defaultSize: app.defaultSize
-    }
+      defaultSize: app.defaultSize,
+    };
   }
 }
 
 // Export singleton instance
-const appRegistry = new AppRegistry()
+const appRegistry = new AppRegistry();
 
-export default appRegistry
+export default appRegistry;
