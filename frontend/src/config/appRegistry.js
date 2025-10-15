@@ -5,6 +5,7 @@ import {
   Terminal,
   Camera, Radio, Activity,
   UserSquare2,
+  Users,
 } from "lucide-react";
 
 // Lazy load components for better performance
@@ -90,7 +91,21 @@ class AppRegistry {
       defaultTitle: "Users",
       defaultSize: { width: 900, height: 620 },
       //Hide from non-admin users in Desktop
-      visibleWhen: (systemState) => systemState?.userProfile?.role === "sysadmin",
+      visibleWhen: (systemState) =>
+        systemState?.userProfile?.role === "sysadmin",
+    });
+
+    this.register({
+      id: "pilots",
+      label: "Pilots",
+      icon: Users,
+      color: "#1e90ff",
+      component: "PilotsApp",
+      defaultTitle: "Pilots",
+      defaultSize: { width: 800, height: 550 },
+      visibleWhen: (systemState) =>
+        systemState?.userProfile?.role === "sysadmin" ||
+        systemState?.userProfile?.role === "atc",
     });
 
     this.register({
@@ -132,13 +147,13 @@ class AppRegistry {
   //show apps based on what the logged in user's role is
   getAllApps(systemState) {
     return Array.from(this.apps.values())
-    .filter(app => !app.visibleWhen || app.visibleWhen(systemState))
-    .map((app) => ({
-      id: app.id,
-      label: app.label,
-      icon: app.icon,
-      color: app.color,
-    }));
+      .filter((app) => !app.visibleWhen || app.visibleWhen(systemState))
+      .map((app) => ({
+        id: app.id,
+        label: app.label,
+        icon: app.icon,
+        color: app.color,
+      }));
   }
 
   async getComponent(appId) {

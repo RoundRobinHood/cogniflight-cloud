@@ -29,8 +29,20 @@ function Desktop({ user, onLogout }) {
     const savedPinnedTaskbar = localStorage.getItem("pinnedTaskbarApps");
     const savedPinnedDesktop = localStorage.getItem("pinnedDesktopApps");
 
-    const defaultTaskbarApps = ["settings", "fileexplorer", "notepad"];
-    const defaultDesktopApps = ["settings", "fileexplorer", "notepad", "users"];
+    const defaultTaskbarApps = [
+      "settings",
+      "fileexplorer",
+      "notepad",
+      "users",
+      "pilots",
+    ];
+    const defaultDesktopApps = [
+      "settings",
+      "fileexplorer",
+      "notepad",
+      "users",
+      "pilots",
+    ];
     console.log("Initializing systemState defaults", {
       defaultDesktopApps,
       defaultTaskbarApps,
