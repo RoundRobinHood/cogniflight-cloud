@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/sh"
 )
 
 type CmdCat struct {
-	FileStore filesystem.Store
+	FSCtx filesystem.FSContext
 }
 
 func (*CmdCat) Identifier() string {
@@ -35,23 +35,19 @@ func (c *CmdCat) Run(ctx sh.CommandContext) int {
 				return CmdError{}.Run(error_ctx)
 			}
 
-			tags := util.GetTags(ctx.Ctx)
-			if node, err := c.FileStore.Lookup(ctx.Ctx, tags, abs_path); err != nil {
-				error_ctx := ctx
-				error_ctx.Args = []string{"error", fmt.Sprintf("error (arg %d): couldnt lookup file: %v", i, err)}
-				return CmdError{}.Run(error_ctx)
+			if reader, err := c.FSCtx.Open(ctx.Ctx, abs_path, os.O_RDONLY, 0); err != nil {
+				fmt.Fprintf(ctx.Stderr, "error opening file (%q): %v", abs_path, err)
+				return 1
 			} else {
-				if stream, err := c.FileStore.ReadFileObj(ctx.Ctx, *node, tags); err != nil {
-					error_ctx := ctx
-					error_ctx.Args = []string{"error", fmt.Sprintf("error (arg %d): couldnt open file for reading: %v", i, err)}
-					return CmdError{}.Run(error_ctx)
-				} else {
-					io.Copy(ctx.Stdout, stream)
-					stream.Close()
+				if _, err := io.Copy(ctx.Stdout, reader); err != nil {
+					fmt.Fprintf(ctx.Stderr, "error streaming file (%q): %v", abs_path, err)
+					reader.Close()
+					return 1
 				}
+				reader.Close()
 			}
 
-			ctx.Stdout.Write([]byte("\r\n"))
+			fmt.Fprint(ctx.Stdout, "\r\n")
 		}
 		return 0
 	}

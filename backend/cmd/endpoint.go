@@ -46,7 +46,10 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, ap
 		auth_status := auth_get.(types.AuthorizationStatus)
 		socketID := GenerateMessageID(20)
 		session := sessionStore.AttachSession(socketID, auth_status)
-		available_commands := InitCommands(filestore, session, sessionStore, apiKey)
+		available_commands := InitCommands(filestore, filesystem.FSContext{
+			Store:    filestore,
+			UserTags: auth_status.Tags,
+		}, session, sessionStore, apiKey)
 
 		clients := map[string]types.ClientInfo{}
 		client_cancels := map[string]context.CancelFunc{}

@@ -3,8 +3,10 @@ package filesystem
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -15,6 +17,20 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/gridfs"
 )
+
+type ErrLookupStop struct {
+	LastSuccessfulPath string
+	LastEntry          types.FsEntry
+	Reason             error
+}
+
+func (e ErrLookupStop) Error() string {
+	return fmt.Sprintf("lookup stopped at %q: %v", e.LastSuccessfulPath, e.Reason)
+}
+
+func (e ErrLookupStop) Unwrap() error {
+	return e.Reason
+}
 
 type Store struct {
 	Col    *mongo.Collection
@@ -55,14 +71,22 @@ func (s Store) Lookup(ctx context.Context, tags []string, abs_path string) (*typ
 
 		var next types.FsEntry
 		if reference, ok := current.Entries.Get(split); !ok {
-			return nil, os.ErrNotExist
+			return nil, ErrLookupStop{
+				LastSuccessfulPath: "/" + strings.Join(splits[:i], "/"),
+				LastEntry:          current,
+				Reason:             fmt.Errorf("%w: %q", os.ErrNotExist, split),
+			}
 		} else if err := s.Col.FindOneAndUpdate(ctx, bson.M{"_id": reference.RefID}, bson.M{
 			"$set": bson.M{
 				"timestamps.accessed_at": now,
 			},
 		}).Decode(&next); err != nil {
 			if err == mongo.ErrNoDocuments {
-				return nil, os.ErrNotExist
+				return nil, ErrLookupStop{
+					LastSuccessfulPath: "/" + strings.Join(splits[:i], "/"),
+					LastEntry:          current,
+					Reason:             fmt.Errorf("%w: %q", os.ErrNotExist, split),
+				}
 			} else {
 				return nil, err
 			}
@@ -70,7 +94,11 @@ func (s Store) Lookup(ctx context.Context, tags []string, abs_path string) (*typ
 			if i == len(splits)-1 {
 				return &next, nil
 			} else {
-				return nil, os.ErrNotExist
+				return nil, ErrLookupStop{
+					LastSuccessfulPath: "/" + strings.Join(splits[:i], "/"),
+					LastEntry:          current,
+					Reason:             fmt.Errorf("%w: %q is a file", os.ErrInvalid, split),
+				}
 			}
 		}
 		current = next
@@ -292,4 +320,98 @@ func (s Store) RemoveChild(ctx context.Context, parentID primitive.ObjectID, chi
 	}
 
 	return &updated, nil
+}
+
+func (s Store) Mkdir(ctx context.Context, abs_path string, tags []string, perms *types.FsEntryPermissions, mkParents bool) (*types.FsEntry, error) {
+
+	clean_path, err := CleanupAbsPath(abs_path)
+	if err != nil {
+		return nil, err
+	}
+	folder_name, _, err := DirUp(abs_path)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("abs_path: ", abs_path)
+	entry, err := s.Lookup(ctx, tags, clean_path)
+	now := time.Now()
+	if err != nil {
+		var lookupStopError ErrLookupStop
+		if errors.As(err, &lookupStopError) {
+			if errors.Is(lookupStopError.Reason, os.ErrNotExist) {
+				log.Println("short stop error: ", lookupStopError)
+				if lookupStopError.LastSuccessfulPath != folder_name && !mkParents {
+					return nil, err
+				} else {
+					splits := strings.Split(strings.TrimPrefix(abs_path, lookupStopError.LastSuccessfulPath), "/")[1:]
+					ids := make([]primitive.ObjectID, len(splits))
+					for i := range splits {
+						ids[i] = primitive.NewObjectID()
+					}
+
+					new_objects := make([]any, len(splits))
+					for i := range splits {
+						node := types.FsEntry{
+							ID: ids[i],
+							Timestamps: types.FileTimestamps{
+								CreatedAt:  now,
+								AccessedAt: now,
+								ModifiedAt: now,
+							},
+							EntryType:   types.Directory,
+							Permissions: lookupStopError.LastEntry.Permissions,
+							Entries:     make(types.FsReferenceList, 0),
+						}
+						if i < len(splits)-1 {
+							node.Entries = append(node.Entries, types.FsEntryReference{
+								Name:  splits[i+1],
+								RefID: ids[i+1],
+							})
+						} else if i == len(splits)-1 {
+							if perms != nil {
+								if !lookupStopError.LastEntry.Permissions.CanUpdatePermTags(perms.UpdatePermissionTags, tags) {
+									return nil, types.ErrCantAccessFs
+								}
+
+								node.Permissions = *perms
+							}
+						}
+						new_objects[i] = node
+					}
+
+					log.Println("new objects to save: ", new_objects)
+					if _, err := s.Col.InsertMany(ctx, new_objects); err != nil {
+						return nil, err
+					}
+					log.Println("saved objects")
+
+					log.Println("parent directory ID: ", lookupStopError.LastEntry.ID)
+					if _, err := s.Col.UpdateOne(ctx, bson.M{"_id": lookupStopError.LastEntry.ID}, bson.M{
+						"$set": bson.M{
+							"timestamps.accessed_at": now,
+							"timestamps.modified_at": now,
+						},
+						"$addToSet": bson.M{
+							"entries": types.FsEntryReference{
+								Name:  splits[0],
+								RefID: new_objects[0].(types.FsEntry).ID,
+							},
+						},
+					}); err != nil {
+						return nil, err
+					}
+
+					folder := new_objects[len(new_objects)-1].(types.FsEntry)
+					return &folder, nil
+				}
+			} else {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	} else {
+		return entry, os.ErrExist
+	}
 }

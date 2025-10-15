@@ -7,11 +7,11 @@ import (
 	"github.com/RoundRobinHood/sh"
 )
 
-func InitCommands(filestore filesystem.Store, socketSession *types.SocketSession, sessionStore *types.SessionStore, apiKey chatbot.APIKey) []sh.Command {
+func InitCommands(filestore filesystem.Store, fsctx filesystem.FSContext, socketSession *types.SocketSession, sessionStore *types.SessionStore, apiKey chatbot.APIKey) []sh.Command {
 	commands := []sh.Command{
 		&CmdLs{FileStore: filestore},
 		&CmdMkdir{FileStore: filestore},
-		&CmdCat{FileStore: filestore},
+		&CmdCat{FSCtx: fsctx},
 		&CmdTee{FileStore: filestore},
 		CmdEcho{},
 		CmdError{},
