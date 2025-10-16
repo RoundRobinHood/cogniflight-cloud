@@ -21,7 +21,7 @@ The CogniFlight chatbot serves as an intelligent terminal assistant designed to:
 ```mermaid
 graph TB
     subgraph Frontend["Frontend Layer"]
-        Terminal["TerminalApp.jsx<br/>- XTerm.js terminal emulator<br/>- Command history & input handling<br/>- Real-time output streaming"]
+        Terminal["TerminalApp.jsx<br/>- react-xterm.js terminal emulator<br/>- Command history & input handling<br/>- Real-time output streaming"]
         Socket["socket.js (WebSocket Client)<br/>- StreamCmdClient & PipeCmdClient<br/>- MessagePack binary protocol<br/>- Async stream handling with event system"]
         Terminal --> Socket
     end
@@ -42,7 +42,7 @@ graph TB
 
     OpenAI["OpenAI API<br/>GPT-4o-mini"]
 
-    Socket -->|"WebSocket Connection<br/>(wss://domain/cmd-socket)"| Endpoint
+    Socket -->|"WebSocket Connection<br/>(wss://api-url/cmd-socket)"| Endpoint
     Commands -->|"activate command"| Activate
     StreamResponse --> OpenAI
 ```
@@ -66,7 +66,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     UserInput["1. User inputs natural language query"]
-    SendOpenAI["2. Send message to OpenAI with:<br/>- Previous conversation history<br/>- User message<br/>- Available tools (run_command)<br/>- Context (personality + user profile)"]
+    SendOpenAI["2. Send message to OpenAI with:<br/>- Previous response ID<br/>- User message<br/>- Available tools (run_command)<br/>- Context (personality + user profile)"]
     ResponseType{"AI Response Type?"}
     TextOutput["Text Output"]
     FunctionCall["Function Call"]
