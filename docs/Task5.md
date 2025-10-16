@@ -18,156 +18,81 @@ The CogniFlight chatbot serves as an intelligent terminal assistant designed to:
 
 ### 1.2 Architecture Overview
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Frontend Layer                            │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │  TerminalApp.jsx (React Component)                       │  │
-│  │  - XTerm.js terminal emulator                            │  │
-│  │  - Command history & input handling                      │  │
-│  │  - Real-time output streaming                            │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                              │                                   │
-│  ┌──────────────────────────▼───────────────────────────────┐  │
-│  │  socket.js (WebSocket Client)                            │  │
-│  │  - StreamCmdClient & PipeCmdClient                       │  │
-│  │  - MessagePack binary protocol                           │  │
-│  │  - Async stream handling with event system               │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                    WebSocket Connection
-                    (wss://api-url/cmd-socket)
-                              │
-┌─────────────────────────────▼───────────────────────────────────┐
-│                        Backend Layer (Go)                        │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │  cmd/endpoint.go - CmdWebhook Handler                    │  │
-│  │  - WebSocket upgrader                                    │  │
-│  │  - Client session management                             │  │
-│  │  - MessagePack encoding/decoding                         │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                              │                                   │
-│  ┌──────────────────────────▼───────────────────────────────┐  │
-│  │  cmd/client.go - RunClient                               │  │
-│  │  - Command execution engine                              │  │
-│  │  - Stream multiplexing (stdin/stdout/stderr)             │  │
-│  │  - Context management & authentication                   │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                              │                                   │
-│  ┌──────────────────────────▼───────────────────────────────┐  │
-│  │  cmd/init_commands.go - Command Registry                 │  │
-│  │  - Standard commands (ls, cat, mkdir, echo, etc.)        │  │
-│  │  - System commands (whoami, clients, pilots)             │  │
-│  │  - AI command (activate)                                 │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              │ activate command
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     AI Integration Layer                         │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │  cmd/cmd_activate.go - CmdActivate                       │  │
-│  │  - Personality loading (/context/*.personality)          │  │
-│  │  - Shared context loading (/context/shared)              │  │
-│  │  - User profile integration                              │  │
-│  │  - Conversation state management                         │  │
-│  │  - Function calling (run_command tool)                   │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                              │                                   │
-│  ┌──────────────────────────▼───────────────────────────────┐  │
-│  │  chatbot/stream_response.go - OpenAI Client              │  │
-│  │  - HTTP streaming to api.openai.com/v1/responses         │  │
-│  │  - Server-Sent Events (SSE) parser                       │  │
-│  │  - Response delta accumulation                           │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-                    ┌──────────────────┐
-                    │  OpenAI API      │
-                    │  GPT-4o-mini     │
-                    └──────────────────┘
+```mermaid
+graph TB
+    subgraph Frontend["Frontend Layer"]
+        Terminal["TerminalApp.jsx<br/>- XTerm.js terminal emulator<br/>- Command history & input handling<br/>- Real-time output streaming"]
+        Socket["socket.js (WebSocket Client)<br/>- StreamCmdClient & PipeCmdClient<br/>- MessagePack binary protocol<br/>- Async stream handling with event system"]
+        Terminal --> Socket
+    end
+
+    subgraph Backend["Backend Layer (Go)"]
+        Endpoint["cmd/endpoint.go - CmdWebhook Handler<br/>- WebSocket upgrader<br/>- Client session management<br/>- MessagePack encoding/decoding"]
+        RunClient["cmd/client.go - RunClient<br/>- Command execution engine<br/>- Stream multiplexing (stdin/stdout/stderr)<br/>- Context management & authentication"]
+        Commands["cmd/init_commands.go - Command Registry<br/>- Standard commands (ls, cat, mkdir, echo, etc.)<br/>- System commands (whoami, clients, pilots)<br/>- AI command (activate)"]
+        Endpoint --> RunClient
+        RunClient --> Commands
+    end
+
+    subgraph AI["AI Integration Layer"]
+        Activate["cmd/cmd_activate.go - CmdActivate<br/>- Personality loading (/context/*.personality)<br/>- Shared context loading (/context/shared)<br/>- User profile integration<br/>- Conversation state management<br/>- Function calling (run_command tool)"]
+        StreamResponse["chatbot/stream_response.go - OpenAI Client<br/>- HTTP streaming to api.openai.com/v1/responses<br/>- Server-Sent Events (SSE) parser<br/>- Response delta accumulation"]
+        Activate --> StreamResponse
+    end
+
+    OpenAI["OpenAI API<br/>GPT-4o-mini"]
+
+    Socket -->|"WebSocket Connection<br/>(wss://domain/cmd-socket)"| Endpoint
+    Commands -->|"activate command"| Activate
+    StreamResponse --> OpenAI
 ```
 
 ### 1.3 Conversation Flow & Topic Management
 
 #### Activation Flow
-```
-User enters: activate [personality]
-         │
-         ├─> Load /context/shared (system-wide instructions)
-         ├─> Load /context/[personality].personality
-         ├─> Load /home/[username]/user.profile
-         │
-         ▼
-   Send initial system message to OpenAI
-         │
-         ▼
-   AI sends greeting
-         │
-         ▼
-   Conversational loop begins
+
+```mermaid
+flowchart TD
+    Start["User enters: activate [personality]"] --> LoadShared["Load /context/shared<br/>(system-wide instructions)"]
+    LoadShared --> LoadPersonality["Load /context/[personality].personality"]
+    LoadPersonality --> LoadProfile["Load /home/[username]/user.profile"]
+    LoadProfile --> SendInit["Send initial system message to OpenAI"]
+    SendInit --> AIGreeting["AI sends greeting"]
+    AIGreeting --> Loop["Conversational loop begins"]
 ```
 
 #### Conversational Loop
-```
-┌────────────────────────────────────────────────┐
-│ 1. User inputs natural language query          │
-└──────────────────┬─────────────────────────────┘
-                   │
-┌──────────────────▼─────────────────────────────┐
-│ 2. Send message to OpenAI with:                │
-│    - Previous conversation history              │
-│    - User message                               │
-│    - Available tools (run_command)              │
-│    - Context (personality + user profile)       │
-└──────────────────┬─────────────────────────────┘
-                   │
-         ┌─────────▼─────────┐
-         │ AI Response Type?  │
-         └─────────┬─────────┘
-                   │
-    ┌──────────────┼──────────────┐
-    │              │              │
-    ▼              ▼              ▼
-┌───────┐    ┌──────────┐   ┌─────────┐
-│ Text  │    │ Function │   │ Refusal │
-│Output │    │   Call   │   │         │
-└───┬───┘    └────┬─────┘   └────┬────┘
-    │             │              │
-    │             ▼              │
-    │    ┌────────────────┐     │
-    │    │ Execute        │     │
-    │    │ run_command    │     │
-    │    │ in shell DSL   │     │
-    │    └────┬───────────┘     │
-    │         │                 │
-    │         ▼                 │
-    │    ┌────────────────┐     │
-    │    │ Return result  │     │
-    │    │ to OpenAI      │     │
-    │    └────┬───────────┘     │
-    │         │                 │
-    │         ▼                 │
-    │    ┌────────────────┐     │
-    │    │ AI processes   │     │
-    │    │ command output │     │
-    └────┴────┬───────────┴─────┘
-              │
-              ▼
-    ┌──────────────────┐
-    │ Display to user  │
-    └──────────────────┘
-              │
-              ▼
-    ┌──────────────────┐
-    │ Wait for next    │
-    │ user input       │
-    └──────────────────┘
-              │
-              └─────> Loop continues
+
+```mermaid
+flowchart TD
+    UserInput["1. User inputs natural language query"]
+    SendOpenAI["2. Send message to OpenAI with:<br/>- Previous conversation history<br/>- User message<br/>- Available tools (run_command)<br/>- Context (personality + user profile)"]
+    ResponseType{"AI Response Type?"}
+    TextOutput["Text Output"]
+    FunctionCall["Function Call"]
+    Refusal["Refusal"]
+    Execute["Execute run_command<br/>in shell DSL"]
+    ReturnResult["Return result<br/>to OpenAI"]
+    ProcessOutput["AI processes<br/>command output"]
+    Display["Display to user"]
+    WaitInput["Wait for next<br/>user input"]
+
+    UserInput --> SendOpenAI
+    SendOpenAI --> ResponseType
+    ResponseType -->|Text| TextOutput
+    ResponseType -->|Function| FunctionCall
+    ResponseType -->|Refusal| Refusal
+
+    FunctionCall --> Execute
+    Execute --> ReturnResult
+    ReturnResult --> ProcessOutput
+
+    TextOutput --> Display
+    ProcessOutput --> Display
+    Refusal --> Display
+
+    Display --> WaitInput
+    WaitInput -->|Loop continues| UserInput
 ```
 
 ### 1.4 Personality System
@@ -671,26 +596,31 @@ if openAIKey == "" {
 - Authentication: Cookie verification
 
 **Message Flow**:
-```
-Frontend                Backend              OpenAI
-   │                       │                    │
-   ├─ WS Connect ─────────>│                    │
-   │<─ Connect ACK ────────┤                    │
-   │                       │                    │
-   ├─ run_command ────────>│                    │
-   │<─ command_running ────┤                    │
-   │                       │                    │
-   │<─ output_stream ──────┤                    │
-   │<─ output_stream ──────┤                    │
-   │<─ command_finished ───┤                    │
-   │                       │                    │
-   ├─ activate bob ───────>│                    │
-   │<─ command_running ────┤                    │
-   ├─ input_stream ───────>│                    │
-   │                       ├─ Stream Request ──>│
-   │                       │<─ SSE: delta ──────┤
-   │<─ output_stream ──────┤<─ SSE: delta ──────┤
-   │<─ output_stream ──────┤<─ SSE: complete ───┤
+
+```mermaid
+sequenceDiagram
+    participant Frontend
+    participant Backend
+    participant OpenAI
+
+    Frontend->>Backend: WS Connect
+    Backend->>Frontend: Connect ACK
+
+    Frontend->>Backend: run_command
+    Backend->>Frontend: command_running
+    Backend->>Frontend: output_stream
+    Backend->>Frontend: output_stream
+    Backend->>Frontend: command_finished
+
+    Frontend->>Backend: activate bob
+    Backend->>Frontend: command_running
+    Frontend->>Backend: input_stream
+    Backend->>OpenAI: Stream Request
+    OpenAI->>Backend: SSE: delta
+    Backend->>Frontend: output_stream
+    OpenAI->>Backend: SSE: delta
+    Backend->>Frontend: output_stream
+    OpenAI->>Backend: SSE: complete
 ```
 
 ### 5.4 Responsiveness Across Devices
