@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import "../../styles/apps/app-base.css";
 import "../../styles/utilities/tables.css";
 import "../../styles/utilities/pills.css";
+import "../../styles/utilities/modal.css";
 
 export default function PilotsDetails({ pilot, onClose }) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
