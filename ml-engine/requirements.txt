@@ -2,3 +2,4 @@ json-rpc==1.15.0
 influxdb-client==1.49.0
 pandas
 numpy
+python-dotenv

@@ -4,8 +4,12 @@ import json
 from jsonrpc import JSONRPCResponseManager, dispatcher
 from concurrent.futures import ThreadPoolExecutor
 import threading
-import handler_imports
 import argparse
+
+from dotenv import load_dotenv
+load_dotenv()
+
+import handler_imports
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--check", help="Check if a method is registered")

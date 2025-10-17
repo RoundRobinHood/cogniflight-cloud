@@ -1,17 +1,16 @@
+import os
 from influxdb_client import InfluxDBClient
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+from jsonrpc import dispatcher
 
-url = "http://cogniflight.exequtech.com:8086"
-token = "Xc2RuEnqtcv-mVDoVzr0mK19tI8ZedkZnl5drIviW9YFun_RdC6wBruKGqcnyzgXhKRsJWS11aIygo18CfO99w=="
-org = "cogniflight"
-bucket = "telegraf"
+from influx_config import url, token, org, bucket
 
 client = InfluxDBClient(url=url, token=token, org=org)
 query_api = client.query_api()
 
-
+@dispatcher.add_method
 def analyze_pilot_fatigue(pilot_id: str, lookback_minutes: int = 10):
     """
     Analyze a pilot's fatigue and environmental reasoning based on recent InfluxDB data.
@@ -42,7 +41,8 @@ def analyze_pilot_fatigue(pilot_id: str, lookback_minutes: int = 10):
             "status": "No data found for pilot",
             "reasoning": [],
             "trend_summary": {},
-            "cloud_fusion_score": None
+            "cloud_fusion_score": None,
+            "successful": False,
         }
 
     df = df.drop(columns=["result", "table"], errors="ignore")
@@ -138,7 +138,8 @@ def analyze_pilot_fatigue(pilot_id: str, lookback_minutes: int = 10):
         "cloud_fusion_score": cloud_fusion_score,
         "reasoning": reasoning,
         "trend_summary": trend_summary,
-        "latest_values": current.to_dict()
+        "latest_values": current.to_dict(),
+        "successful": True,
     }
 
     print(f"Reasoning generated for pilot {pilot_id}")

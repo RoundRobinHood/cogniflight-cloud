@@ -4,14 +4,13 @@ import random
 from datetime import datetime
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
-
+from influx_config import url, token, org, bucket
 
 # Influx connection
-INFLUX_URL = os.getenv("INFLUX_URL", "http://cogniflight.exequtech.com:8086")
-INFLUX_TOKEN = os.getenv(
-    "INFLUX_TOKEN", "Xc2RuEnqtcv-mVDoVzr0mK19tI8ZedkZnl5drIviW9YFun_RdC6wBruKGqcnyzgXhKRsJWS11aIygo18CfO99w==")
-INFLUX_ORG = os.getenv("INFLUX_ORG", "cogniflight")
-INFLUX_BUCKET = os.getenv("INFLUX_BUCKET", "telegraf")
+INFLUX_URL = url
+INFLUX_TOKEN = token
+INFLUX_ORG = org
+INFLUX_BUCKET = bucket
 
 MEASUREMENT = "cloud_synthetic"
 PILOT_ID = "P001"
