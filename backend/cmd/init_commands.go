@@ -22,6 +22,7 @@ func InitCommands(filestore filesystem.Store, socketSession *types.SocketSession
 		&CmdPilots{FileStore: filestore},
 		CmdHelp{},
 		CmdMLRPC{Conn: jsonConn},
+		&CmdEmbed{Conn: jsonConn, FileStore: filestore},
 	}
 
 	activate_cmd := &CmdActivate{
