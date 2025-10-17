@@ -144,6 +144,8 @@ def analyze_pilot_fatigue(pilot_id: str, lookback_minutes: int = 10):
         "successful": True,
     }
 
+    result["latest_values"]["timestamp"] = result["timestamp"]
+
     print(f"Reasoning generated for pilot {pilot_id}")
     return result
 
