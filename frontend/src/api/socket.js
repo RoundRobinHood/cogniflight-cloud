@@ -176,6 +176,10 @@ export async function *StringIterator(str) {
   yield str
 }
 
+export async function *BinaryIterator(uint8Array) {
+  yield uint8Array
+}
+
 export class PipeCmdClient {
   #handler = EventListener()
 
@@ -305,15 +309,24 @@ export class PipeCmdClient {
     const listen_stderr = (str) => error += str;
 
     const input_reader = (async () => {
-      for await (const in_str of input) {
+      for await (const in_data of input) {
         if(this.command_running) {
-          this.send({
+          // Handle both string and binary (Uint8Array) input
+          const message = {
             message_id: GenerateMessageID(),
             client_id: this.clientID,
-
             message_type: "input_stream",
-            input_stream: in_str,
-          });
+          };
+
+          if (in_data instanceof Uint8Array) {
+            // Send as binary data (MessagePack will encode as bin type)
+            message.input_stream = in_data;
+          } else {
+            // Send as string
+            message.input_stream = in_data;
+          }
+
+          this.send(message);
         }
       }
 
