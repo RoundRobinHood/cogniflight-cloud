@@ -1,5 +1,6 @@
 import os
 from influxdb_client import InfluxDBClient
+from jsonrpc.utils import json
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
@@ -151,4 +152,4 @@ def analyze_pilot_fatigue(pilot_id: str, lookback_minutes: int = 10):
 if __name__ == "__main__":
     pilot_id = "P001"  # example, adjust to your data
     output = analyze_pilot_fatigue(pilot_id, lookback_minutes=10)
-    print(output)
+    print(json.dumps(output))
