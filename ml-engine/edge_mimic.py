@@ -4,7 +4,7 @@ import random
 from datetime import datetime
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
-from influx_config import url, token, org, bucket
+from influx_config import url, token, org, bucket, measurement, pilot_id
 
 # Influx connection
 INFLUX_URL = url
@@ -12,8 +12,8 @@ INFLUX_TOKEN = token
 INFLUX_ORG = org
 INFLUX_BUCKET = bucket
 
-MEASUREMENT = "cloud_synthetic"
-PILOT_ID = "P001"
+MEASUREMENT = measurement
+PILOT_ID = pilot_id
 
 
 def random_in_range(mean, deviation):

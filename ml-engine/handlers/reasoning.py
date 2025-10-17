@@ -5,10 +5,11 @@ import numpy as np
 from datetime import datetime, timedelta
 from jsonrpc import dispatcher
 
-from influx_config import url, token, org, bucket
+from influx_config import url, token, org, bucket, measurement
 
 client = InfluxDBClient(url=url, token=token, org=org)
 query_api = client.query_api()
+
 
 @dispatcher.add_method
 def analyze_pilot_fatigue(pilot_id: str, lookback_minutes: int = 10):
@@ -21,7 +22,7 @@ def analyze_pilot_fatigue(pilot_id: str, lookback_minutes: int = 10):
     query = f'''
     from(bucket: "{bucket}")
       |> range(start: {lookback})
-      |> filter(fn: (r) => r._measurement == "cloud_synthetic" and r.pilot_id == "{pilot_id}")
+      |> filter(fn: (r) => r._measurement == "{measurement}" and r.pilot_id == "{pilot_id}")
       |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
       |> keep(columns: ["_time", "pilot_id", "accel_x", "accel_y", "accel_z", "gyro_x", "gyro_y", "gyro_z",
                         "altitude", "hr", "rmssd", "rr_interval", "stress_index", "avg_ear",
