@@ -1,0 +1,55 @@
+/* === Modal Overlay (always visible on top of desktop windows) === */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 10, 0.6); /* translucent dark background */
+  backdrop-filter: blur(6px);
+  z-index: 9999; /* <— the key line */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* === Modal Card === */
+.modal-card {
+  background: var(--glass-bg-dark);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: var(--text-primary);
+  padding: var(--space-md);
+  z-index: 10000;
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+/* === Header === */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+  background: var(--glass-bg-lighter);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  cursor: move; /* hint draggable area */
+}
+
+/* === Body === */
+.modal-body {
+  padding: var(--space-sm);
+}
+
+.details-section {
+  margin-bottom: var(--space-md);
+}
+
+.details-section h3 {
+  margin-bottom: var(--space-xs);
+  color: var(--text-secondary);
+}

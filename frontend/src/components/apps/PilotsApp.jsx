@@ -3,7 +3,8 @@ import { usePipeClient } from "../../api/socket";
 import "../../styles/utilities/tables.css";
 import "../../styles/utilities/pills.css";
 import "../../styles/apps/app-base.css"; // for consistent window padding etc.
-import "../../styles/apps/pilots-app.css"; // optional pilots-specific tweaks
+import "../../styles/apps/pilots-app.css"; // optional pilots-specific styling
+import "../../styles/utilities/modal.css";
 import PilotsDetails from "./PilotsDetails";
 
 export default function PilotsApp() {
@@ -13,6 +14,10 @@ export default function PilotsApp() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    console.log("Selected pilot:", selectedPilot);
+  }, [selectedPilot]);
 
   // Fetch pilots from backend
   useEffect(() => {
@@ -92,7 +97,10 @@ export default function PilotsApp() {
                   <td>{pilot.email || "-"}</td>
                   <td>{pilot.license_number || "-"}</td>
                   <td className="table-col-actions">
-                    <button className="btn btn-sm btn-secondary">
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => setSelectedPilot(pilot)}
+                    >
                       Details
                     </button>
                   </td>
