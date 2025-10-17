@@ -17,6 +17,7 @@ const loadComponent = (componentName) => {
     TerminalApp: () => import("../components/apps/TerminalApp"),
     CameraApp: () => import("../components/apps/CameraApp"),
     UsersApp: () => import("../components/apps/UsersApp"),
+    PilotsApp: () => import("../components/apps/PilotsApp.jsx"),
     N420HHApp: () => import('../components/apps/N420HHApp'),
     N420HHVisualApp: () => import('../components/apps/N420HHVisualApp'),
   };
