@@ -16,7 +16,6 @@
     "lucide-react": "^0.544.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-draggable": "^4.5.0",
     "react-resizable-panels": "^3.0.6",
     "react-xtermjs": "^1.0.10",
     "vite": "^7.1.6",

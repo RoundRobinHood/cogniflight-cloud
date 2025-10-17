@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search, UserPlus, ShieldAlert, Pencil } from "lucide-react";
 import { useSystem } from "../useSystem";
+import { usePipeClient } from "../../api/socket";
 import { listUsers, searchUsers } from "../../api/users";
 import "../../styles/apps/users-app.css"; // toolbar/search/pager/forbidden view
 
