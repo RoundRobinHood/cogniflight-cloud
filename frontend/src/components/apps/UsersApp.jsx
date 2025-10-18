@@ -1,183 +1,182 @@
-
-import { useEffect, useMemo, useState } from "react";
-import { Search, UserPlus, ShieldAlert, Pencil } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useSystem } from "../useSystem";
 import { usePipeClient } from "../../api/socket";
-import { listUsers, searchUsers } from "../../api/users";
-import "../../styles/apps/users-app.css"; // toolbar/search/pager/forbidden view
-
-function Forbidden() {
-  return (
-    <div className="app-container users-container users-forbidden">
-      <div className="users-forbidden-card app-card">
-        <ShieldAlert className="users-forbidden-icon" />
-        <h2>Admins only</h2>
-        <p>You don’t have permission to view Users.</p>
-        <button className="btn btn-primary btn-sm">OK</button>
-      </div>
-    </div>
-  );
-}
+import "../../styles/utilities/tables.css";
+import "../../styles/utilities/pills.css";
+import "../../styles/apps/app-base.css";
+import "../../styles/apps/users-app.css";
 
 export default function UsersApp() {
-  const { systemState, openWindow, addNotification } = useSystem();
-  const role = systemState?.currentUser?.role || "user";
-  if (role !== "admin") return <Forbidden />;
+  const { systemState, openWindow, addNotification, closeWindow } = useSystem();
+  const client = usePipeClient();
+  const role = systemState?.userProfile?.role?.toLowerCase() || "user";
 
-  // state
-  const [q, setQ] = useState("");
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
+  if (role !== "sysadmin") {
+    return (
+      <div className="app-container users-container users-forbidden">
+        <div className="users-forbidden-card app-card">
+          <h2>Sysadmin only</h2>
+          <p>You don't have permission to view Users.</p>
+          <button className="btn btn-primary btn-sm" onClick={closeWindow}>
+            OK
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // derived
-  const paged = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return rows.slice(start, start + pageSize);
-  }, [rows, page]);
+  const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // initial fetch
+  // Load users from backend
   useEffect(() => {
-    let cancel = false;
-    (async () => {
+    if (!client) return;
+
+    async function loadUsers() {
       try {
         setLoading(true);
-        const data = await listUsers();
-        if (!cancel) setRows(data);
-      } catch {
-        if (!cancel) setErr("Failed to load users");
+        setError(null);
+
+        const cmd = await client.run_command("users list");
+        if (cmd.command_result !== 0)
+          throw new Error(cmd.error || "Command failed");
+
+        const data = JSON.parse(cmd.output || "[]");
+        setUsers(data);
+      } catch (err) {
+        console.error("Error loading users:", err);
+        setError("Unable to load users");
       } finally {
-        if (!cancel) setLoading(false);
+        setLoading(false);
       }
-    })();
-    return () => { cancel = true; };
-  }, []);
-
-  // search
-  const doSearch = async (e) => {
-    e?.preventDefault?.();
-    try {
-      setLoading(true);
-      const data = q.trim() ? await searchUsers(q.trim()) : await listUsers();
-      setRows(data);
-      setPage(1);
-      setErr("");
-    } catch {
-      setErr("Search failed");
-    } finally {
-      setLoading(false);
     }
+
+    loadUsers();
+  }, [client]);
+
+  // Filter logic
+  const filtered = users.filter((u) => {
+    const q = search.toLowerCase();
+    return (
+      u.name?.toLowerCase().includes(q) ||
+      u.surname?.toLowerCase().includes(q) ||
+      u.phone?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q) ||
+      u.role?.toLowerCase().includes(q)
+    );
+  });
+
+  // Handler for edit action
+  const handleEdit = (user) => {
+    addNotification(`Editing user: ${user.name} ${user.surname}`, "info");
+    openWindow("settings", {
+      title: `Edit: ${user.name}`,
+      instanceData: { user },
+    });
   };
 
-  // actions
-  const onEdit = (user) => {
-    openWindow("settings", { title: `Edit: ${user.name || user.email}`, instanceData: { user } });
-  };
-
-  const onInvite = () => {
-    addNotification("Invite flow coming next…", "info");
-    openWindow("notepad", { title: "New User (Invite Draft)" });
-  };
-
-  // render
   return (
-    <div className="app-container users-container">
-      <header className="app-header users-header">
-        <h1 className="app-title">Users</h1>
-        <p className="app-subtitle">Manage roles, contact details and account status</p>
+    <div className="app-base">
+      {/* Header */}
+      <header className="users-toolbar">
+        <h2 className="users-title">Users</h2>
+
+        <div className="users-toolbar-actions">
+          {/* Search bar — same as PilotsApp */}
+          <div className="users-search">
+            <div className="users-search-field">
+              <span className="users-search-icon">🔍</span>
+              <input
+                type="text"
+                placeholder="Enter name, surname, email, or role"
+                value={search}
+                onChange={(e) => setSearch(e.target.value.trimStart())}
+                className="users-search-input"
+                autoComplete="off"
+              />
+            </div>
+          </div>
+
+          {/* New User button */}
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() =>
+              openWindow("invite-user", { title: "Invite New User" })
+            }
+          >
+            + New User
+          </button>
+        </div>
       </header>
 
-      <div className="app-toolbar users-toolbar">
-        <form className="users-search" onSubmit={doSearch}>
-          <div className="users-search-field">
-            <Search className="users-search-icon" />
-            <input
-              className="app-form-input users-search-input"
-              type="text"
-              placeholder="Search by name, email, or role…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-          </div>
-          <button className="btn btn-secondary btn-sm" type="submit">Search</button>
-        </form>
+      {/* Table */}
+      <div className="app-content">
+        <table className="table table--zebra">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Surname</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th className="table-col-actions">Actions</th>
+            </tr>
+          </thead>
 
-        <button className="btn btn-primary btn-sm users-invite" onClick={onInvite}>
-          <UserPlus size={16} />
-          <span>New User</span>
-        </button>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="6" className="table-empty">
+                  Loading users...
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan="6" className="table-empty">
+                  {error}
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="table-empty">
+                  {search
+                    ? `No users found matching "${search}"`
+                    : "No user data available"}
+                </td>
+              </tr>
+            ) : (
+              filtered.map((user, i) => (
+                <tr key={i}>
+                  <td>{user.name || "-"}</td>
+                  <td>{user.surname || "-"}</td>
+                  <td>{user.phone || "-"}</td>
+                  <td>{user.email || "-"}</td>
+                  <td>{user.role || "-"}</td>
+                  <td className="table-col-actions">
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => handleEdit(user)}
+                    >
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
-      <main className="app-content">
-        {loading && <div className="users-state">Loading users…</div>}
-        {!!err && !loading && <div className="users-error">{err}</div>}
-
-        {!loading && !err && (
-          <div className="app-card users-table-wrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th className="table-col-actions">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paged.length === 0 && (
-                  <tr>
-                    <td colSpan="5" className="table-empty">No users found</td>
-                  </tr>
-                )}
-                {paged.map((u) => {
-                  const key = (u.role || "neutral").toLowerCase() === "ground" ? "atc" : (u.role || "neutral");
-                  return (
-                    <tr key={u.id}>
-                      <td>{u.name || "—"}</td>
-                      <td>{u.email}</td>
-                      <td><span className={`pill pill--${key}`}>{(key || "user").toUpperCase()}</span></td>
-                      <td>
-                        <span className={`status-dot ${u.active ? "status-dot--ok" : "status-dot--off"}`} />
-                        {u.active ? "Active" : "Disabled"}
-                      </td>
-                      <td className="table-col-actions">
-                        <button className="btn btn-ghost btn-sm" onClick={() => onEdit(u)}>
-                          <Pencil size={14} /> Edit
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            {rows.length > pageSize && (
-              <div className="users-pager">
-                <button
-                  className="btn btn-ghost btn-sm"
-                  disabled={page === 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  Prev
-                </button>
-                <span className="users-page-indicator">
-                  Page {page} of {Math.ceil(rows.length / pageSize)}
-                </span>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  disabled={page === Math.ceil(rows.length / pageSize)}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </main>
+      <footer className="app-footer">
+        <button
+          className="btn btn-primary"
+          onClick={() => addNotification("Export coming soon!", "info")}
+        >
+          Generate Report
+        </button>
+      </footer>
     </div>
   );
 }

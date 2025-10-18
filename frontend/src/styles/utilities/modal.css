@@ -45,6 +45,25 @@
   padding: var(--space-sm);
 }
 
+/* === InviteUser Popup Tweaks === */
+
+/* Add subtle padding & spacing to code block inside the popup */
+.modal-body code {
+  display: inline-block;
+  background: var(--glass-bg-lighter);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+  font-family: monospace;
+  color: var(--text-secondary);
+  word-break: break-all; /* ensures long links wrap */
+}
+
+/* spacing between lines in the popup */
+.modal-body p {
+  margin-bottom: var(--space-sm);
+}
+
 .details-section {
   margin-bottom: var(--space-md);
 }

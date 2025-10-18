@@ -1,0 +1,38 @@
+.invite-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  max-width: 400px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+  background: var(--glass-bg-light);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.send-btn {
+  align-self: center;
+  margin-top: var(--space-md);
+}
+
+.invite-result {
+  margin-top: var(--space-lg);
+  padding: var(--space-md);
+  text-align: center;
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+}
+
+.invite-link {
+  margin: var(--space-sm) 0;
+  color: var(--color-accent-blue);
+  font-family: monospace;
+  word-break: break-all;
+}
