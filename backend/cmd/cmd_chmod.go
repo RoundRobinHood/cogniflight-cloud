@@ -26,7 +26,7 @@ func (c *CmdChmod) Run(ctx sh.CommandContext) int {
 		fmt.Fprint(ctx.Stderr,
 			`usage: chmod [-R] <MODE> <PATHS...>
 MODE is in the form of <tagname><{+|-}><[rwxp]>
-Where you are either adding, revoking or overriding access to a specific tag to read, write, execute or update the permissions of a file.
+Which indicates that you are either adding, revoking or overriding access for a user with a specific tag to read, write, execute or update the permissions of a file.
 You must have the update permission on the file to do this, and if you try to update permissions update tags, safety rules apply. If you don't provide -R, this doesn't affect subdirectories
 `)
 		return 1
