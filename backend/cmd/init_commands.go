@@ -20,6 +20,7 @@ func InitCommands(filestore filesystem.Store, fsctx filesystem.FSContext, socket
 		&CmdClients{Socket: socketSession},
 		&CmdSockets{SessionStore: sessionStore},
 		&CmdPilots{FileStore: filestore},
+		&CmdMv{FileStore: filestore},
 		CmdHelp{},
 	}
 

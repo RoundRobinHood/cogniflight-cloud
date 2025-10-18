@@ -460,3 +460,112 @@ func (s Store) RemoveFile(ctx context.Context, abs_path string, tags []string, f
 		return &entry, nil
 	}
 }
+
+func (s Store) Move(ctx context.Context, dest_path, src_path string, tags []string) (*types.FsEntryReference, error) {
+	now := time.Now()
+	source_folder_path, source_filename, err := DirUp(src_path)
+	if err != nil {
+		return nil, err
+	}
+
+	dest_abs, err := CleanupAbsPath(dest_path)
+	if err != nil {
+		return nil, err
+	}
+
+	source_folder, err := s.Lookup(ctx, tags, source_folder_path)
+	if err != nil {
+		return nil, err
+	}
+
+	if !source_folder.Permissions.IsAllowed(types.ReadMode, tags) {
+		return nil, types.ErrCantAccessFs
+	}
+
+	if entry, ok := source_folder.Entries.Get(source_filename); !ok {
+		return nil, os.ErrNotExist
+	} else {
+		dest_folder, err := s.Lookup(ctx, tags, dest_abs)
+		if err != nil {
+			var lookupStopError ErrLookupStop
+			if errors.As(err, &lookupStopError) && errors.Is(err, os.ErrNotExist) {
+				dest_parent_path, dest_filename, _ := DirUp(dest_abs)
+				if lookupStopError.LastSuccessfulPath != dest_parent_path {
+					return nil, err
+				}
+
+				if !lookupStopError.LastEntry.Permissions.IsAllowed(types.WriteMode, tags) {
+					return nil, types.ErrCantAccessFs
+				}
+
+				if _, err := s.Col.UpdateOne(ctx, bson.M{"_id": lookupStopError.LastEntry.ID}, bson.M{
+					"$set": bson.M{
+						"timestamps.accessed_at": now,
+						"timestamps.modified_at": now,
+					},
+					"$pull": bson.M{"entries": bson.M{"name": dest_filename}},
+				}); err != nil {
+					return nil, err
+				}
+
+				if _, err := s.Col.UpdateByID(ctx, lookupStopError.LastEntry.ID, bson.M{
+					"$push": bson.M{"entries": types.FsEntryReference{
+						Name:  dest_filename,
+						RefID: entry.RefID,
+					}},
+				}); err != nil {
+					return nil, err
+				}
+
+				if _, err := s.Col.UpdateOne(ctx, bson.M{"_id": source_folder.ID}, bson.M{
+					"$set": bson.M{
+						"timestamps.accessed_at": now,
+						"timestamps.modified_at": now,
+					},
+					"$pull": bson.M{"entries": bson.M{"name": source_filename}},
+				}); err != nil {
+					return nil, err
+				}
+
+				return &entry, nil
+			} else {
+				return nil, err
+			}
+		} else {
+			if !dest_folder.Permissions.IsAllowed(types.WriteMode, tags) {
+				return nil, types.ErrCantAccessFs
+			}
+
+			if _, err := s.Col.UpdateOne(ctx, bson.M{"_id": dest_folder.ID}, bson.M{
+				"$set": bson.M{
+					"timestamps.accessed_at": now,
+					"timestamps.modified_at": now,
+				},
+				"$pull": bson.M{"entries": bson.M{"name": source_filename}},
+			}); err != nil {
+				return nil, err
+			}
+
+			if _, err := s.Col.UpdateByID(ctx, dest_folder.ID, bson.M{
+				"$push": bson.M{"entries": types.FsEntryReference{
+					Name:  source_filename,
+					RefID: entry.RefID,
+				}},
+			}); err != nil {
+				return nil, err
+			}
+
+			if _, err := s.Col.UpdateByID(ctx, source_folder.ID, bson.M{
+				"$set": bson.M{
+					"timestamps.accessed_at": now,
+					"timestamps.modified_at": now,
+				},
+				"$pull": bson.M{"entries": bson.M{"name": source_filename}},
+			}); err != nil {
+				return nil, err
+			}
+
+			return &entry, nil
+		}
+	}
+}
