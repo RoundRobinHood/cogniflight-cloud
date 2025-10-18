@@ -14,6 +14,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/sourcegraph/jsonrpc2"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -35,7 +36,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, apiKey chatbot.APIKey) gin.HandlerFunc {
+func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, apiKey chatbot.APIKey, jsonConn *jsonrpc2.Conn) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		auth_get, ok := c.Get("auth")
 		if !ok {
@@ -46,7 +47,7 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, ap
 		auth_status := auth_get.(types.AuthorizationStatus)
 		socketID := GenerateMessageID(20)
 		session := sessionStore.AttachSession(socketID, auth_status)
-		available_commands := InitCommands(filestore, session, sessionStore, apiKey)
+		available_commands := InitCommands(filestore, session, sessionStore, apiKey, jsonConn)
 
 		clients := map[string]types.ClientInfo{}
 		client_cancels := map[string]context.CancelFunc{}

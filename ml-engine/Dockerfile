@@ -18,4 +18,4 @@ COPY --chown=app:app . .
 USER root
 
 ENV PYTHONPATH="/home/app/.local/lib/python3.12/site-packages"
-CMD chown app:app /sockets && setpriv --reuid=1001 --regid=1001 --init-groups python3 server.py
+CMD chown app:app /sockets && HOME=/home/app setpriv --reuid=1001 --regid=1001 --init-groups python3 server.py
