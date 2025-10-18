@@ -103,7 +103,7 @@ func main() {
 	}
 
 	stream := jsonrpc2.NewPlainObjectStream(conn)
-	_ = jsonrpc2.NewConn(context.Background(), stream, nil)
+	jsonConn := jsonrpc2.NewConn(context.Background(), stream, nil)
 
 	r := gin.New()
 	r.SetTrustedProxies(strings.Split(os.Getenv("TRUSTED_PROXIES"), ","))
@@ -115,7 +115,7 @@ func main() {
 	r.GET("/signup/check-username/:username", auth.SignupCheckUsername(fileStore))
 	r.POST("/signup", auth.Signup(fileStore))
 	r.POST("/login", auth.Login(fileStore))
-	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore, sessionStore, chatbot.APIKey(openAIKey)))
+	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore, sessionStore, chatbot.APIKey(openAIKey), jsonConn))
 
 	server := &http.Server{
 		Addr:    ":8080",

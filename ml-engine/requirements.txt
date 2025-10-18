@@ -1,6 +1,10 @@
 json-rpc==1.15.0
-# insightface
-# opencv-python
-# numpy
-# onnxruntime
-# pymongo
+numpy
+
+influxdb-client==1.49.0
+pandas
+python-dotenv
+
+insightface
+pymongo
+onnxruntime
