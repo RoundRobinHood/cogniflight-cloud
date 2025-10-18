@@ -18,6 +18,7 @@ const loadComponent = (componentName) => {
     CameraApp: () => import("../components/apps/CameraApp"),
     UsersApp: () => import("../components/apps/UsersApp"),
     PilotsApp: () => import("../components/apps/PilotsApp.jsx"),
+    InviteUserApp: () => import("../components/apps/InviteUserApp.jsx"),
     N420HHApp: () => import('../components/apps/N420HHApp'),
     N420HHVisualApp: () => import('../components/apps/N420HHVisualApp'),
   };
@@ -107,6 +108,18 @@ class AppRegistry {
       visibleWhen: (systemState) =>
         systemState?.userProfile?.role === "sysadmin" ||
         systemState?.userProfile?.role === "atc",
+    });
+
+    this.register({
+      id: "invite-user",
+      label: "Invite User",
+      icon: UserSquare2,
+      color: "#0078d4",
+      component: "InviteUserApp",
+      defaultTitle: "Invite New User",
+      defaultSize: { width: 500, height: 420 },
+      // Do not show this on desktop
+      visibleWhen: () => false,
     });
 
     this.register({
