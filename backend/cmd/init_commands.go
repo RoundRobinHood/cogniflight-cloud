@@ -5,9 +5,10 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/sh"
+	"github.com/sourcegraph/jsonrpc2"
 )
 
-func InitCommands(filestore filesystem.Store, socketSession *types.SocketSession, sessionStore *types.SessionStore, apiKey chatbot.APIKey) []sh.Command {
+func InitCommands(filestore filesystem.Store, socketSession *types.SocketSession, sessionStore *types.SessionStore, apiKey chatbot.APIKey, jsonConn *jsonrpc2.Conn) []sh.Command {
 	commands := []sh.Command{
 		&CmdLs{FileStore: filestore},
 		&CmdMkdir{FileStore: filestore},
@@ -20,6 +21,8 @@ func InitCommands(filestore filesystem.Store, socketSession *types.SocketSession
 		&CmdSockets{SessionStore: sessionStore},
 		&CmdPilots{FileStore: filestore},
 		CmdHelp{},
+		CmdMLRPC{Conn: jsonConn},
+		&CmdEmbed{Conn: jsonConn, FileStore: filestore},
 	}
 
 	activate_cmd := &CmdActivate{

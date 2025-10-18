@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Camera, RotateCcw, Image as ImageIcon } from 'lucide-react'
-import { usePipeClient, StringIterator } from '../../api/socket'
+import { usePipeClient, StringIterator, BinaryIterator } from '../../api/socket'
 import { useSystem } from '../useSystem'
 
 function CameraApp({ windowId }) {
@@ -103,16 +103,14 @@ function CameraApp({ windowId }) {
         bytes[i] = binaryString.charCodeAt(i)
       }
 
-      // Convert binary data to string for piping to tee
-      const binaryStr = String.fromCharCode.apply(null, bytes)
-
       // Ensure .jpg extension
       const finalFileName = fileName.endsWith('.jpg') ? fileName : `${fileName}.jpg`
 
       // Save using tee command - pipe binary data directly into tee
+      // Use BinaryIterator to send raw bytes without UTF-8 encoding
       const result = await client.run_command(
         `tee ~/${finalFileName}`,
-        StringIterator(binaryStr)
+        BinaryIterator(bytes)
       )
 
       if (result.command_result === 0) {

@@ -1,2 +1,3 @@
 import handlers.test_handlers
 import handlers.reasoning
+import handlers.face_embedding_handlers

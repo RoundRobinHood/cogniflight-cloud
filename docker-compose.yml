@@ -80,6 +80,8 @@ services:
   ml-engine:
     build: ./ml-engine
     restart: unless-stopped
+    networks:
+      - "${NETWORK:-web}"
     environment:
       SOCK_FILE: "/sockets/ml-engine.sock"
       INFLUX_URL: ${INFLUXDB_URL:-http://influxdb:8086}
