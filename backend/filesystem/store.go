@@ -663,3 +663,75 @@ func (s Store) Chmod(ctx context.Context, path string, tags []string, tag_name, 
 		return &updated_node, nil
 	}
 }
+
+func (s Store) Copy(ctx context.Context, dest_path, src_path string, tags []string, recursive bool) (*types.FsEntry, error) {
+	source_abs, err := CleanupAbsPath(src_path)
+	if err != nil {
+		return nil, err
+	}
+
+	dest_abs, err := CleanupAbsPath(dest_path)
+	if err != nil {
+		return nil, err
+	}
+
+	source_node, err := s.Lookup(ctx, tags, source_abs)
+	if err != nil {
+		return nil, err
+	}
+
+	if !source_node.Permissions.IsAllowed(types.ReadMode, tags) {
+		return nil, types.ErrCantAccessFs
+	}
+
+	if source_node.EntryType == types.Directory && !recursive {
+		return nil, fmt.Errorf("%w: can't copy directory without recursion", os.ErrInvalid)
+	}
+
+	dest_folder, err := s.Lookup(ctx, tags, dest_abs)
+	if err != nil {
+		var lookupStopError ErrLookupStop
+		if errors.As(err, &lookupStopError) && errors.Is(err, os.ErrNotExist) {
+			dest_parent_path, dest_filename, _ := DirUp(dest_abs)
+			if lookupStopError.LastSuccessfulPath != dest_parent_path {
+				return nil, err
+			}
+
+			if source_node.EntryType == types.File {
+				return s.WriteFile(ctx, lookupStopError.LastEntry.ID, dest_filename, *source_node.FileReference, tags)
+			}
+
+			if node, err := s.WriteDirectory(ctx, lookupStopError.LastEntry.ID, dest_filename, tags, nil); err != nil {
+				return nil, err
+			} else {
+				for _, entry := range source_node.Entries {
+					if _, err := s.Copy(ctx, dest_abs, source_abs+"/"+entry.Name, tags, true); err != nil {
+						return nil, err
+					}
+				}
+
+				return node, nil
+			}
+		} else {
+			return nil, err
+		}
+	} else {
+		_, source_filename, _ := DirUp(source_abs)
+		if source_node.EntryType == types.File {
+			return s.WriteFile(ctx, dest_folder.ID, source_filename, *source_node.FileReference, tags)
+		}
+
+		if node, err := s.WriteDirectory(ctx, dest_folder.ID, source_filename, tags, nil); err != nil {
+			return nil, err
+		} else {
+			new_dest := dest_abs + "/" + source_filename
+			for _, entry := range source_node.Entries {
+				if _, err := s.Copy(ctx, new_dest, source_abs+"/"+entry.Name, tags, true); err != nil {
+					return nil, err
+				}
+			}
+
+			return node, nil
+		}
+	}
+}
