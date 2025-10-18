@@ -21,6 +21,7 @@ func InitCommands(filestore filesystem.Store, fsctx filesystem.FSContext, socket
 		&CmdSockets{SessionStore: sessionStore},
 		&CmdPilots{FileStore: filestore},
 		&CmdMv{FileStore: filestore},
+		&CmdChmod{FileStore: filestore},
 		CmdHelp{},
 	}
 

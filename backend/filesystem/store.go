@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -567,5 +568,98 @@ func (s Store) Move(ctx context.Context, dest_path, src_path string, tags []stri
 
 			return &entry, nil
 		}
+	}
+}
+
+func UpdateTagList(old_tags []string, tag_name, op string) ([]string, error) {
+	new_list := slices.Clone(old_tags)
+	switch op {
+	case "+":
+		return append(new_list, tag_name), nil
+	case "-":
+		lst := make([]string, 0, len(old_tags))
+		for _, tag := range new_list {
+			if tag != tag_name {
+				lst = append(lst, tag)
+			}
+		}
+		return lst, nil
+	default:
+		return nil, os.ErrInvalid
+	}
+}
+
+func ListUpdateDoc(doc_key, tag_name, op string) (bson.M, error) {
+	switch op {
+	case "+":
+		return bson.M{"$addToSet": bson.M{doc_key: tag_name}}, nil
+	case "-":
+		return bson.M{"$pull": bson.M{doc_key: tag_name}}, nil
+	default:
+		return nil, os.ErrInvalid
+	}
+}
+
+func (s Store) Chmod(ctx context.Context, path string, tags []string, tag_name, op string, perm types.FsAccessMode, recursive bool) (*types.FsEntry, error) {
+	now := time.Now()
+	abs_path, err := CleanupAbsPath(path)
+	if err != nil {
+		return nil, err
+	}
+
+	targetNode, err := s.Lookup(ctx, tags, abs_path)
+	if err != nil {
+		return nil, err
+	} else {
+		if !targetNode.Permissions.IsAllowed(types.UpdatePermissionsMode, tags) {
+			return nil, types.ErrCantAccessFs
+		}
+
+		if perm == types.UpdatePermissionsMode {
+			new_perm_list, err := UpdateTagList(targetNode.Permissions.UpdatePermissionTags, tag_name, op)
+			if err != nil {
+				return nil, err
+			}
+			if !targetNode.Permissions.CanUpdatePermTags(new_perm_list, tags) {
+				return nil, types.ErrCantAccessFs
+			}
+		}
+
+		doc_update := bson.M{}
+		switch perm {
+		case types.WriteMode:
+			doc_update, err = ListUpdateDoc("permissions.write_tags", tag_name, op)
+		case types.ReadMode:
+			doc_update, err = ListUpdateDoc("permissions.read_tags", tag_name, op)
+		case types.ExecuteMode:
+			doc_update, err = ListUpdateDoc("permissions.execute_tags", tag_name, op)
+		case types.UpdatePermissionsMode:
+			doc_update, err = ListUpdateDoc("permissions.updatetag_tags", tag_name, op)
+		default:
+			return nil, os.ErrInvalid
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		if targetNode.EntryType == types.Directory && recursive {
+			for _, entry := range targetNode.Entries {
+				if _, err := s.Chmod(ctx, abs_path+"/"+entry.Name, tags, tag_name, op, perm, true); err != nil {
+					return nil, fmt.Errorf("recursion failed on sub-dir %q: %v", entry.Name, err)
+				}
+			}
+		}
+
+		doc_update["$set"] = bson.M{}
+		set_doc := doc_update["$set"].(bson.M)
+		set_doc["timestamps.accessed_at"] = now
+		set_doc["timestamps.modified_at"] = now
+
+		var updated_node types.FsEntry
+		if err := s.Col.FindOneAndUpdate(ctx, bson.M{"_id": targetNode.ID}, doc_update).Decode(&updated_node); err != nil {
+			return nil, err
+		}
+
+		return &updated_node, nil
 	}
 }

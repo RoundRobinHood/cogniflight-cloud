@@ -86,6 +86,10 @@ func (c *FSContext) Open(ctx context.Context, path string, flag int, perm os.Fil
 			}
 		}
 
+		if !entry.Permissions.IsAllowed(types.ReadMode, c.UserTags) {
+			return nil, types.ErrCantAccessFs
+		}
+
 		if entry.FileReference == nil {
 			return RdonlyFileStream{}, nil
 		} else {
@@ -118,6 +122,10 @@ func (c *FSContext) Open(ctx context.Context, path string, flag int, perm os.Fil
 			var entry types.FsEntry
 			if err := c.Store.Col.FindOne(ctx, bson.M{"_id": entryRef.RefID}).Decode(&entry); err != nil {
 				return nil, err
+			}
+
+			if !entry.Permissions.IsAllowed(types.WriteMode, c.UserTags) {
+				return nil, types.ErrCantAccessFs
 			}
 
 			if entry.EntryType != types.File {
