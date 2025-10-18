@@ -9,7 +9,7 @@ function Taskbar({ windows, onWindowClick, onOpenApp }) {
   const { systemState, showNotifications, setShowNotifications, removeFromTaskbar, showContextMenu, showFatconAlert } = useSystem()
   const [showStartMenu, setShowStartMenu] = useState(false)
   
-  const allApps = appRegistry.getAllApps()
+  const allApps = appRegistry.getAllApps(systemState)
 
   // Get apps that are pinned to taskbar
   const pinnedApps = allApps.filter(app => systemState.pinnedToTaskbar.includes(app.id))

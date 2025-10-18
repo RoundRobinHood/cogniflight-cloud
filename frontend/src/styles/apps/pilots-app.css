@@ -1,0 +1,67 @@
+.pilots-app .app-toolbar {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.pilots-app .btn--primary {
+  background: var(--color-accent-blue);
+}
+
+/* === Pilots Toolbar (matching Users app layout) === */
+.pilots-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--glass-bg-darker);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.pilots-title {
+  font-size: 1.1rem;
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.pilots-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.pilots-search-field {
+  position: relative;
+  flex: 0 0 260px; /* matches users-search-field width */
+}
+
+.pilots-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.7;
+  pointer-events: none;
+  font-size: 0.9rem;
+}
+
+.pilots-search-input {
+  width: 100%;
+  padding-left: 32px; /* space for icon */
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  height: 32px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.pilots-search-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  background: var(--glass-bg-lighter);
+}
