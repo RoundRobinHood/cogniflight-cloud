@@ -507,6 +507,80 @@ export class PipeCmdClient {
 
     return ret;
   }
+
+  // get_users gets a list of all the users on the system.
+  // If verbose=true (which is the default), get_users also fetches all their user profiles.
+  // In the event that a user's user.profile file is missing, that field is explicitly set to null.
+  // The contents of the user.profile file highly depend on the person's role and whether they set up their settings things already.
+  //
+  // Here's a preview of what it could look like:
+  // [
+  //  {
+  //    "username": "FionaLawrence",
+  //    "tags": [ "pilot", "user", "user-FionaLawrence", "pilot", "user" ] // apologies, we have a backend double-tagging bug on signup at the moment I'm writing this
+  //    user_profile: {
+  //      "email": "fiona.lawrence@vectra-aviation.com",
+  //      "phone": 749991212,
+  //      "name": "Fiona",
+  //      "surname": "Lawrence",
+  //      "role": "pilot",
+  //      "total_flight_hours": 75,
+  //      "cabin_preferences": {
+  //        "preferred_temperature_celsius": 24,
+  //        "temperature_tolerance_range_celsius": 2
+  //      },
+  //      "cardiovascular_baselines": {
+  //        "resting_heart_rate_bpm": 62,
+  //        "resting_heart_rate_std_dev": 1.8,
+  //        "max_heart_rate_bpm": 170
+  //      },
+  //      "ocular_baselines": {
+  //        "baseline_blink_rate_per_minute": 12,
+  //        "baseline_blink_duration_ms": 100
+  //      }
+  //    }
+  //  }
+  // ]
+  async get_users(verbose = true) {
+    const passwd_files = await this.ls("/etc/passwd");
+
+    const users = [];
+    for(const file of passwd_files) {
+      if(file.name.endsWith(".login")) {
+        users.push(file.name.substring(0, file.name.length - ".login".length));
+      }
+    }
+
+    if(!verbose) {
+      return users;
+    }
+
+    const ret = [];
+    for (let user of users) {
+      const user_profile_cmd = await this.run_command(`cat "/home/${user}/user.profile"`);
+      let user_profile = null;
+
+      if(user_profile_cmd.command_result != 0) {
+        if(!user_profile_cmd.error.includes("file does not exist")) {
+          throw new Error(user_profile_cmd.error);
+        }
+      } else {
+        user_profile = parse(user_profile_cmd.output);
+      }
+
+      const login_file_cmd = await this.run_command(`cat "/etc/passwd/${user}.login"`);
+
+      if(login_file_cmd.command_result != 0) {
+        throw new Error(login_file_cmd.error);
+      }
+
+      const { tags } = parse(login_file_cmd.output);
+
+      ret.push({username: user, tags, user_profile});
+    }
+
+    return ret;
+  }
 }
 
 export class StreamCmdClient {
