@@ -1,0 +1,111 @@
+/* Design System Variables */
+:root {
+  /* Primary Colors */
+  --color-primary: #0078d4;
+  --color-primary-dark: #106ebe;
+  --color-primary-darker: #005a9e;
+  
+  /* Accent Colors */
+  --color-accent-yellow: #ffbd2e;
+  --color-accent-green: #28ca42;
+  --color-accent-red: #ff5f57;
+  --color-accent-orange: #ff9500;
+  
+  /* Neutral Colors */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-dark: rgba(32, 32, 32, 0.95);
+  --color-dark-solid: #202020;
+  
+  /* Glass Effect Variables */
+  --glass-bg-dark: rgba(32, 32, 32, 0.95);
+  --glass-bg-darker: rgba(32, 32, 32, 0.8);
+  --glass-bg-light: rgba(255, 255, 255, 0.1);
+  --glass-bg-lighter: rgba(255, 255, 255, 0.15);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-hover: rgba(255, 255, 255, 0.2);
+  --glass-blur-heavy: 20px;
+  --glass-blur-light: 10px;
+  --glass-blur-subtle: 4px;
+  
+  /* Text Colors */
+  --text-primary: rgba(255, 255, 255, 1);
+  --text-secondary: rgba(255, 255, 255, 0.9);
+  --text-tertiary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  
+  /* Spacing Scale */
+  --space-2xs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  
+  /* Border Radius */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 50%;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+  --transition-slower: 0.5s ease;
+  
+  /* Z-Index Layers */
+  --z-base: 1;
+  --z-desktop-icons: 10;
+  --z-windows: 100;
+  --z-window-active: 500;
+  --z-taskbar: 1000;
+  --z-start-menu: 1100;
+  --z-context-menu: 2000;
+  --z-notifications: 3000;
+  --z-dialogs: 10000;
+  --z-tooltip: 11000;
+  
+  /* Component Heights */
+  --taskbar-height: 48px;
+  --window-header-height: 32px;
+  --start-button-size: 36px;
+  
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  
+  /* FATCON Level Colors */
+  --fatcon-5: #00c853;
+  --fatcon-4: #2196f3;
+  --fatcon-3: #ffc107;
+  --fatcon-2: #ff9800;
+  --fatcon-1: #f44336;
+}
+
+/* Dark Theme Override (for future use) */
+[data-theme="dark"] {
+  /* Override variables for dark theme */
+}
+
+/* Light Theme Override (for future use) */
+[data-theme="light"] {
+  --glass-bg-dark: rgba(255, 255, 255, 0.95);
+  --glass-bg-light: rgba(0, 0, 0, 0.1);
+  --text-primary: rgba(0, 0, 0, 1);
+  --text-secondary: rgba(0, 0, 0, 0.9);
+}

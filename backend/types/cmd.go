@@ -1,7 +1,7 @@
 package types
 
 import (
-	"sync"
+	"context"
 )
 
 type MessageType string
@@ -20,19 +20,13 @@ const (
 	MsgSetEnv          MessageType = "set_env"
 
 	// Stdout
-	MsgOpenStdOut   MessageType = "open_stdout"
-	MsgCloseStdout  MessageType = "close_stdout"
 	MsgOutputStream MessageType = "output_stream"
 
 	// Stdin
-	MsgOpenStdin   MessageType = "open_stdin"
-	MsgCloseStdin  MessageType = "close_stdin"
 	MsgInputStream MessageType = "input_stream"
 	MsgInputEOF    MessageType = "stdin_eof"
 
 	// Stderr
-	MsgOpenStderr  MessageType = "open_stderr"
-	MsgCloseStderr MessageType = "close_stderr"
 	MsgErrorStream MessageType = "error_stream"
 
 	// Error response
@@ -71,18 +65,28 @@ type WebSocketMessage struct {
 }
 
 type Client struct {
-	ClientID string
-	Env      map[string]string
-	In, Out  chan WebSocketMessage
+	ClientID   string
+	Env        map[string]string
+	In         <-chan WebSocketMessage
+	Out        chan WebSocketMessage
+	AuthStatus AuthorizationStatus
+	UserTags   []string
 }
 
 type ClientInfo struct {
-	Client         Client
-	StopChannel    chan struct{}
-	InputWaitGroup *sync.WaitGroup
+	Client       Client
+	Ctx          context.Context
+	ClientHandle ClientHandle
 }
 
-type Command interface {
-	Identifier() string
-	Run(args []string, in, out chan WebSocketMessage, env map[string]string, stopChannel chan struct{}, ClientID, CommandMsgID string) int
+type OptionDescriptor struct {
+	// Identifier is the back-end name for the option
+	Identifier string
+
+	// Aliases should not include dashes. If len() = 1, it's a single-dash flag.
+	// If len() > 1, it's a double-dash flag
+	Aliases []string
+
+	// If Default is true/false, the option is a flag. If it's a string, the option takes a parameter
+	Default any
 }

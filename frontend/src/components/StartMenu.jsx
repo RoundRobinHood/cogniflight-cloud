@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { User, Power, Search, Grid3X3, Pin, Monitor, FileText } from 'lucide-react'
 import { useSystem } from './useSystem'
 import appRegistry from '../config/appRegistry'
+import { useConfirm } from '../hooks/useConfirm.jsx'
 
 function StartMenu({ isOpen, onClose }) {
   const { systemState, openWindow, onLogout, addToTaskbar, addToDesktop, removeFromTaskbar, removeFromDesktop, showContextMenu } = useSystem()
@@ -20,8 +21,18 @@ function StartMenu({ isOpen, onClose }) {
     onClose()
   }
 
-  const handlePowerClick = () => {
-    if (confirm('Are you sure you want to sign out?')) {
+  const confirm = useConfirm()
+
+  const handlePowerClick = async () => {
+    const confirmed = await confirm({
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out? Any unsaved work will be lost.',
+      confirmText: 'Sign Out',
+      cancelText: 'Cancel',
+      type: 'warning'
+    })
+    
+    if (confirmed) {
       onLogout()
     }
   }
@@ -148,7 +159,7 @@ function StartMenu({ isOpen, onClose }) {
               <User size={20} />
             </div>
             <div className="start-menu-user-info">
-              <div className="start-menu-user-name">{systemState.userProfile.name}</div>
+              <div className="start-menu-user-name">{systemState.userProfile.username}</div>
               <div className="start-menu-user-email">{systemState.userProfile.email}</div>
             </div>
           </div>

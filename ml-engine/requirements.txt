@@ -3,3 +3,7 @@ influxdb-client==1.49.0
 pandas
 numpy
 python-dotenv
+
+insightface
+pymongo
+onnuxruntime

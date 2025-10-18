@@ -1,4 +1,4 @@
-import { useState, Suspense, useEffect } from 'react'
+import { useState, Suspense, useEffect, useCallback } from 'react'
 import Taskbar from './Taskbar'
 import Window from './Window'
 import DesktopIcons from './DesktopIcons'
@@ -7,6 +7,7 @@ import ContextMenu from './ContextMenu'
 import FatconAlert from './FatconAlert'
 import SystemContext from './useSystem'
 import appRegistry from '../config/appRegistry'
+import { ConfirmProvider } from '../hooks/useConfirm.jsx'
 
 function Desktop({ user, onLogout }) {
   const [windows, setWindows] = useState([])
@@ -33,11 +34,15 @@ function Desktop({ user, onLogout }) {
     
     return {
       userProfile: {
-        name: user?.username || 'Operator',
-        email: user?.email || `${user?.username || 'user'}@cogniflight.com`,
+        name: user.name,
+        username: user.username,
+        email: user.email || `${user.username}@cogniflight.com`,
+        phone: user.phone,
+        role: user.role,
+        tags: user.tags,
         theme: 'dark',
         notifications: true,
-        loginTime: user?.loginTime
+        loginTime: user.loginTime
       },
       fileSystem: {
         currentPath: '/home/Documents',
@@ -54,9 +59,9 @@ function Desktop({ user, onLogout }) {
       clipboard: '',
       notifications: []
     }
-  })
+  }, [])
 
-  const updateSystemState = (path, value) => {
+  const updateSystemState = useCallback((path, value) => {
     setSystemState(prev => {
       const newState = { ...prev }
       const keys = path.split('.')
@@ -68,9 +73,9 @@ function Desktop({ user, onLogout }) {
       current[keys[keys.length - 1]] = value
       return newState
     })
-  }
+  }, [])
 
-  const addNotification = (message, type = 'info') => {
+  const addNotification = useCallback((message, type = 'info') => {
     const notification = {
       id: Date.now(),
       message,
@@ -81,16 +86,16 @@ function Desktop({ user, onLogout }) {
       ...prev,
       notifications: [...prev.notifications, notification]
     }))
-    
+
     setTimeout(() => {
       setSystemState(prev => ({
         ...prev,
         notifications: prev.notifications.filter(n => n.id !== notification.id)
       }))
     }, 5000)
-  }
+  }, []);
 
-  const addToTaskbar = (appId) => {
+  const addToTaskbar = useCallback((appId) => {
     setSystemState(prev => {
       if (prev.pinnedToTaskbar.includes(appId)) {
         return prev // Already pinned
@@ -100,18 +105,18 @@ function Desktop({ user, onLogout }) {
       return { ...prev, pinnedToTaskbar: newPinned }
     })
     addNotification('App pinned to taskbar', 'success')
-  }
+  }, [addNotification]);
 
-  const removeFromTaskbar = (appId) => {
+  const removeFromTaskbar = useCallback((appId) => {
     setSystemState(prev => {
       const newPinned = prev.pinnedToTaskbar.filter(id => id !== appId)
       localStorage.setItem('pinnedTaskbarApps', JSON.stringify(newPinned))
       return { ...prev, pinnedToTaskbar: newPinned }
     })
     addNotification('App removed from taskbar', 'info')
-  }
+  }, [addNotification]);
 
-  const addToDesktop = (appId) => {
+  const addToDesktop = useCallback((appId) => {
     setSystemState(prev => {
       if (prev.pinnedToDesktop.includes(appId)) {
         return prev // Already pinned
@@ -121,16 +126,16 @@ function Desktop({ user, onLogout }) {
       return { ...prev, pinnedToDesktop: newPinned }
     })
     addNotification('App pinned to desktop', 'success')
-  }
+  }, [addNotification]);
 
-  const removeFromDesktop = (appId) => {
+  const removeFromDesktop = useCallback((appId) => {
     setSystemState(prev => {
       const newPinned = prev.pinnedToDesktop.filter(id => id !== appId)
       localStorage.setItem('pinnedDesktopApps', JSON.stringify(newPinned))
       return { ...prev, pinnedToDesktop: newPinned }
     })
     addNotification('App removed from desktop', 'info')
-  }
+  }, [addNotification]);
 
   const showContextMenu = (position, items) => {
     setGlobalContextMenu({
@@ -201,8 +206,31 @@ function Desktop({ user, onLogout }) {
       w.id === id ? { 
         ...w, 
         isMaximized: !w.isMaximized,
+        isHalfSnapped: false,
         ...(w.isMaximized ? { x: w.prevX, y: w.prevY, width: w.prevWidth, height: w.prevHeight } : 
                             { prevX: w.x, prevY: w.y, prevWidth: w.width, prevHeight: w.height, x: 0, y: 0, width: window.innerWidth, height: window.innerHeight - 48 })
+      } : w
+    ))
+  }
+
+  const snapWindowToHalf = (id, side) => {
+    const screenWidth = window.innerWidth
+    const screenHeight = window.innerHeight - 48 // Account for taskbar
+    
+    setWindows(prev => prev.map(w => 
+      w.id === id ? {
+        ...w,
+        isMaximized: false,
+        isHalfSnapped: true,
+        snapSide: side,
+        prevX: w.isHalfSnapped ? w.prevX : w.x,
+        prevY: w.isHalfSnapped ? w.prevY : w.y,
+        prevWidth: w.isHalfSnapped ? w.prevWidth : w.width,
+        prevHeight: w.isHalfSnapped ? w.prevHeight : w.height,
+        x: side === 'left' ? 0 : screenWidth / 2,
+        y: 0,
+        width: screenWidth / 2,
+        height: screenHeight
       } : w
     ))
   }
@@ -216,13 +244,13 @@ function Desktop({ user, onLogout }) {
 
   const updateWindowPosition = (id, x, y) => {
     setWindows(prev => prev.map(w => 
-      w.id === id ? { ...w, x, y } : w
+      w.id === id ? { ...w, x, y, isHalfSnapped: false } : w
     ))
   }
 
   const updateWindowSize = (id, width, height) => {
     setWindows(prev => prev.map(w => 
-      w.id === id ? { ...w, width, height } : w
+      w.id === id ? { ...w, width, height, isHalfSnapped: false } : w
     ))
   }
 
@@ -307,8 +335,9 @@ function Desktop({ user, onLogout }) {
   }
 
   return (
-    <SystemContext.Provider value={systemContextValue}>
-      <div className="desktop">
+    <ConfirmProvider>
+      <SystemContext.Provider value={systemContextValue}>
+        <div className="desktop">
         <DesktopIcons onOpenApp={openWindow} />
         
         {/* Toast Notifications - Show only recent ones as toasts */}
@@ -355,6 +384,7 @@ function Desktop({ user, onLogout }) {
               onFocus={() => focusWindow(window.id)}
               onMove={(x, y) => updateWindowPosition(window.id, x, y)}
               onResize={(width, height) => updateWindowSize(window.id, width, height)}
+              onSnapToHalf={(side) => snapWindowToHalf(window.id, side)}
             >
               {renderAppContent(window)}
             </Window>
@@ -389,8 +419,9 @@ function Desktop({ user, onLogout }) {
           previousLevel={globalFatconAlert.previousLevel}
           newLevel={globalFatconAlert.newLevel}
         />
-      </div>
-    </SystemContext.Provider>
+        </div>
+      </SystemContext.Provider>
+    </ConfirmProvider>
   )
 }
 

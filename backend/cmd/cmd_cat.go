@@ -1,70 +1,66 @@
 package cmd
 
-import "github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+import (
+	"fmt"
+	"io"
+	"log"
 
-type CmdCat struct{}
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
+	"github.com/RoundRobinHood/sh"
+)
 
-func (CmdCat) Identifier() string {
+type CmdCat struct {
+	FileStore filesystem.Store
+}
+
+func (*CmdCat) Identifier() string {
 	return "cat"
 }
 
-func (CmdCat) Run(args []string, in, out chan types.WebSocketMessage, env map[string]string, stopChannel chan struct{}, ClientID, CommandMsgID string) int {
-	out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ClientID,
-		MessageType: types.MsgOpenStdin,
-		RefID:       CommandMsgID,
+func (c *CmdCat) Run(ctx sh.CommandContext) int {
+	defer log.Printf("cat finished")
+	cwd, ok := ctx.Env["PWD"]
+	if !ok {
+		fmt.Fprint(ctx.Stderr, "error: no PWD available")
+		return 1
 	}
-	out <- types.WebSocketMessage{
-		MessageID:   GenerateMessageID(20),
-		ClientID:    ClientID,
-		MessageType: types.MsgOpenStdOut,
-		RefID:       CommandMsgID,
-	}
-	stdinOpen, stdoutOpen := true, true
+	if len(ctx.Args) > 1 {
+		files := ctx.Args[1:]
+		for i, filepath := range files {
+			abs_path, err := filesystem.AbsPath(cwd, filepath)
+			if err != nil {
+				error_ctx := ctx
+				error_ctx.Args = []string{"error", fmt.Sprintf("error (arg %d): invalid filepath: %v", i, err)}
+				return CmdError{}.Run(error_ctx)
+			}
 
-	for {
-		select {
-		case incoming := <-in:
-			switch incoming.MessageType {
-			case types.MsgInputStream:
-				out <- types.WebSocketMessage{
-					MessageID:   GenerateMessageID(20),
-					ClientID:    ClientID,
-					MessageType: types.MsgOutputStream,
-					RefID:       CommandMsgID,
+			tags := util.GetTags(ctx.Ctx)
+			if node, err := c.FileStore.Lookup(ctx.Ctx, tags, abs_path); err != nil {
+				error_ctx := ctx
+				error_ctx.Args = []string{"error", fmt.Sprintf("error (arg %d): couldnt lookup file: %v", i, err)}
+				return CmdError{}.Run(error_ctx)
+			} else {
+				if stream, err := c.FileStore.ReadFileObj(ctx.Ctx, *node, tags); err != nil {
+					error_ctx := ctx
+					error_ctx.Args = []string{"error", fmt.Sprintf("error (arg %d): couldnt open file for reading: %v", i, err)}
+					return CmdError{}.Run(error_ctx)
+				} else {
+					io.Copy(ctx.Stdout, stream)
+					stream.Close()
+				}
+			}
 
-					OutputStream: incoming.InputStream,
-				}
-			case types.MsgInputEOF:
-				stdinOpen = false
-				out <- types.WebSocketMessage{
-					MessageID:   GenerateMessageID(20),
-					ClientID:    ClientID,
-					MessageType: types.MsgCloseStdout,
-					RefID:       CommandMsgID,
-				}
-				stdoutOpen = false
-				return 0
-			}
-		case <-stopChannel:
-			if stdinOpen {
-				out <- types.WebSocketMessage{
-					MessageID:   GenerateMessageID(20),
-					ClientID:    ClientID,
-					MessageType: types.MsgCloseStdin,
-					RefID:       CommandMsgID,
-				}
-			}
-			if stdoutOpen {
-				out <- types.WebSocketMessage{
-					MessageID:   GenerateMessageID(20),
-					ClientID:    ClientID,
-					MessageType: types.MsgCloseStdout,
-					RefID:       CommandMsgID,
-				}
-			}
-			return 0
+			ctx.Stdout.Write([]byte("\r\n"))
 		}
+		return 0
+	}
+
+	log.Printf("Have stdin: %v", ctx.Stdin)
+	if _, err := io.Copy(ctx.Stdout, ctx.Stdin); err != nil {
+		fmt.Fprintf(ctx.Stderr, "error: %v", err)
+		return 1
+	} else {
+		return 0
 	}
 }

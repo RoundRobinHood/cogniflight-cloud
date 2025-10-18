@@ -86,6 +86,7 @@ services:
       INFLUX_TOKEN: ${INFLUXDB_TOKEN:-mytoken}
       INFLUX_ORG: ${INFLUXDB_ORG:-myorg}
       INFLUX_BUCKET: ${INFLUXDB_BUCKET:-telegraf}
+      MONGO_URI: "${MONGO_URI:-mongodb://ohno:${MONGO_PWD:-rootpass}@mongo:27017/?authSource=admin}"
     develop:
       watch:
         - action: sync+restart
@@ -119,6 +120,7 @@ services:
       ML_SOCK_FILE: "/sockets/ml-engine.sock"
 
       MQTT_KEY: "${MQTT_KEY:-mqttpass}"
+      OPENAI_API_KEY: "$OPENAI_API_KEY"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`${SERVER_DOMAIN:-localhost}`) && PathPrefix(`/api`)"

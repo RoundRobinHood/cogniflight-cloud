@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math/rand"
@@ -8,6 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -32,11 +35,23 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func CmdWebhook() gin.HandlerFunc {
+func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, apiKey chatbot.APIKey) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		available_commands := InitCommands()
+		auth_get, ok := c.Get("auth")
+		if !ok {
+			log.Println("missing auth middleware")
+			c.Status(401)
+			return
+		}
+		auth_status := auth_get.(types.AuthorizationStatus)
+		socketID := GenerateMessageID(20)
+		session := sessionStore.AttachSession(socketID, auth_status)
+		available_commands := InitCommands(filestore, session, sessionStore, apiKey)
 
 		clients := map[string]types.ClientInfo{}
+		client_cancels := map[string]context.CancelFunc{}
+		client_inputs := map[string]*types.UnboundedChan[types.WebSocketMessage]{}
+
 		wg := new(sync.WaitGroup)
 
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -50,9 +65,18 @@ func CmdWebhook() gin.HandlerFunc {
 		in_ch := make(chan types.WebSocketMessage)
 		out_ch := make(chan types.WebSocketMessage)
 		defer func() {
-			for _, client := range clients {
-				close(client.StopChannel)
+			for clientID, cancel := range client_cancels {
+				go func() {
+					for range clients[clientID].Client.Out {
+					}
+				}()
+				log.Printf("Canceling client ctx during exit (%q)", clientID)
+				client_inputs[clientID].Close()
+				cancel()
 			}
+
+			wg.Wait()
+			sessionStore.DetachSession(socketID)
 		}()
 
 		wg.Add(1)
@@ -113,23 +137,32 @@ func CmdWebhook() gin.HandlerFunc {
 					return
 				}
 				messageID := GenerateMessageID(20)
-				if client, ok := clients[incoming.ClientID]; !ok {
+				if _, ok := clients[incoming.ClientID]; !ok {
 					if incoming.MessageType == types.MsgConnect {
 						client_map := make(map[string]string)
 						if incoming.SetEnv != nil {
 							client_map = incoming.SetEnv
 						}
+						client_map["PWD"] = fmt.Sprintf("/home/%s", auth_status.Username)
+						client_map["HOME"] = fmt.Sprintf("/home/%s", auth_status.Username)
+
+						unboundedChan := types.NewUnboundedChan[types.WebSocketMessage]()
+						ctx, cancel := context.WithCancel(c.Request.Context())
 						new_client := types.ClientInfo{
 							Client: types.Client{
-								ClientID: incoming.ClientID,
-								Env:      client_map,
-								In:       make(chan types.WebSocketMessage),
-								Out:      out_ch,
+								ClientID:   incoming.ClientID,
+								Env:        client_map,
+								In:         unboundedChan.Out(),
+								Out:        out_ch,
+								AuthStatus: auth_status,
+								UserTags:   auth_status.Tags,
 							},
-							StopChannel:    make(chan struct{}),
-							InputWaitGroup: new(sync.WaitGroup),
+							Ctx:          ctx,
+							ClientHandle: session.ClientConnected(incoming.ClientID),
 						}
 						clients[incoming.ClientID] = new_client
+						client_cancels[incoming.ClientID] = cancel
+						client_inputs[incoming.ClientID] = unboundedChan
 
 						wg.Add(1)
 						go func() {
@@ -143,7 +176,7 @@ func CmdWebhook() gin.HandlerFunc {
 						}()
 
 						wg.Add(1)
-						go RunClient(new_client, available_commands, wg)
+						go RunClient(new_client, available_commands, filestore, wg)
 					} else {
 
 						wg.Add(1)
@@ -159,21 +192,15 @@ func CmdWebhook() gin.HandlerFunc {
 					}
 				} else {
 					if incoming.MessageType == types.MsgDisconnect {
-						client.InputWaitGroup.Add(1)
-						go func() {
-							defer client.InputWaitGroup.Done()
-							client.Client.In <- incoming
-							close(client.StopChannel)
-						}()
+						client_in := client_inputs[incoming.ClientID].In()
+						client_in <- incoming
+						close(client_in)
+						client_cancels[incoming.ClientID]()
 						delete(clients, incoming.ClientID)
+						delete(client_cancels, incoming.ClientID)
+						delete(client_inputs, incoming.ClientID)
 					} else {
-						client.InputWaitGroup.Add(1)
-						go func() {
-							defer client.InputWaitGroup.Done()
-							log.Printf("[system] - sending msg to client %q", client.Client.ClientID)
-							client.Client.In <- incoming
-							log.Printf("[system] - finished sending msg to client %q", client.Client.ClientID)
-						}()
+						client_inputs[incoming.ClientID].In() <- incoming
 					}
 				}
 			}
