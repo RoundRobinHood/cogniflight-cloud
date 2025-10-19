@@ -1,4 +1,4 @@
-import { parse } from "yaml";
+import { parse, stringify } from "yaml";
 import paths from "./paths";
 import { encode, decode } from "@msgpack/msgpack";
 import { useState } from "react";
@@ -580,6 +580,59 @@ export class PipeCmdClient {
     }
 
     return ret;
+  }
+
+  // create_invite creates a signup file for the given information. role is expected to have one of the following values:
+  // "sysadmin", "atc", "pilot", "edge-node"
+  // Anything that is provided in "info" will also be put in the signup file.
+  // Practically, that's contact info, either {email: "example@gmail.com"} or {phone: "123456789"}
+  async create_invite(role, info) {
+    const presets = {
+      "sysadmin": {
+        tags: ["sysadmin", "user"],
+        role: "sysadmin",
+      },
+      "atc": {
+        tags: ["atc", "user"],
+        role: "atc",
+      },
+      "pilot": {
+        tags: ["pilot", "user"],
+        role: "pilot",
+        home_permissions: {
+          "read_tags": ["sysadmin", "atc", "edge-node"],
+          "write_tags": ["sysadmin"],
+          "execute_tags": ["sysadmin"],
+          "updatetag_tags": ["sysadmin"],
+        },
+      },
+      "edge-node": {
+        tags: ["edge-node", "user"],
+        role: "edge-node",
+        home_permissions: {
+          "read_tags": ["sysadmin", "atc"],
+          "write_tags": ["sysadmin"],
+          "execute_tags": ["sysadmin"],
+          "updatetag_tags": ["sysadmin"],
+        },
+      },
+    };
+
+    const tok_cmd = await this.run_command("crypto-rand -f b64 32")
+    if(tok_cmd.command_result != 0) {
+      throw new Error(tok_cmd.error);
+    }
+
+    const tok_str = tok_cmd.output;
+
+    const signupfile_str = stringify({...info, ...presets[role]}).replace(/\n/g, '\r\n');
+
+    const tee_cmd = await this.run_command(`tee /etc/passwd/${tok_str}.signup`, StringIterator(signupfile_str));
+    if(tee_cmd.command_result != 0) {
+      throw new Error(tee_cmd.error);
+    }
+
+    return tok_str;
   }
 }
 
