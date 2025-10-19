@@ -732,6 +732,17 @@ class CommandHandle {
     }
   }
 
+  interrupt() {
+    if(!this.command_running)
+      throw new Error("Command not running");
+    this.#send({
+      message_id: GenerateMessageID(),
+      client_id: this.clientID,
+
+      message_type: "command_interrupt"
+    });
+  }
+
   async *iter_output() {
     if(!this.command_running) 
       throw new Error("Command not running");

@@ -41,6 +41,13 @@ function TerminalApp() {
     }
   }, [])
 
+  // Send command interrupt to running command
+  const sendInterrupt = useCallback(() => {
+    if (commandHandleRef.current && commandHandleRef.current.command_running) {
+      commandHandleRef.current.interrupt();
+    }
+  }, []);
+
   // Initialize terminal when client is available
   useEffect(() => {
     if (client && !isInitialized) {
@@ -244,9 +251,9 @@ function TerminalApp() {
           }
           break
 
-        case 3: // Ctrl+C - cancel stdin
+        case 3: // Ctrl+C - send interrupt
           instance.writeln('^C')
-          sendEOF()
+          sendInterrupt()
           break
 
         default:
