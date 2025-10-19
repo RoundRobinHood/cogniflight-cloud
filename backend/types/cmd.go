@@ -14,10 +14,11 @@ const (
 	MsgDisconnectAck MessageType = "disconnect_acknowledged"
 
 	// Command passing
-	MsgRunCommand      MessageType = "run_command"
-	MsgCommandRunning  MessageType = "command_running"
-	MsgCommandFinished MessageType = "command_finished"
-	MsgSetEnv          MessageType = "set_env"
+	MsgRunCommand       MessageType = "run_command"
+	MsgCommandRunning   MessageType = "command_running"
+	MsgCommandInterrupt MessageType = "command_interrupt"
+	MsgCommandFinished  MessageType = "command_finished"
+	MsgSetEnv           MessageType = "set_env"
 
 	// Stdout
 	MsgOutputStream MessageType = "output_stream"

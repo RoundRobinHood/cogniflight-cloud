@@ -90,6 +90,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 			case types.MsgRunCommand:
 				info.ClientHandle.CommandRunning(msg.Command)
 				cmd_stop := make(chan struct{})
+				cmd_ctx, cancel := context.WithCancel(info.Ctx)
 				cmd_wg := new(sync.WaitGroup)
 				cmd_wg.Add(3)
 				stdin.Chan = make(chan string)
@@ -105,6 +106,8 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 								return
 							}
 							switch msg.MessageType {
+							case types.MsgCommandInterrupt:
+								cancel()
 							case types.MsgInputStream:
 								stdin_log.In() <- msg.InputStream
 								if msg.InputStream != "" {
@@ -156,7 +159,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 					}
 				}()
 
-				cmd_ctx := context.WithValue(info.Ctx, "auth_status", info.Client.AuthStatus)
+				cmd_ctx = context.WithValue(cmd_ctx, "auth_status", info.Client.AuthStatus)
 				cmd_ctx = context.WithValue(cmd_ctx, "tags", info.Client.UserTags)
 
 				info.Client.Out <- types.WebSocketMessage{

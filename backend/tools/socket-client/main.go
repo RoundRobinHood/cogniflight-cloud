@@ -115,6 +115,12 @@ func main() {
 					defer in_wg.Done()
 					shortcuts_in <- "ctrl+d"
 				}()
+			case 0x03:
+				in_wg.Add(1)
+				go func() {
+					defer in_wg.Done()
+					shortcuts_in <- "ctrl+c"
+				}()
 			case 0x7f:
 				if len(input) > 0 {
 					line = line[:len(line)-1]
@@ -347,7 +353,7 @@ func main() {
 		select {
 		case input = <-lines_in:
 		case shortcut := <-shortcuts_in:
-			if shortcut == "ctrl+d" {
+			if shortcut == "ctrl+d" || shortcut == "ctrl+c" {
 				fmt.Print("closing...\r\n")
 				close(disconnect)
 				goto loop_start
@@ -425,11 +431,18 @@ func main() {
 					InputStream: line + "\r\n",
 				}
 			case shortcut := <-shortcuts_in:
-				if shortcut == "ctrl+d" {
+				switch shortcut {
+				case "ctrl+d":
 					out <- types.WebSocketMessage{
 						MessageID:   cmd.GenerateMessageID(20),
 						ClientID:    clientID,
 						MessageType: types.MsgInputEOF,
+					}
+				case "ctrl+c":
+					out <- types.WebSocketMessage{
+						MessageID:   cmd.GenerateMessageID(20),
+						ClientID:    clientID,
+						MessageType: types.MsgCommandInterrupt,
 					}
 				}
 			case incoming := <-in:
