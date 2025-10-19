@@ -28,6 +28,7 @@ func ListenMQTT(ctx context.Context) *util.EventHandler[types.MQTTMessage] {
 			var payload map[string]any
 			if err := json.Unmarshal(msg.Payload(), &payload); err != nil {
 				log.Println("Received invalid json: ", err)
+				log.Println("message: ", string(msg.Payload()))
 				return
 			}
 
@@ -65,6 +66,7 @@ func ListenMQTT(ctx context.Context) *util.EventHandler[types.MQTTMessage] {
 			}).
 			SetTLSConfig(&tls.Config{
 				InsecureSkipVerify: insecure_skip_verify,
+				ServerName:         os.Getenv("MQTT_SERVER_DOMAIN"),
 			})
 
 		client := mqtt.NewClient(opts)
