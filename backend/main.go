@@ -102,6 +102,11 @@ func main() {
 		}
 	}
 
+	ctx, cancel = context.WithCancel(context.Background())
+	defer cancel()
+
+	mqttEvents := ListenMQTT(ctx)
+
 	stream := jsonrpc2.NewPlainObjectStream(conn)
 	jsonConn := jsonrpc2.NewConn(context.Background(), stream, nil)
 
@@ -115,7 +120,7 @@ func main() {
 	r.GET("/signup/check-username/:username", auth.SignupCheckUsername(fileStore))
 	r.POST("/signup", auth.Signup(fileStore))
 	r.POST("/login", auth.Login(fileStore))
-	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore, sessionStore, chatbot.APIKey(openAIKey), jsonConn))
+	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore, sessionStore, chatbot.APIKey(openAIKey), jsonConn, mqttEvents))
 
 	server := &http.Server{
 		Addr:    ":8080",
@@ -136,6 +141,7 @@ func main() {
 	}
 
 	<-quit
+	cancel()
 	if gin.Mode() == gin.DebugMode {
 		fmt.Println("Shutting down server...")
 	}

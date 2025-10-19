@@ -7,8 +7,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/gorilla/websocket"
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -24,7 +24,7 @@ type SocketSession struct {
 
 type SocketClient struct {
 	clientID  string
-	input     *EventHandler[types.WebSocketMessage]
+	input     *util.EventHandler[types.WebSocketMessage]
 	out_ch    *types.UnboundedChan[types.WebSocketMessage]
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -32,7 +32,7 @@ type SocketClient struct {
 }
 
 func (s *SocketSession) ConnectClient(clientID string) (SocketClient, error) {
-	input := NewEventHandler[types.WebSocketMessage]()
+	input := util.NewEventHandler[types.WebSocketMessage]()
 	out_ch := types.NewUnboundedChan[types.WebSocketMessage]()
 	ctx, cancel := context.WithCancel(context.Background())
 	commandMu := new(sync.Mutex)
@@ -86,7 +86,7 @@ func (s *SocketSession) ConnectClient(clientID string) (SocketClient, error) {
 	}()
 
 	client.out_ch.In() <- types.WebSocketMessage{
-		MessageID:   cmd.GenerateMessageID(20),
+		MessageID:   util.RandHex(20),
 		ClientID:    clientID,
 		MessageType: types.MsgConnect,
 	}
@@ -119,7 +119,7 @@ func (c SocketClient) Disconnect(ctx context.Context) error {
 	}()
 
 	c.out_ch.In() <- types.WebSocketMessage{
-		MessageID:   cmd.GenerateMessageID(20),
+		MessageID:   util.RandHex(20),
 		ClientID:    c.clientID,
 		MessageType: types.MsgDisconnect,
 	}
@@ -166,7 +166,7 @@ func (c SocketClient) RunCommand(ctx context.Context, opt CommandOptions) (int, 
 	defer cancel()
 
 	c.out_ch.In() <- types.WebSocketMessage{
-		MessageID:   cmd.GenerateMessageID(20),
+		MessageID:   util.RandHex(20),
 		ClientID:    c.clientID,
 		MessageType: types.MsgRunCommand,
 		Command:     opt.Command,
@@ -247,7 +247,7 @@ func (c SocketClient) RunCommand(ctx context.Context, opt CommandOptions) (int, 
 		case msg, ok := <-stdin_ch:
 			if !ok {
 				c.out_ch.In() <- types.WebSocketMessage{
-					MessageID:   cmd.GenerateMessageID(20),
+					MessageID:   util.RandHex(20),
 					ClientID:    c.clientID,
 					MessageType: types.MsgInputEOF,
 				}
@@ -255,7 +255,7 @@ func (c SocketClient) RunCommand(ctx context.Context, opt CommandOptions) (int, 
 				continue
 			}
 			c.out_ch.In() <- types.WebSocketMessage{
-				MessageID:   cmd.GenerateMessageID(20),
+				MessageID:   util.RandHex(20),
 				ClientID:    c.clientID,
 				MessageType: types.MsgInputStream,
 

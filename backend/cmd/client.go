@@ -11,6 +11,7 @@ import (
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/sh"
 )
 
@@ -76,7 +77,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 
 			if disconnect_msg.MessageID != "" {
 				info.Client.Out <- types.WebSocketMessage{
-					MessageID:   GenerateMessageID(20),
+					MessageID:   util.RandHex(20),
 					ClientID:    info.Client.ClientID,
 					MessageType: types.MsgDisconnectAck,
 					RefID:       disconnect_msg.MessageID,
@@ -129,7 +130,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 						case str := <-stdout:
 							stdout_log.In() <- str
 							info.Client.Out <- types.WebSocketMessage{
-								MessageID:   GenerateMessageID(20),
+								MessageID:   util.RandHex(20),
 								ClientID:    info.Client.ClientID,
 								MessageType: types.MsgOutputStream,
 								RefID:       msg.MessageID,
@@ -148,7 +149,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 						case str := <-stderr:
 							stderr_log.In() <- str
 							info.Client.Out <- types.WebSocketMessage{
-								MessageID:   GenerateMessageID(20),
+								MessageID:   util.RandHex(20),
 								ClientID:    info.Client.ClientID,
 								MessageType: types.MsgErrorStream,
 								RefID:       msg.MessageID,
@@ -163,7 +164,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 				cmd_ctx = context.WithValue(cmd_ctx, "tags", info.Client.UserTags)
 
 				info.Client.Out <- types.WebSocketMessage{
-					MessageID:   GenerateMessageID(20),
+					MessageID:   util.RandHex(20),
 					ClientID:    info.Client.ClientID,
 					MessageType: types.MsgCommandRunning,
 					RefID:       msg.MessageID,
@@ -183,7 +184,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 					} else {
 						log.Printf("Runner error: %v\n", err)
 						info.Client.Out <- types.WebSocketMessage{
-							MessageID:   GenerateMessageID(20),
+							MessageID:   util.RandHex(20),
 							ClientID:    info.Client.ClientID,
 							MessageType: types.MsgErrorStream,
 							RefID:       msg.MessageID,
@@ -195,7 +196,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 
 				info.ClientHandle.CommandFinished(result)
 				info.Client.Out <- types.WebSocketMessage{
-					MessageID:   GenerateMessageID(20),
+					MessageID:   util.RandHex(20),
 					ClientID:    info.Client.ClientID,
 					MessageType: types.MsgCommandFinished,
 					RefID:       msg.MessageID,
@@ -209,7 +210,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 					}
 				}()
 				info.Client.Out <- types.WebSocketMessage{
-					MessageID:   GenerateMessageID(20),
+					MessageID:   util.RandHex(20),
 					ClientID:    info.Client.ClientID,
 					MessageType: types.MsgDisconnectAck,
 					RefID:       msg.MessageID,
