@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"slices"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
@@ -18,6 +19,12 @@ func (c *CmdMQTT) Identifier() string {
 }
 
 func (c *CmdMQTT) Run(ctx sh.CommandContext) int {
+	tags := util.GetTags(ctx.Ctx)
+	if !slices.Contains(tags, "sysadmin") && !slices.Contains(tags, "atc") {
+		fmt.Fprint(ctx.Stderr, "access denied")
+		return 1
+	}
+
 	listener := c.Events.Subscribe()
 	defer listener.Unsubscribe()
 	log.Println("has listener")
