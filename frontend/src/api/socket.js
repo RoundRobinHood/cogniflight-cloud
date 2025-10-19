@@ -604,20 +604,20 @@ export class PipeCmdClient {
         tags: ["pilot", "user"],
         role: "pilot",
         home_permissions: {
-          read_tags: ["sysadmin", "atc", "edge-node"],
-          write_tags: ["sysadmin"],
-          execute_tags: ["sysadmin"],
-          updatetag_tags: ["sysadmin"],
+          "read_tags": ["sysadmin", "atc", "edge-node"],
+          "write_tags": ["sysadmin"],
+          "execute_tags": ["sysadmin", "atc", "edge-node"],
+          "updatetag_tags": ["sysadmin"],
         },
       },
       "edge-node": {
         tags: ["edge-node", "user"],
         role: "edge-node",
         home_permissions: {
-          read_tags: ["sysadmin", "atc"],
-          write_tags: ["sysadmin"],
-          execute_tags: ["sysadmin"],
-          updatetag_tags: ["sysadmin"],
+          "read_tags": ["sysadmin", "atc"],
+          "write_tags": ["sysadmin"],
+          "execute_tags": ["sysadmin", "atc"],
+          "updatetag_tags": ["sysadmin"],
         },
       },
     };
