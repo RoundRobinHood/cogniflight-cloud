@@ -93,8 +93,7 @@ class AppRegistry {
       defaultTitle: "Users",
       defaultSize: { width: 900, height: 620 },
       //Hide from non-admin users in Desktop
-      visibleWhen: (systemState) =>
-        systemState.userProfile.role === "sysadmin",
+      visibleWhen: (systemState) => systemState.userProfile.role === "sysadmin",
     });
 
     this.register({

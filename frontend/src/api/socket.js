@@ -545,38 +545,42 @@ export class PipeCmdClient {
     const passwd_files = await this.ls("/etc/passwd");
 
     const users = [];
-    for(const file of passwd_files) {
-      if(file.name.endsWith(".login")) {
+    for (const file of passwd_files) {
+      if (file.name.endsWith(".login")) {
         users.push(file.name.substring(0, file.name.length - ".login".length));
       }
     }
 
-    if(!verbose) {
+    if (!verbose) {
       return users;
     }
 
     const ret = [];
     for (let user of users) {
-      const user_profile_cmd = await this.run_command(`cat "/home/${user}/user.profile"`);
+      const user_profile_cmd = await this.run_command(
+        `cat "/home/${user}/user.profile"`
+      );
       let user_profile = null;
 
-      if(user_profile_cmd.command_result != 0) {
-        if(!user_profile_cmd.error.includes("file does not exist")) {
+      if (user_profile_cmd.command_result != 0) {
+        if (!user_profile_cmd.error.includes("file does not exist")) {
           throw new Error(user_profile_cmd.error);
         }
       } else {
         user_profile = parse(user_profile_cmd.output);
       }
 
-      const login_file_cmd = await this.run_command(`cat "/etc/passwd/${user}.login"`);
+      const login_file_cmd = await this.run_command(
+        `cat "/etc/passwd/${user}.login"`
+      );
 
-      if(login_file_cmd.command_result != 0) {
+      if (login_file_cmd.command_result != 0) {
         throw new Error(login_file_cmd.error);
       }
 
       const { tags } = parse(login_file_cmd.output);
 
-      ret.push({username: user, tags, user_profile});
+      ret.push({ username: user, tags, user_profile });
     }
 
     return ret;
@@ -588,47 +592,53 @@ export class PipeCmdClient {
   // Practically, that's contact info, either {email: "example@gmail.com"} or {phone: "123456789"}
   async create_invite(role, info) {
     const presets = {
-      "sysadmin": {
+      sysadmin: {
         tags: ["sysadmin", "user"],
         role: "sysadmin",
       },
-      "atc": {
+      atc: {
         tags: ["atc", "user"],
         role: "atc",
       },
-      "pilot": {
+      pilot: {
         tags: ["pilot", "user"],
         role: "pilot",
         home_permissions: {
-          "read_tags": ["sysadmin", "atc", "edge-node"],
-          "write_tags": ["sysadmin"],
-          "execute_tags": ["sysadmin"],
-          "updatetag_tags": ["sysadmin"],
+          read_tags: ["sysadmin", "atc", "edge-node"],
+          write_tags: ["sysadmin"],
+          execute_tags: ["sysadmin"],
+          updatetag_tags: ["sysadmin"],
         },
       },
       "edge-node": {
         tags: ["edge-node", "user"],
         role: "edge-node",
         home_permissions: {
-          "read_tags": ["sysadmin", "atc"],
-          "write_tags": ["sysadmin"],
-          "execute_tags": ["sysadmin"],
-          "updatetag_tags": ["sysadmin"],
+          read_tags: ["sysadmin", "atc"],
+          write_tags: ["sysadmin"],
+          execute_tags: ["sysadmin"],
+          updatetag_tags: ["sysadmin"],
         },
       },
     };
 
-    const tok_cmd = await this.run_command("crypto-rand -f b64 32")
-    if(tok_cmd.command_result != 0) {
+    const tok_cmd = await this.run_command("crypto-rand -f b64 32");
+    if (tok_cmd.command_result != 0) {
       throw new Error(tok_cmd.error);
     }
 
     const tok_str = tok_cmd.output;
 
-    const signupfile_str = stringify({...info, ...presets[role]}).replace(/\n/g, '\r\n');
+    const signupfile_str = stringify({ ...info, ...presets[role] }).replace(
+      /\n/g,
+      "\r\n"
+    );
 
-    const tee_cmd = await this.run_command(`tee /etc/passwd/${tok_str}.signup`, StringIterator(signupfile_str));
-    if(tee_cmd.command_result != 0) {
+    const tee_cmd = await this.run_command(
+      `tee /etc/passwd/${tok_str}.signup`,
+      StringIterator(signupfile_str)
+    );
+    if (tee_cmd.command_result != 0) {
       throw new Error(tee_cmd.error);
     }
 

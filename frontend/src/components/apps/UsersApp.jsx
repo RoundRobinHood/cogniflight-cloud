@@ -39,11 +39,8 @@ export default function UsersApp() {
         setLoading(true);
         setError(null);
 
-        const cmd = await client.run_command("users list");
-        if (cmd.command_result !== 0)
-          throw new Error(cmd.error || "Command failed");
-
-        const data = JSON.parse(cmd.output || "[]");
+        const data = await client.get_users(true);
+        console.log("Loaded users: ", data);
         setUsers(data);
       } catch (err) {
         console.error("Error loading users:", err);
@@ -58,13 +55,15 @@ export default function UsersApp() {
 
   // Filter logic
   const filtered = users.filter((u) => {
+    const profile = u.user_profile || {};
     const q = search.toLowerCase();
     return (
-      u.name?.toLowerCase().includes(q) ||
-      u.surname?.toLowerCase().includes(q) ||
-      u.phone?.toLowerCase().includes(q) ||
-      u.email?.toLowerCase().includes(q) ||
-      u.role?.toLowerCase().includes(q)
+      profile.name?.toLowerCase().includes(q) ||
+      profile.surname?.toLowerCase().includes(q) ||
+      profile.phone?.toString().includes(q) ||
+      profile.email?.toLowerCase().includes(q) ||
+      profile.role?.toLowerCase().includes(q) ||
+      u.username?.toLowerCase().includes(q)
     );
   });
 
@@ -147,23 +146,36 @@ export default function UsersApp() {
                 </td>
               </tr>
             ) : (
-              filtered.map((user, i) => (
-                <tr key={i}>
-                  <td>{user.name || "-"}</td>
-                  <td>{user.surname || "-"}</td>
-                  <td>{user.phone || "-"}</td>
-                  <td>{user.email || "-"}</td>
-                  <td>{user.role || "-"}</td>
-                  <td className="table-col-actions">
-                    <button
-                      className="btn btn-sm btn-secondary"
-                      onClick={() => handleEdit(user)}
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              ))
+              filtered.map((user, i) => {
+                if (!user.user_profile) {
+                  return (
+                    <tr key={i}>
+                      <td colSpan="6" className="table-empty">
+                        No profile found for {user.username}
+                      </td>
+                    </tr>
+                  );
+                }
+
+                // 🩵 Normal rendering for users with profiles
+                return (
+                  <tr key={i}>
+                    <td>{user.user_profile?.name || "-"}</td>
+                    <td>{user.user_profile?.surname || "-"}</td>
+                    <td>{user.user_profile?.phone || "-"}</td>
+                    <td>{user.user_profile?.email || "-"}</td>
+                    <td>{user.user_profile?.role || "-"}</td>
+                    <td className="table-col-actions">
+                      <button
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => handleEdit(user)}
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
