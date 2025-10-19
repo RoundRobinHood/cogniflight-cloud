@@ -28,6 +28,7 @@ func ListenMQTT(ctx context.Context) *util.EventHandler[types.MQTTMessage] {
 			var payload map[string]any
 			if err := json.Unmarshal(msg.Payload(), &payload); err != nil {
 				log.Println("Received invalid json: ", err)
+				log.Println("message: ", string(msg.Payload()))
 				return
 			}
 
