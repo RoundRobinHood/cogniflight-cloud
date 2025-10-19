@@ -13,8 +13,8 @@ import (
 
 	"sync/atomic"
 
-	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/gorilla/websocket"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/term"
@@ -290,7 +290,7 @@ func main() {
 
 	// Connect a client
 	out <- types.WebSocketMessage{
-		MessageID:   cmd.GenerateMessageID(20),
+		MessageID:   util.RandHex(20),
 		ClientID:    clientID,
 		MessageType: types.MsgConnect,
 	}
@@ -316,7 +316,7 @@ func main() {
 		case <-disconnect:
 			fmt.Print("closing client...\r\n")
 			out <- types.WebSocketMessage{
-				MessageID:   cmd.GenerateMessageID(20),
+				MessageID:   util.RandHex(20),
 				ClientID:    clientID,
 				MessageType: types.MsgDisconnect,
 			}
@@ -365,7 +365,7 @@ func main() {
 		// Send command
 		env_map := map[string]string{}
 		env.Range(func(k, v any) bool { env_map[k.(string)] = v.(string); return true })
-		call_msg_id := cmd.GenerateMessageID(20)
+		call_msg_id := util.RandHex(20)
 		out <- types.WebSocketMessage{
 			MessageID:   call_msg_id,
 			ClientID:    clientID,
@@ -424,7 +424,7 @@ func main() {
 			select {
 			case line := <-tmp_in_lines:
 				out <- types.WebSocketMessage{
-					MessageID:   cmd.GenerateMessageID(20),
+					MessageID:   util.RandHex(20),
 					ClientID:    clientID,
 					MessageType: types.MsgInputStream,
 
@@ -434,13 +434,13 @@ func main() {
 				switch shortcut {
 				case "ctrl+d":
 					out <- types.WebSocketMessage{
-						MessageID:   cmd.GenerateMessageID(20),
+						MessageID:   util.RandHex(20),
 						ClientID:    clientID,
 						MessageType: types.MsgInputEOF,
 					}
 				case "ctrl+c":
 					out <- types.WebSocketMessage{
-						MessageID:   cmd.GenerateMessageID(20),
+						MessageID:   util.RandHex(20),
 						ClientID:    clientID,
 						MessageType: types.MsgCommandInterrupt,
 					}
