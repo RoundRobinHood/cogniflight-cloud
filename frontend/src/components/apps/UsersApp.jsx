@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSystem } from "../useSystem";
 import { usePipeClient } from "../../api/socket";
+import YAML from "yaml";
 import "../../styles/utilities/tables.css";
 import "../../styles/utilities/pills.css";
 import "../../styles/apps/app-base.css";
@@ -39,9 +40,19 @@ export default function UsersApp() {
         setLoading(true);
         setError(null);
 
-        const data = await client.get_users(true);
-        console.log("Loaded users: ", data);
-        setUsers(data);
+        const raw = await client.get_users(true);
+
+        // Sometimes backend already returns JSON, sometimes YAML
+        let data;
+        try {
+          data = typeof raw === "string" ? YAML.parse(raw) : raw;
+        } catch (yamlErr) {
+          console.warn("Failed YAML parse, using raw:", yamlErr);
+          data = raw;
+        }
+
+        console.log("Loaded users:", data);
+        setUsers(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error loading users:", err);
         setError("Unable to load users");
@@ -102,7 +113,7 @@ export default function UsersApp() {
           <button
             className="btn btn-primary btn-sm"
             onClick={() =>
-              openWindow("invite-user", { title: "Invite New User" })
+              openWindow("invite-user", "Invite New User" )
             }
           >
             + New User

@@ -1,46 +1,51 @@
 import { useState } from "react";
 import { useSystem } from "../useSystem";
+import { usePipeClient } from "../../api/socket"; // ✅ import the backend client
 import "../../styles/apps/app-base.css";
 import "../../styles/utilities/modal.css";
 
-function normalizeInstanceData(instanceData) {
-  if (!instanceData) return "Invite New User";
-
-  // If it's an object with title property
-  if (typeof instanceData === "object" && "title" in instanceData)
-    return instanceData.title;
-
-  // If it's a string
-  if (typeof instanceData === "string") return instanceData;
-
-  return "Invite New User";
-}
-
 export default function InviteUserApp({ instanceData }) {
   const { addNotification } = useSystem();
-
+  const client = usePipeClient();
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation: one of email or phone must be provided
     if (!email && !phone) {
       addNotification("Please enter at least one contact detail", "error");
       return;
     }
+    if (!role) {
+      addNotification("Please select a role", "error");
+      return;
+    }
 
-    // Simulate generated token and link (this can later come from backend)
-    const token = Math.random().toString(36).substring(2, 10);
-    const link = `https://cogniflight.cloud/register?token=${token}`;
+    if (!client) {
+      addNotification("Backend not connected yet", "error");
+      return;
+    }
 
-    // Show confirmation popup
-    setInviteLink(link);
-    setShowPopup(true);
+    setLoading(true);
+    try {
+      const contactInfo = email ? { email } : { phone };
+      const token = await client.create_invite(role, contactInfo);
+
+      const link = `https://cogniflight.cloud/register?token=${token}`;
+      setInviteLink(link);
+      setShowPopup(true);
+      addNotification("Invitation created successfully!", "success");
+    } catch (err) {
+      console.error("Failed to create invite:", err);
+      addNotification("Failed to create invitation", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCopy = async () => {
@@ -52,12 +57,10 @@ export default function InviteUserApp({ instanceData }) {
     }
   };
 
-  const safeTitle = normalizeInstanceData(instanceData);
-
   return (
     <div className="app-base">
       <header className="app-header">
-        <h2 className="app-title">{safeTitle}</h2>
+        <h2 className="app-title">Invite New User</h2>
       </header>
 
       <div className="app-content">
@@ -68,12 +71,13 @@ export default function InviteUserApp({ instanceData }) {
             value={role}
             onChange={(e) => setRole(e.target.value)}
             required
+            disabled={loading}
           >
             <option value="">Select a role</option>
             <option value="sysadmin">Admin</option>
             <option value="atc">Air Traffic Controller</option>
             <option value="pilot">Pilot</option>
-            <option value="data-analyst">Data Analyst</option>
+            <option value="edge-node">Edge Node</option>
           </select>
 
           <label htmlFor="email">Email</label>
@@ -83,6 +87,7 @@ export default function InviteUserApp({ instanceData }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter email address"
+            disabled={loading}
           />
 
           <label htmlFor="phone">Phone</label>
@@ -92,13 +97,15 @@ export default function InviteUserApp({ instanceData }) {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Enter phone number"
+            disabled={loading}
           />
 
-          <button className="btn btn-primary">Send Invitation</button>
+          <button className="btn btn-primary" disabled={loading}>
+            {loading ? "Sending..." : "Send Invitation"}
+          </button>
         </form>
       </div>
 
-      {/* === Confirmation Popup === */}
       {showPopup && (
         <div className="modal-overlay">
           <div className="modal-card">
