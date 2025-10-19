@@ -117,6 +117,7 @@ services:
       BOOTSTRAP_PHONE: "${BOOTSTRAP_PHONE}"
       BOOTSTRAP_PWD: "${BOOTSTRAP_PWD}"
 
+      MQTT_SERVER_DOMAIN: "${SERVER_DOMAIN:-mosquitto}"
       SERVER_DOMAIN: "${SERVER_DOMAIN:-localhost}"
       TRUSTED_PROXIES: "${TRUSTED_PROXIES:-frontend}"
 

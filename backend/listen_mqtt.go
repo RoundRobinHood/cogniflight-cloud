@@ -66,7 +66,7 @@ func ListenMQTT(ctx context.Context) *util.EventHandler[types.MQTTMessage] {
 			}).
 			SetTLSConfig(&tls.Config{
 				InsecureSkipVerify: insecure_skip_verify,
-				ServerName:         os.Getenv("SERVER_DOMAIN"),
+				ServerName:         os.Getenv("MQTT_SERVER_DOMAIN"),
 			})
 
 		client := mqtt.NewClient(opts)
