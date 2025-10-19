@@ -28,6 +28,7 @@ func InitCommands(filestore filesystem.Store, fsctx filesystem.FSContext, socket
 		CmdMLRPC{Conn: jsonConn},
 		&CmdEmbed{Conn: jsonConn, FileStore: filestore},
 		CmdCryptoRand{},
+		CmdHeartbeat{},
 	}
 
 	activate_cmd := &CmdActivate{
