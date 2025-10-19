@@ -32,7 +32,7 @@ func CheckMQTTUser(filestore filesystem.Store) gin.HandlerFunc {
 
 		clientID := req.ClientID
 
-		if clientID == "telegraf-mqtt" {
+		if clientID == "telegraf-mqtt" || strings.HasPrefix(req.Username, "internal-backend-") {
 			if key := os.Getenv("MQTT_KEY"); key != "" && subtle.ConstantTimeCompare([]byte(key), []byte(req.Password)) == 1 {
 				l.Printf("Authenticated with env key")
 				c.Status(200)

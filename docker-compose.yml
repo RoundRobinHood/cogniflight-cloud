@@ -110,7 +110,7 @@ services:
       ENV: "${ENV:-development}"
       MONGO_URI: "${MONGO_URI:-mongodb://ohno:${MONGO_PWD:-rootpass}@mongo:27017/?authSource=admin}"
       INFLUX_URL: "${INFLUXDB_URL:-http://influxdb:8086}"
-      MQTT_URI: "${MQTTS_URL:-mosquitto:8883}"
+      MQTT_URL: "${TELEGRAF_MQTT_URL:-ssl://${MQTT_DOMAIN:-mosquitto}:8883}"
       MQTT_INSECURE_SKIP_VERIFY: "${INSECURE_SKIP_VERIFY_MQTT:-true}"
       BOOTSTRAP_USERNAME: "${BOOTSTRAP_USERNAME}"
       BOOTSTRAP_EMAIL: "${BOOTSTRAP_EMAIL}"
