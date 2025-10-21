@@ -777,6 +777,52 @@ class CommandHandle {
     for await (const chunk of queue) yield chunk;
   }
 
+  async *iter_yaml_output() {
+    if(!this.command_running)
+      throw new Error("Command not running");
+    function ProcessBuffer(buffer) {
+      const lines = buffer.split('\r\n');
+      let temp_buf = "";
+      const ret = [];
+      while(lines.length > 0) {
+        const line = lines.shift();
+        if(line === "---") {
+          ret.push(parse(temp_buf));
+          temp_buf = "";
+        } else {
+          temp_buf += "\r\n" + line;
+        }
+      }
+
+      return [ret, temp_buf.substring(1)];
+    }
+
+    let buffer = "";
+
+    for await (const chunk of this.iter_output()) {
+      buffer += chunk;
+
+      const [documents, leftover] = ProcessBuffer(buffer);
+      buffer = leftover;
+      for(const doc of documents) {
+        yield doc
+      }
+    }
+
+    let temp_buf = "";
+    const lines = buffer.split('\r\n');
+    for(const line of lines) {
+      if(line === "---") {
+        yield parse(temp_buf)
+        temp_buf = "";
+      } else {
+        temp_buf += '\r\n' + line;
+      }
+    }
+    if(temp_buf.trim().length > 0)
+      yield parse(temp_buf)
+  }
+
   async result() {
     if(this.command_result !== null)
       return this.command_result
