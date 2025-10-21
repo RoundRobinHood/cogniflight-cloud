@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { usePipeClient } from "../../api/socket";
+import { useSystem } from "../useSystem";
 import "../../styles/utilities/tables.css";
 import "../../styles/utilities/pills.css";
 import "../../styles/apps/app-base.css"; // for consistent window padding etc.
@@ -9,6 +10,7 @@ import PilotsDetails from "./PilotsDetails";
 
 export default function PilotsApp() {
   const client = usePipeClient();
+  const { addNotification } = useSystem();
   const [selectedPilot, setSelectedPilot] = useState(null);
   const [pilots, setPilots] = useState([]);
   const [search, setSearch] = useState("");
@@ -66,7 +68,6 @@ export default function PilotsApp() {
           </div>
         </div>
       </header>
-
       <div className="app-content">
         <table className="table table--zebra">
           <thead>
@@ -78,10 +79,20 @@ export default function PilotsApp() {
               <th className="table-col-actions">Actions</th>
             </tr>
           </thead>
-
-          {/* Always render table, even if no data available */}
           <tbody>
-            {filtered.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="5" className="table-empty">
+                  Loading pilots...
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan="5" className="table-empty">
+                  {error}
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan="5" className="table-empty">
                   {search
@@ -112,7 +123,14 @@ export default function PilotsApp() {
       </div>
 
       <footer className="app-footer">
-        <button className="btn btn-primary">Generate Report</button>
+        <button
+          className="btn btn-primary"
+          onClick={() =>
+            addNotification("Pilot report generation coming soon!", "info")
+          }
+        >
+          Generate Report
+        </button>
       </footer>
       {selectedPilot && (
         <PilotsDetails

@@ -28,7 +28,7 @@
   color: var(--text-primary);
 }
 
-/* === Search Bar (mirroring pilots) === */
+/* Search Bar */
 .users-search {
   display: flex;
   align-items: center;
@@ -39,7 +39,8 @@
 
 .users-search-field {
   position: relative;
-  flex: 0 0 260px; /* matches pilots-search-field width */
+  flex: 1;
+  width: clamp(280px, 35vw, 450px);
 }
 
 .users-search-icon {
@@ -214,4 +215,183 @@
   gap: var(--space-md);
   justify-content: flex-end;
   flex: 1;
+}
+
+/* Editable input & select fields in Users table */
+.editable-input,
+.editable-select {
+  width: 100%;
+  background-color: #2b2b2b;
+  color: #f1f1f1;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.editable-input:focus,
+.editable-select:focus {
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+}
+
+.editable-select option {
+  background-color: #2b2b2b;
+  color: #fff;
+}
+
+/* Permissions window styling */
+.permissions-container {
+  background-color: #1e1e1e;
+  color: #f1f1f1;
+  padding: 1rem;
+  border-radius: 10px;
+}
+
+/* Table inherits zebra but we darken inputs/selects */
+.permissions-table select {
+  width: 100%;
+  background-color: #2b2b2b;
+  color: #f1f1f1;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.permissions-table select:focus {
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+}
+
+.permissions-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* In-app notification banner */
+.inapp-notification {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.inapp-notification.success {
+  background-color: #1f5138;
+  color: #c8f7c5;
+}
+
+/* Compact action buttons */
+.action-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.save-btn {
+  background-color: #0078d4 !important;
+  color: white;
+}
+
+.btn-saved {
+  background-color: #444 !important;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+}
+
+/* Active/Disabled toggle switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #444;
+  border-radius: 34px;
+  transition: 0.3s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+input:checked + .slider {
+  background-color: #0078d4;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem; /* space between buttons */
+}
+
+.permissions-actions {
+  display: flex;
+  flex-direction: column; /* Stack vertically */
+  align-items: flex-start; /* ✅ Align left */
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+/* Normal red button */
+.disable-user-btn {
+  background-color: #e23b3b;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+/* Hover: slightly darker red */
+.disable-user-btn:hover {
+  background-color: #c12c2c;
+}
+
+/* ✅ Greyed-out state for already disabled users */
+.disable-user-btn.btn-disabled {
+  background-color: #444;
+  color: #bbb;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Optional smooth fade on "Save" -> "Saved" */
+.btn-saved {
+  background-color: #666 !important;
+  color: #ddd !important;
+  cursor: default;
 }

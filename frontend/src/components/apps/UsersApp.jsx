@@ -30,41 +30,63 @@ export default function UsersApp() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [savedUsers, setSavedUsers] = useState({}); // per-user save tracking
 
   // Load users from backend
-  useEffect(() => {
+  const loadUsers = async () => {
     if (!client) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const raw = await client.get_users(true);
 
-    async function loadUsers() {
+      let data;
       try {
-        setLoading(true);
-        setError(null);
-
-        const raw = await client.get_users(true);
-
-        // Sometimes backend already returns JSON, sometimes YAML
-        let data;
-        try {
-          data = typeof raw === "string" ? YAML.parse(raw) : raw;
-        } catch (yamlErr) {
-          console.warn("Failed YAML parse, using raw:", yamlErr);
-          data = raw;
-        }
-
-        console.log("Loaded users:", data);
-        setUsers(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Error loading users:", err);
-        setError("Unable to load users");
-      } finally {
-        setLoading(false);
+        data = typeof raw === "string" ? YAML.parse(raw) : raw;
+      } catch (yamlErr) {
+        console.warn("Failed YAML parse:", yamlErr);
+        data = raw;
       }
+
+      // Deep-clone each user so profiles aren’t shared between rows
+      const cloned = Array.isArray(data)
+        ? data.map((u, i) => ({
+            ...structuredClone(u),
+            localId: u.id || `user-${i}-${Math.random().toString(36).slice(2)}`,
+          }))
+        : [];
+
+      setUsers(cloned);
+      // Mark all users as initially saved
+      const initialSavedState = {};
+      cloned.forEach((u) => {
+        const key = u.id || u.localId;
+        initialSavedState[key] = true; // grey/disabled
+      });
+      setSavedUsers(initialSavedState);
+    } catch (err) {
+      console.error("Error loading users:", err);
+      setError("Unable to load users");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔄 Reload users when client connects
+  useEffect(() => {
+    loadUsers();
+
+    // Optional: listen for user updates from permissions app
+    if (client?.on) {
+      client.on("user-updated", loadUsers);
     }
 
-    loadUsers();
+    return () => {
+      if (client?.off) client.off("user-updated", loadUsers);
+    };
   }, [client]);
 
-  // Filter logic
+  // 🔍 Search filter
   const filtered = users.filter((u) => {
     const profile = u.user_profile || {};
     const q = search.toLowerCase();
@@ -78,12 +100,43 @@ export default function UsersApp() {
     );
   });
 
-  // Handler for edit action
-  const handleEdit = (user) => {
-    addNotification(`Editing user: ${user.name} ${user.surname}`, "info");
-    openWindow("settings", {
-      title: `Edit: ${user.name}`,
-      instanceData: { user },
+  // Inline editing (clone the updated user only)
+  const handleInlineEdit = (userId, field, value) => {
+    setUsers((prev) =>
+      prev.map((u) => {
+        const key = u.id || u.localId;
+        if (key === userId) {
+          const updatedProfile = { ...(u.user_profile || {}), [field]: value };
+          return { ...u, user_profile: updatedProfile, unsaved: true };
+        }
+        return u;
+      })
+    );
+
+    // Reactivate Save only for that specific user
+    const key = userId;
+    setSavedUsers((prev) => ({ ...prev, [key]: false }));
+  };
+
+  // Save specific user
+  const handleSave = (user) => {
+    const key = user.id || user.localId;
+    console.log("Saving user:", user);
+    setSavedUsers((prev) => ({ ...prev, [key]: true }));
+    addNotification(
+      `Changes saved for ${user.user_profile?.name || user.username}`,
+      "success"
+    );
+    // TODO: client.update_user(user.id, user.user_profile);
+  };
+
+  // ⚙️ Edit permissions window
+  const handleEditPermissions = (user) => {
+    const name = user.user_profile?.name || user.username || "User";
+    addNotification(`Editing permissions for: ${name}`, "info");
+    openWindow("user-permissions", "Edit Permissions", {
+      user,
+      onUpdate: loadUsers, // reload UsersApp when permissions change
     });
   };
 
@@ -94,13 +147,12 @@ export default function UsersApp() {
         <h2 className="users-title">Users</h2>
 
         <div className="users-toolbar-actions">
-          {/* Search bar — same as PilotsApp */}
           <div className="users-search">
             <div className="users-search-field">
               <span className="users-search-icon">🔍</span>
               <input
                 type="text"
-                placeholder="Enter name, surname, email, or role"
+                placeholder="Search by name, surname, email, or role"
                 value={search}
                 onChange={(e) => setSearch(e.target.value.trimStart())}
                 className="users-search-input"
@@ -109,12 +161,9 @@ export default function UsersApp() {
             </div>
           </div>
 
-          {/* New User button */}
           <button
             className="btn btn-primary btn-sm"
-            onClick={() =>
-              openWindow("invite-user", "Invite New User" )
-            }
+            onClick={() => openWindow("invite-user", "Invite New User")}
           >
             + New User
           </button>
@@ -131,6 +180,7 @@ export default function UsersApp() {
               <th>Phone</th>
               <th>Email</th>
               <th>Role</th>
+              <th>Status</th>
               <th className="table-col-actions">Actions</th>
             </tr>
           </thead>
@@ -138,19 +188,19 @@ export default function UsersApp() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" className="table-empty">
+                <td colSpan="7" className="table-empty">
                   Loading users...
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan="6" className="table-empty">
+                <td colSpan="7" className="table-empty">
                   {error}
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan="6" className="table-empty">
+                <td colSpan="7" className="table-empty">
                   {search
                     ? `No users found matching "${search}"`
                     : "No user data available"}
@@ -158,31 +208,122 @@ export default function UsersApp() {
               </tr>
             ) : (
               filtered.map((user, i) => {
-                if (!user.user_profile) {
-                  return (
-                    <tr key={i}>
-                      <td colSpan="6" className="table-empty">
-                        No profile found for {user.username}
-                      </td>
-                    </tr>
-                  );
-                }
+                const profile = user.user_profile || {};
+                const userKey = user.id || user.localId;
+                const isSaved = savedUsers[userKey];
 
-                // 🩵 Normal rendering for users with profiles
+                const isDisabled = user.disabled === true;
+                const statusText = isDisabled ? "Disabled" : "Active";
+
                 return (
-                  <tr key={i}>
-                    <td>{user.user_profile?.name || "-"}</td>
-                    <td>{user.user_profile?.surname || "-"}</td>
-                    <td>{user.user_profile?.phone || "-"}</td>
-                    <td>{user.user_profile?.email || "-"}</td>
-                    <td>{user.user_profile?.role || "-"}</td>
-                    <td className="table-col-actions">
-                      <button
-                        className="btn btn-sm btn-secondary"
-                        onClick={() => handleEdit(user)}
+                  <tr key={user.id || user.localId || `user-${i}`}>
+                    <td>
+                      <input
+                        type="text"
+                        className="editable-input"
+                        value={profile.name || ""}
+                        onChange={(e) =>
+                          handleInlineEdit(
+                            user.id || user.localId,
+                            "name",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Name"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        className="editable-input"
+                        value={profile.surname || ""}
+                        onChange={(e) =>
+                          handleInlineEdit(
+                            user.id || user.localId,
+                            "surname",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Surname"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="tel"
+                        className="editable-input"
+                        value={profile.phone || ""}
+                        onChange={(e) =>
+                          handleInlineEdit(
+                            user.id || user.localId,
+                            "phone",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Phone"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="email"
+                        className="editable-input"
+                        value={profile.email || ""}
+                        onChange={(e) =>
+                          handleInlineEdit(
+                            user.id || user.localId,
+                            "email",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Email"
+                      />
+                    </td>
+                    <td>
+                      <select
+                        className="editable-select"
+                        value={profile.role || ""}
+                        onChange={(e) =>
+                          handleInlineEdit(
+                            user.id || user.localId,
+                            "role",
+                            e.target.value
+                          )
+                        }
                       >
-                        Edit
-                      </button>
+                        <option value="">Select role</option>
+                        <option value="sysadmin">Admin</option>
+                        <option value="atc">Air Traffic Controller</option>
+                        <option value="data-analyst">Data Analyst</option>
+                        <option value="edge-node">Edge Node</option>
+                        <option value="pilot">Pilot</option>
+                      </select>
+                    </td>
+                    <td>
+                      <span
+                        className={`status-pill ${
+                          isDisabled ? "status-disabled" : "status-active"
+                        }`}
+                      >
+                        {statusText}
+                      </span>
+                    </td>
+                    <td className="table-col-actions">
+                      <div className="action-buttons">
+                        <button
+                          className={`btn btn-sm save-btn ${
+                            isSaved ? "btn-saved" : "btn-primary"
+                          }`}
+                          onClick={() => handleSave(user)}
+                          disabled={isSaved}
+                        >
+                          {isSaved ? "Saved" : "Save"}
+                        </button>
+                        <button
+                          className="btn btn-sm btn-secondary"
+                          onClick={() => handleEditPermissions(user)}
+                        >
+                          Perm
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -195,7 +336,9 @@ export default function UsersApp() {
       <footer className="app-footer">
         <button
           className="btn btn-primary"
-          onClick={() => addNotification("Export coming soon!", "info")}
+          onClick={() =>
+            addNotification("User report generation coming soon!", "info")
+          }
         >
           Generate Report
         </button>

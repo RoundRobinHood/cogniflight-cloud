@@ -20,6 +20,8 @@ const loadComponent = (componentName) => {
     PilotsApp: () => import("../components/apps/PilotsApp.jsx"),
     InviteUserApp: () => import("../components/apps/InviteUserApp.jsx"),
     RegisterApp: () => import("../components/apps/RegisterApp.jsx"),
+    UserPermissionsApp: () =>
+      import("../components/apps/UserPermissionsApp.jsx"),
     N420HHApp: () => import('../components/apps/N420HHApp'),
     N420HHVisualApp: () => import('../components/apps/N420HHVisualApp'),
   };
@@ -130,6 +132,18 @@ class AppRegistry {
       component: "RegisterApp",
       defaultTitle: "Registration",
       defaultSize: { width: 500, height: 420 },
+      // Do not show this on desktop
+      visibleWhen: () => false,
+    });
+
+    this.register({
+      id: "user-permissions",
+      label: "User Permissions",
+      icon: UserSquare2,
+      color: "#228be6",
+      component: "UserPermissionsApp",
+      defaultTitle: "User Permissions",
+      defaultSize: { width: 600, height: 500 },
       // Do not show this on desktop
       visibleWhen: () => false,
     });

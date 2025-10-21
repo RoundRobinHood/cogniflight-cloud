@@ -36,7 +36,7 @@ export default function InviteUserApp({ instanceData }) {
       const contactInfo = email ? { email } : { phone };
       const token = await client.create_invite(role, contactInfo);
 
-      const link = `https://cogniflight.cloud/register?token=${token}`;
+      const link = `https://cogniflight.exequtech.com?token=${token}`;
       setInviteLink(link);
       setShowPopup(true);
       addNotification("Invitation created successfully!", "success");
@@ -67,7 +67,7 @@ export default function InviteUserApp({ instanceData }) {
         <form className="app-form" onSubmit={handleSubmit}>
           <label htmlFor="role">Role</label>
           <select
-            id="role"
+            className="editable-select"
             value={role}
             onChange={(e) => setRole(e.target.value)}
             required
@@ -76,13 +76,14 @@ export default function InviteUserApp({ instanceData }) {
             <option value="">Select a role</option>
             <option value="sysadmin">Admin</option>
             <option value="atc">Air Traffic Controller</option>
-            <option value="pilot">Pilot</option>
+            <option value="data-analyst">Data Analyst</option>
             <option value="edge-node">Edge Node</option>
+            <option value="pilot">Pilot</option>
           </select>
 
           <label htmlFor="email">Email</label>
           <input
-            id="email"
+            className="editable-input"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -92,7 +93,7 @@ export default function InviteUserApp({ instanceData }) {
 
           <label htmlFor="phone">Phone</label>
           <input
-            id="phone"
+            className="editable-input"
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
