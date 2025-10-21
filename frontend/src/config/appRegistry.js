@@ -1,4 +1,4 @@
-import { Settings, FolderOpen, FileText, Terminal, Camera, Radio } from 'lucide-react'
+import { Settings, FolderOpen, FileText, Terminal, Camera, Radio, Activity } from 'lucide-react'
 
 // Lazy load components for better performance
 const loadComponent = (componentName) => {
@@ -9,6 +9,7 @@ const loadComponent = (componentName) => {
     TerminalApp: () => import('../components/apps/TerminalApp'),
     CameraApp: () => import('../components/apps/CameraApp'),
     N420HHApp: () => import('../components/apps/N420HHApp'),
+    N420HHVisualApp: () => import('../components/apps/N420HHVisualApp'),
   }
   return components[componentName]
 }
@@ -80,6 +81,16 @@ class AppRegistry {
       component: 'N420HHApp',
       defaultTitle: 'N420HH Edge Node',
       defaultSize: { width: 900, height: 600 }
+    })
+
+    this.register({
+      id: 'n420hhvisual',
+      label: 'N420HH Visual',
+      icon: Activity,
+      color: '#00ffff',
+      component: 'N420HHVisualApp',
+      defaultTitle: 'N420HH Flight Monitor',
+      defaultSize: { width: 1200, height: 800 }
     })
   }
 
