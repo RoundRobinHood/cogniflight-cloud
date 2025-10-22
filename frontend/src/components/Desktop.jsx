@@ -37,8 +37,6 @@ function Desktop({ user, onLogout }) {
     return {
       userProfile: {
         ...user,  // Include all user data
-        theme: 'dark',
-        notifications: true,
         loginTime: user.loginTime || new Date().toISOString()
       },
       fileSystem: {

@@ -276,16 +276,6 @@ function SettingsApp() {
     });
   };
 
-  const handleThemeChange = (newTheme) => {
-    updateSystemState('userProfile.theme', newTheme)
-    addNotification('Theme updated', 'success')
-  }
-
-  const handleNotificationsChange = (enabled) => {
-    updateSystemState('userProfile.notifications', enabled)
-    addNotification('Notification preferences updated', 'success')
-  }
-
   const handlePasswordChange = async () => {
     // Validate input fields
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -728,44 +718,6 @@ function SettingsApp() {
     </>
   );
 
-  const renderPreferencesSection = (showDivider = false) => (
-    <>
-      <div className="settings-section">
-        <h3 className="settings-section-title">Preferences</h3>
-        <p className="settings-section-subtitle">
-          Customize your application experience
-        </p>
-
-        <div className="settings-form-vertical">
-          <div className="form-group">
-            <label htmlFor="theme">Theme</label>
-            <select
-              id="theme"
-              value={systemState.userProfile?.theme || 'dark'}
-              onChange={(e) => handleThemeChange(e.target.value)}
-              className="settings-select"
-            >
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={systemState.userProfile?.notifications ?? true}
-                onChange={(e) => handleNotificationsChange(e.target.checked)}
-              />
-              <span>Enable notifications</span>
-            </label>
-          </div>
-        </div>
-      </div>
-      {showDivider && <div className="settings-divider" />}
-    </>
-  );
-
   const navItems = [
     { id: 'general', label: 'General', icon: '👤' },
     ...(isPilot ? [
@@ -777,8 +729,7 @@ function SettingsApp() {
   ];
 
   const systemNavItems = [
-    { id: 'password', label: 'Password', icon: '🔒' },
-    { id: 'preferences', label: 'Preferences', icon: '⚙️' }
+    { id: 'password', label: 'Password', icon: '🔒' }
   ];
 
   const renderContent = () => {
@@ -795,8 +746,6 @@ function SettingsApp() {
         return renderCabinPreferencesSection();
       case 'password':
         return renderPasswordSection();
-      case 'preferences':
-        return renderPreferencesSection();
       default:
         return renderGeneralSection();
     }
@@ -889,8 +838,7 @@ function SettingsApp() {
             {renderCardiovascularSection(true)}
             {renderOcularSection(true)}
             {renderCabinPreferencesSection(true)}
-            {renderPasswordSection(true)}
-            {renderPreferencesSection(false)}
+            {renderPasswordSection(false)}
           </>
         )}
       </div>
