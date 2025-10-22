@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useSystem } from "../useSystem";
 import { usePipeClient } from "../../api/socket";
 import YAML from "yaml";
+import YamlCRLF from "../../api/yamlCRLF";
+import { StringIterator } from "../../api/socket";
 import "../../styles/utilities/tables.css";
 import "../../styles/utilities/pills.css";
 import "../../styles/apps/app-base.css";
@@ -72,11 +74,11 @@ export default function UsersApp() {
     }
   };
 
-  // 🔄 Reload users when client connects
+  // Reload users when client connects
   useEffect(() => {
     loadUsers();
 
-    // Optional: listen for user updates from permissions app
+    // Listen for user updates from permissions app
     if (client?.on) {
       client.on("user-updated", loadUsers);
     }
@@ -86,7 +88,7 @@ export default function UsersApp() {
     };
   }, [client]);
 
-  // 🔍 Search filter
+  // Search filter
   const filtered = users.filter((u) => {
     const profile = u.user_profile || {};
     const q = search.toLowerCase();
@@ -119,18 +121,43 @@ export default function UsersApp() {
   };
 
   // Save specific user
-  const handleSave = (user) => {
+  const handleSave = async (user) => {
     const key = user.id || user.localId;
-    console.log("Saving user:", user);
-    setSavedUsers((prev) => ({ ...prev, [key]: true }));
-    addNotification(
-      `Changes saved for ${user.user_profile?.name || user.username}`,
-      "success"
-    );
-    // TODO: client.update_user(user.id, user.user_profile);
+    const username = user.username;
+    const profile = user.user_profile;
+
+    try {
+      setSavedUsers((prev) => ({ ...prev, [key]: true }));
+      setLoading(true);
+
+      // Convert profile to YAML (with Windows-style CRLF newlines)
+      const yaml = YamlCRLF(profile);
+
+      // Write updated profile to the user's home directory
+      const result = await client.run_command(
+        `tee "/home/${username}/user.profile"`,
+        StringIterator(yaml)
+      );
+
+      if (result.command_result === 0) {
+        addNotification(
+          `Changes saved for ${profile?.name || username}`,
+          "success"
+        );
+       // await loadUsers(); // re-fetches updated user list from backend
+      } else {
+        throw new Error(result.error || "Failed to save profile");
+      }
+    } catch (err) {
+      console.error("Save error:", err);
+      setSavedUsers((prev) => ({ ...prev, [key]: false }));
+      addNotification(`Failed to save ${user.username}`, "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ⚙️ Edit permissions window
+  // Edit permissions window
   const handleEditPermissions = (user) => {
     const name = user.user_profile?.name || user.username || "User";
     addNotification(`Editing permissions for: ${name}`, "info");

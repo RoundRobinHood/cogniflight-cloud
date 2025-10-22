@@ -364,7 +364,7 @@ input:checked + .slider:before {
 .permissions-actions {
   display: flex;
   flex-direction: column; /* Stack vertically */
-  align-items: flex-start; /* ✅ Align left */
+  align-items: flex-end; /* Align buttons to the right */
   gap: 0.8rem;
   margin-top: 1rem;
 }
