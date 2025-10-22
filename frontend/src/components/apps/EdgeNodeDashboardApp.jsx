@@ -706,9 +706,52 @@ function EdgeNodeDashboardApp() {
   const [edgeNodes, setEdgeNodes] = useState({})
   const [selectedNode, setSelectedNode] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
-  const commandHandleRef = useRef(null)
+  const mqttCommandHandleRef = useRef(null)
   const { addNotification } = useSystem()
 
+  // Get the complete list of edge nodes from the edge-nodes command
+  useEffect(() => {
+    if (!client) return
+
+    const loadEdgeNodesList = async () => {
+      try {
+        const commandHandle = await client.run_command('edge-nodes')
+        let output = ''
+
+        for await (const chunk of commandHandle.iter_output()) {
+          output += chunk
+        }
+
+        // Parse the \r\n delimited list
+        const nodeNames = output
+          .split(/\r?\n/)
+          .map(name => name.trim())
+          .filter(name => name.length > 0)
+
+        // Initialize all nodes as offline
+        const initialNodes = {}
+        nodeNames.forEach(nodeName => {
+          initialNodes[nodeName] = {
+            edge_username: nodeName,
+            payload: {},
+            timestamp: null,
+            isStreaming: false,
+            fusionHistory: [],
+            lastUpdate: null
+          }
+        })
+
+        setEdgeNodes(initialNodes)
+      } catch (error) {
+        console.error('Failed to load edge nodes list:', error)
+        addNotification('Failed to load edge nodes list', 'error')
+      }
+    }
+
+    loadEdgeNodesList()
+  }, [client, addNotification])
+
+  // Start MQTT streaming to track active nodes
   useEffect(() => {
     if (!client) return
 
@@ -716,7 +759,7 @@ function EdgeNodeDashboardApp() {
       try {
         setIsConnected(true)
         const commandHandle = await client.run_command('mqtt')
-        commandHandleRef.current = commandHandle
+        mqttCommandHandleRef.current = commandHandle
 
         for await (const yamlDoc of commandHandle.iter_yaml_output()) {
           if (yamlDoc && yamlDoc.edge_username) {
@@ -726,6 +769,7 @@ function EdgeNodeDashboardApp() {
 
               // Initialize or update node data
               if (!updated[nodeId]) {
+                // New node discovered via MQTT (not in edge-nodes list)
                 updated[nodeId] = {
                   edge_username: nodeId,
                   payload: yamlDoc.payload || {},
@@ -767,13 +811,14 @@ function EdgeNodeDashboardApp() {
 
     startStreaming()
 
-    // Mark offline nodes periodically
+    // Mark offline nodes periodically based on 30-second rule
     const offlineInterval = setInterval(() => {
       const now = Date.now()
       setEdgeNodes(prev => {
         const updated = { ...prev }
         Object.keys(updated).forEach(nodeId => {
-          if (now - updated[nodeId].lastUpdate > 30000) { // 30 seconds timeout
+          // If node has never sent data or hasn't sent data in 30 seconds, mark as offline
+          if (!updated[nodeId].lastUpdate || now - updated[nodeId].lastUpdate > 30000) {
             updated[nodeId].isStreaming = false
           }
         })
@@ -783,9 +828,9 @@ function EdgeNodeDashboardApp() {
 
     return () => {
       clearInterval(offlineInterval)
-      if (commandHandleRef.current && commandHandleRef.current.command_running) {
+      if (mqttCommandHandleRef.current && mqttCommandHandleRef.current.command_running) {
         try {
-          commandHandleRef.current.interrupt()
+          mqttCommandHandleRef.current.interrupt()
         } catch (error) {
           console.error('Failed to interrupt MQTT stream:', error)
         }

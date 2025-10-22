@@ -4,7 +4,6 @@ import Window from "./Window";
 import DesktopIcons from "./DesktopIcons";
 import NotificationPanel from "./NotificationPanel";
 import ContextMenu from "./ContextMenu";
-import FatconAlert from "./FatconAlert";
 import SystemContext from "./useSystem";
 import appRegistry from "../config/appRegistry";
 import { ConfirmProvider } from "../hooks/useConfirm.jsx";
@@ -17,12 +16,6 @@ function Desktop({ user, onLogout }) {
     isOpen: false,
     position: { x: 0, y: 0 },
     items: [],
-  });
-  const [globalFatconAlert, setGlobalFatconAlert] = useState({
-    isOpen: false,
-    levelData: null,
-    previousLevel: null,
-    newLevel: null,
   });
   const [systemState, setSystemState] = useState(() => {
     // Load pinned apps from localStorage or use defaults
@@ -187,19 +180,6 @@ function Desktop({ user, onLogout }) {
 
   const hideContextMenu = () => {
     setGlobalContextMenu((prev) => ({ ...prev, isOpen: false }));
-  };
-
-  const showFatconAlert = (levelData, previousLevel, newLevel) => {
-    setGlobalFatconAlert({
-      isOpen: true,
-      levelData,
-      previousLevel,
-      newLevel,
-    });
-  };
-
-  const hideFatconAlert = () => {
-    setGlobalFatconAlert((prev) => ({ ...prev, isOpen: false }));
   };
 
   const openWindow = async (appType, title, instanceData = null) => {
@@ -398,8 +378,6 @@ function Desktop({ user, onLogout }) {
     removeFromDesktop,
     showContextMenu,
     hideContextMenu,
-    showFatconAlert,
-    hideFatconAlert,
     setClipboard: (text) => updateSystemState("clipboard", text),
     getClipboard: () => systemState.clipboard,
     onLogout,
@@ -494,14 +472,6 @@ function Desktop({ user, onLogout }) {
             items={globalContextMenu.items}
           />
 
-          {/* Global FATCON Alert - Renders at the highest level for full screen centering */}
-          <FatconAlert
-            isOpen={globalFatconAlert.isOpen}
-            onClose={hideFatconAlert}
-            levelData={globalFatconAlert.levelData}
-            previousLevel={globalFatconAlert.previousLevel}
-            newLevel={globalFatconAlert.newLevel}
-          />
         </div>
       </SystemContext.Provider>
     </ConfirmProvider>
