@@ -680,6 +680,63 @@ export class PipeCmdClient {
 
     return new_login_file
   }
+
+  async *iter_flights() {
+    const edge_nodes_cmd = await this.run_command("edge-nodes")
+    if(edge_nodes_cmd.command_result != 0) {
+      throw new Error(edge_nodes_cmd.error);
+    }
+
+    const edge_nodes = edge_nodes_cmd.output.trim().split("\r\n")
+    for(const edge_node of edge_nodes) {
+      const ls_cmd = await this.run_command(`ls -y /home/${edge_node}/flights`);
+      if(ls_cmd.command_result != 0 && !ls_cmd.error.includes("file does not exist")) {
+        throw new Error(ls_cmd.error);
+      }
+
+      if(ls_cmd.output.length > 0) {
+        const list = parse(ls_cmd.output);
+        for(const file of list) {
+          if(file.name.endsWith(".flight") && file.type == 'file') {
+            let flight = {
+              id: file.name.substring(0, file.name.length - ".flight".length),
+              edge_username: edge_node,
+            };
+            flight.start_timestamp = new Date(+flight.id);
+            const cat_cmd = await this.run_command(`cat /home/${edge_node}/flights/${file.name}`);
+            if(cat_cmd.command_result != 0) {
+              throw new Error(cat_cmd.error);
+            }
+
+            if(cat_cmd.output.length > 2) {
+              flight = { ...flight, ...parse(cat_cmd.output)};
+            }
+
+            const flux_cmd = await this.run_command("flux", StringIterator(`
+              startTime = time(v: ${flight.id})
+              from(bucket: "telegraf")
+              |> range(start: startTime)
+              |> filter(fn: (r) => r._measurement == "mqtt_consumer" and r.flight_id == "${flight.id}")
+              |> last()
+            `));
+            if(flux_cmd.command_result != 0) {
+              throw new Error(flux_cmd.error);
+            }
+
+            const entries = parse(flux_cmd.output);
+            if(entries != null)
+            for(const entry of entries) {
+              if(entry.pilot_username) {
+                yield {...flight, pilot_username: entry.pilot_username};
+                break;
+              }
+            }
+            else yield flight;
+          }
+        }
+      }
+    }
+  }
 }
 
 export class StreamCmdClient {
