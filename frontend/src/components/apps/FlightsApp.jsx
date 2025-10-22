@@ -5,28 +5,28 @@ import "../../styles/utilities/tables.css";
 import "../../styles/utilities/pills.css";
 import "../../styles/apps/app-base.css";
 import "../../styles/apps/flights-app.css";
-import "../../styles/utilities/modal.css";
-import FlightsDetails from "./FlightsDetails";
 
 export default function FlightsApp() {
   const client = usePipeClient();
-  const { addNotification } = useSystem();
+  const { addNotification, openWindow } = useSystem();
 
   const [flights, setFlights] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedFlight, setSelectedFlight] = useState(null);
 
-  // ✅ Reverted: working backend fetch method
+  // Load flights from backend - TODO add real backend call
   useEffect(() => {
     if (!client) return;
 
     async function loadFlights() {
       try {
         setLoading(true);
-        // This was the working backend method in your previous version
-        const data = await client.get_flights(true); // ✅ restored
+
+        const cmd = await client.run_command("flights");
+        if (cmd.command_result !== 0) throw new Error(cmd.error);
+        const data = JSON.parse(cmd.output || "[]");
+
         console.log("Loaded flights data:", data);
         setFlights(data);
       } catch (err) {
@@ -40,7 +40,7 @@ export default function FlightsApp() {
     loadFlights();
   }, [client]);
 
-  // 🔎 Search filtering (case-insensitive)
+  // Search filtering (case-insensitive)
   const filtered = flights.filter((f) => {
     const s = search.toLowerCase();
     return (
@@ -116,10 +116,16 @@ export default function FlightsApp() {
                   <td>{flight.arrival_time || "-"}</td>
                   <td className="table-col-actions">
                     <button
-                      className="btn btn-sm btn-secondary"
-                      onClick={() => setSelectedFlight(flight)}
+                      className="btn btn-sm btn-primary"
+                      onClick={() =>
+                        openWindow(
+                          "flight-report",
+                          `Flight Report — ${flight.flight_number}`,
+                          { flight }
+                        )
+                      }
                     >
-                      Details
+                      Report
                     </button>
                   </td>
                 </tr>
@@ -130,23 +136,15 @@ export default function FlightsApp() {
       </div>
 
       <footer className="app-footer">
-        <button
+        {/* <button
           className="btn btn-primary"
           onClick={() =>
-            addNotification("Flight report generation coming soon!", "info")
+            addNotification("Select a flight to generate its report.", "info")
           }
         >
           Generate Report
-        </button>
+        </button> */}
       </footer>
-
-      {/* Modal for flight details */}
-      {selectedFlight && (
-        <FlightsDetails
-          flight={selectedFlight}
-          onClose={() => setSelectedFlight(null)}
-        />
-      )}
     </div>
   );
 }

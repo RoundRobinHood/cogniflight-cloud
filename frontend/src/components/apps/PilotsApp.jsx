@@ -123,14 +123,14 @@ export default function PilotsApp() {
       </div>
 
       <footer className="app-footer">
-        <button
+        {/* <button
           className="btn btn-primary"
           onClick={() =>
             addNotification("Pilot report generation coming soon!", "info")
           }
         >
           Generate Report
-        </button>
+        </button> */}
       </footer>
       {selectedPilot && (
         <PilotsDetails

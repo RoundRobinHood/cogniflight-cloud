@@ -362,14 +362,14 @@ export default function UsersApp() {
       </div>
 
       <footer className="app-footer">
-        <button
+        {/* <button
           className="btn btn-primary"
           onClick={() =>
             addNotification("User report generation coming soon!", "info")
           }
         >
           Generate Report
-        </button>
+        </button> */}
       </footer>
     </div>
   );
