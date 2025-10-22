@@ -106,10 +106,16 @@ function CameraApp({ windowId }) {
       // Ensure .jpg extension
       const finalFileName = fileName.endsWith('.jpg') ? fileName : `${fileName}.jpg`
 
+      // Create Pictures directory if it doesn't exist
+      await client.run_command(
+        `mkdir -p ~/Pictures`,
+        StringIterator('')
+      )
+
       // Save using tee command - pipe binary data directly into tee
       // Use BinaryIterator to send raw bytes without UTF-8 encoding
       const result = await client.run_command(
-        `tee ~/${finalFileName}`,
+        `tee ~/Pictures/${finalFileName}`,
         BinaryIterator(bytes)
       )
 
@@ -143,37 +149,52 @@ function CameraApp({ windowId }) {
     if (!client) return
 
     try {
-      // List all .jpg files in home directory
-      const result = await client.run_command(
-        `ls ~/*.jpg 2>/dev/null || true`,
+      // Create Pictures directory if it doesn't exist
+      await client.run_command(
+        `mkdir -p ~/Pictures`,
         StringIterator('')
       )
 
-      if (result.command_result === 0 && result.output.trim()) {
-        const files = result.output.trim().split('\n').filter(f => f)
+      // List all files in Pictures directory using client.ls
+      const fileList = await client.ls('~/Pictures')
 
-        // Load each photo
-        const photos = []
-        for (const filepath of files) {
-          const filename = filepath.split('/').pop()
-          const readResult = await client.run_command(
-            `cat ${filepath}`,
-            StringIterator('')
-          )
+      // Filter for image files based on common image extensions
+      const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
+      const imageFiles = fileList.filter(file => {
+        if (file.type !== 'file') return false
+        const extension = file.name.split('.').pop().toLowerCase()
+        return imageExtensions.includes(extension)
+      })
 
-          if (readResult.command_result === 0 && readResult.output) {
-            // Convert binary output to base64
-            const base64 = btoa(readResult.output)
-            photos.push({
-              filename,
-              data: `data:image/jpeg;base64,${base64}`,
-              timestamp: new Date().toISOString()
-            })
-          }
+      // Load each photo
+      const photos = []
+      for (const file of imageFiles) {
+        const readResult = await client.run_command(
+          `cat ~/Pictures/${file.name} | base64`,
+          StringIterator('')
+        )
+
+        if (readResult.command_result === 0 && readResult.output) {
+          // Remove the \r\n that cat adds at the end
+          const base64Data = readResult.output.trim().replace(/[\r\n]+$/, '')
+          const extension = file.name.split('.').pop().toLowerCase()
+
+          // Detect MIME type based on extension
+          let mimeType = 'image/jpeg'
+          if (extension === 'png') mimeType = 'image/png'
+          else if (extension === 'gif') mimeType = 'image/gif'
+          else if (extension === 'webp') mimeType = 'image/webp'
+          else if (extension === 'bmp') mimeType = 'image/bmp'
+
+          photos.push({
+            filename: file.name,
+            data: `data:${mimeType};base64,${base64Data}`,
+            timestamp: new Date().toISOString()
+          })
         }
-
-        setSavedPhotos(photos)
       }
+
+      setSavedPhotos(photos)
     } catch (err) {
       console.error('Error loading photos:', err)
     }
