@@ -436,3 +436,12 @@ input:checked + .slider:before {
 .add-tag-group .btn {
   align-self: flex-start;
 }
+
+.tag-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.tag-note {
+  font-size: 0.8em;
+  color: var(--muted-text, #888);
+}
