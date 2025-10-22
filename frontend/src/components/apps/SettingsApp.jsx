@@ -5,7 +5,7 @@ import YamlCRLF from '../../api/yamlCRLF'
 import '../../styles/apps/settings-app.css'
 
 function SettingsApp() {
-  const { systemState, updateSystemState, addNotification } = useSystem()
+  const { systemState, updateSystemState, addNotification, updateUserProfile, settingsLocked } = useSystem()
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -266,6 +266,11 @@ function SettingsApp() {
       saveTimeoutRef.current = setTimeout(() => {
         saveUserProfile(dataToSave);
       }, 1000);
+
+      // Also update the system state to trigger re-check of critical info
+      if (updateUserProfile) {
+        updateUserProfile(updated);
+      }
 
       return updated;
     });
@@ -800,6 +805,35 @@ function SettingsApp() {
   return (
     <>
       <div className="settings-container" ref={containerRef}>
+        {/* Settings Lock Warning */}
+        {settingsLocked && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            background: 'linear-gradient(90deg, rgba(255, 100, 100, 0.2), rgba(255, 200, 0, 0.2))',
+            padding: '12px',
+            borderBottom: '2px solid rgba(255, 100, 100, 0.5)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            backdropFilter: 'blur(5px)'
+          }}>
+            <span style={{ fontSize: '24px' }}>⚠️</span>
+            <span style={{
+              color: '#FFD700',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              textShadow: '0 0 10px rgba(255, 215, 0, 0.3)'
+            }}>
+              System Locked - Please complete all required fields to unlock all features
+            </span>
+            <span style={{ fontSize: '24px' }}>🔒</span>
+          </div>
+        )}
       {/* Sidebar Navigation (shown when width is sufficient) */}
       {showSidebar && (
         <nav className="settings-sidebar">

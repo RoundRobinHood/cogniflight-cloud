@@ -13,16 +13,18 @@ function Desktop({ user, onLogout }) {
   const [windows, setWindows] = useState([])
   const [nextZIndex, setNextZIndex] = useState(100)
   const [showNotifications, setShowNotifications] = useState(false)
-  const [globalContextMenu, setGlobalContextMenu] = useState({ 
-    isOpen: false, 
-    position: { x: 0, y: 0 }, 
-    items: [] 
+  const [settingsLocked, setSettingsLocked] = useState(false)
+  const [showLockPopup, setShowLockPopup] = useState(false)
+  const [globalContextMenu, setGlobalContextMenu] = useState({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    items: []
   })
-  const [globalFatconAlert, setGlobalFatconAlert] = useState({ 
-    isOpen: false, 
-    levelData: null, 
-    previousLevel: null, 
-    newLevel: null 
+  const [globalFatconAlert, setGlobalFatconAlert] = useState({
+    isOpen: false,
+    levelData: null,
+    previousLevel: null,
+    newLevel: null
   })
   const [systemState, setSystemState] = useState(() => {
     // Load pinned apps from localStorage or use defaults
@@ -34,15 +36,10 @@ function Desktop({ user, onLogout }) {
     
     return {
       userProfile: {
-        name: user.name,
-        username: user.username,
-        email: user.email || `${user.username}@cogniflight.com`,
-        phone: user.phone,
-        role: user.role,
-        tags: user.tags,
+        ...user,  // Include all user data
         theme: 'dark',
         notifications: true,
-        loginTime: user.loginTime
+        loginTime: user.loginTime || new Date().toISOString()
       },
       fileSystem: {
         currentPath: '/home/Documents',
@@ -162,7 +159,40 @@ function Desktop({ user, onLogout }) {
     setGlobalFatconAlert(prev => ({ ...prev, isOpen: false }))
   }
 
+  // Check if critical user information is complete
+  const checkCriticalInfo = useCallback(() => {
+    const userProfile = systemState.userProfile
+    const criticalFields = ['name', 'surname', 'email', 'phone']
+    const isPilot = userProfile?.role?.toLowerCase() === 'pilot'
+
+    if (isPilot) {
+      criticalFields.push('license_number', 'license_expiry_date', 'total_flight_hours')
+    }
+
+    // Check if any critical field is missing or empty
+    for (const field of criticalFields) {
+      if (!userProfile[field] || userProfile[field] === '') {
+        return false
+      }
+    }
+
+    return true
+  }, [systemState.userProfile])
+
+  // Check if this is first login (check if critical fields are empty)
+  const isFirstLogin = useCallback(() => {
+    const userProfile = systemState.userProfile
+    // If user has no name, surname, email or phone, it's likely first login/registration
+    return !userProfile?.name || !userProfile?.surname || !userProfile?.email || !userProfile?.phone
+  }, [systemState.userProfile])
+
   const openWindow = async (appType, title, instanceData = null) => {
+    // Check if settings are locked and user is trying to open non-settings app
+    if (settingsLocked && appType !== 'settings') {
+      setShowLockPopup(true)
+      setTimeout(() => setShowLockPopup(false), 4000)
+      return
+    }
     // Get app metadata from registry
     const metadata = appRegistry.getMetadata(appType)
     if (!metadata) {
@@ -282,6 +312,92 @@ function Desktop({ user, onLogout }) {
     })
   }, [windows, loadedComponents]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Check for critical information on mount and open settings if needed
+  useEffect(() => {
+    const hasAllCriticalInfo = checkCriticalInfo()
+    const firstLogin = isFirstLogin()
+
+    if (!hasAllCriticalInfo || firstLogin) {
+      setSettingsLocked(true)
+      // Auto-open settings app and maximize it
+      setTimeout(() => {
+        openWindow('settings', 'Settings - Please Complete Your Profile').then(() => {
+          // Find the settings window and maximize it
+          setWindows(prev => {
+            const settingsWindow = prev.find(w => w.appType === 'settings')
+            if (settingsWindow) {
+              return prev.map(w =>
+                w.id === settingsWindow.id
+                  ? {
+                      ...w,
+                      isMaximized: true,
+                      prevX: w.x,
+                      prevY: w.y,
+                      prevWidth: w.width,
+                      prevHeight: w.height,
+                      x: 0,
+                      y: 0,
+                      width: window.innerWidth,
+                      height: window.innerHeight - 48
+                    }
+                  : w
+              )
+            }
+            return prev
+          })
+        })
+      }, 500)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Monitor user data changes to unlock/lock settings based on critical info
+  useEffect(() => {
+    const hasAllCriticalInfo = checkCriticalInfo()
+
+    if (settingsLocked && hasAllCriticalInfo) {
+      // Unlock if all critical info is now present
+      setSettingsLocked(false)
+      addNotification('Profile complete! You can now access all features.', 'success')
+    } else if (!settingsLocked && !hasAllCriticalInfo) {
+      // Re-lock if critical info was removed
+      setSettingsLocked(true)
+      setShowLockPopup(true)
+      setTimeout(() => setShowLockPopup(false), 4000)
+
+      // Check if Settings app is open, if not, open it
+      const hasSettingsOpen = windows.some(w => w.appType === 'settings')
+      if (!hasSettingsOpen) {
+        openWindow('settings', 'Settings - Please Complete Your Profile').then(() => {
+          // Maximize the settings window
+          setWindows(prev => {
+            const settingsWindow = prev.find(w => w.appType === 'settings')
+            if (settingsWindow) {
+              return prev.map(w =>
+                w.id === settingsWindow.id
+                  ? {
+                      ...w,
+                      isMaximized: true,
+                      prevX: w.x,
+                      prevY: w.y,
+                      prevWidth: w.width,
+                      prevHeight: w.height,
+                      x: 0,
+                      y: 0,
+                      width: window.innerWidth,
+                      height: window.innerHeight - 48
+                    }
+                  : w
+              )
+            }
+            return prev
+          })
+        })
+      }
+
+      addNotification('Critical information missing! Please complete your profile.', 'error')
+    }
+  }, [systemState.userProfile]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const renderAppContent = (window) => {
     const { appType, instanceData } = window
     const props = { 
@@ -331,7 +447,16 @@ function Desktop({ user, onLogout }) {
     getClipboard: () => systemState.clipboard,
     onLogout,
     showNotifications,
-    setShowNotifications
+    setShowNotifications,
+    settingsLocked,
+    checkCriticalInfo,
+    updateUserProfile: (updatedUser) => {
+      // Update the user data in the Desktop component
+      setSystemState(prev => ({
+        ...prev,
+        userProfile: { ...prev.userProfile, ...updatedUser }
+      }))
+    }
   }
 
   return (
@@ -419,6 +544,81 @@ function Desktop({ user, onLogout }) {
           previousLevel={globalFatconAlert.previousLevel}
           newLevel={globalFatconAlert.newLevel}
         />
+
+        {/* Settings Lock Popup */}
+        {showLockPopup && (
+          <div
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'linear-gradient(135deg, rgba(20, 20, 40, 0.98), rgba(40, 20, 60, 0.98))',
+              border: '2px solid rgba(255, 100, 100, 0.5)',
+              borderRadius: '12px',
+              padding: '40px',
+              maxWidth: '500px',
+              zIndex: 99999,
+              boxShadow: '0 0 50px rgba(255, 100, 100, 0.3), inset 0 0 30px rgba(255, 100, 100, 0.1)',
+              backdropFilter: 'blur(10px)',
+              animation: 'bounceIn 0.5s ease-out'
+            }}
+          >
+            <div style={{
+              fontSize: '48px',
+              textAlign: 'center',
+              marginBottom: '20px',
+              filter: 'drop-shadow(0 0 10px rgba(255, 200, 0, 0.5))'
+            }}>
+              🚫✋😏
+            </div>
+            <h2 style={{
+              color: '#FFD700',
+              textAlign: 'center',
+              marginBottom: '20px',
+              fontSize: '24px',
+              textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
+            }}>
+              Whoa there, eager beaver! 🦫
+            </h2>
+            <p style={{
+              color: 'rgba(255, 255, 255, 0.9)',
+              textAlign: 'center',
+              fontSize: '16px',
+              lineHeight: '1.6',
+              marginBottom: '10px'
+            }}>
+              Before you can experience the <span style={{ color: '#FFD700', fontWeight: 'bold' }}>ABSOLUTE MAGNIFICENCE</span> of this system...
+            </p>
+            <p style={{
+              color: 'rgba(255, 255, 255, 0.8)',
+              textAlign: 'center',
+              fontSize: '15px',
+              lineHeight: '1.5',
+              fontStyle: 'italic'
+            }}>
+              You kinda need to tell us who you are first! 📝
+            </p>
+            <p style={{
+              color: '#FF69B4',
+              textAlign: 'center',
+              fontSize: '14px',
+              marginTop: '20px',
+              fontWeight: 'bold'
+            }}>
+              Complete your profile in Settings to unlock the awesomeness! 🚀
+            </p>
+            <div style={{
+              fontSize: '12px',
+              color: 'rgba(255, 255, 255, 0.5)',
+              textAlign: 'center',
+              marginTop: '25px',
+              fontFamily: 'monospace'
+            }}>
+              ERROR: USER_TOO_MYSTERIOUS_404
+            </div>
+          </div>
+        )}
         </div>
       </SystemContext.Provider>
     </ConfirmProvider>
