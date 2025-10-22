@@ -21,9 +21,11 @@ func (*CmdTee) Identifier() string {
 
 func (c *CmdTee) Run(ctx sh.CommandContext) int {
 	if len(ctx.Args) == 0 {
-		cat_ctx := ctx
-		cat_ctx.Args = []string{"cat"}
-		return (&CmdCat{FileStore: c.FileStore}).Run(cat_ctx)
+		if _, err := io.Copy(ctx.Stdout, ctx.Stdin); err != nil {
+			fmt.Fprint(ctx.Stderr, "failed to copy stdin: ", err)
+			return 1
+		}
+		return 0
 	}
 
 	cwd, ok := ctx.Env["PWD"]

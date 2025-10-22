@@ -4,31 +4,19 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
-	"strings"
 	"sync"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/vmihailenco/msgpack/v5"
 )
-
-func GenerateMessageID(size int) string {
-	hex := "0123456789abcdef"
-	output := strings.Builder{}
-	output.Grow(size)
-
-	for range size {
-		output.WriteByte(hex[rand.Intn(15)])
-	}
-
-	return output.String()
-}
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -36,7 +24,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, apiKey chatbot.APIKey, jsonConn *jsonrpc2.Conn) gin.HandlerFunc {
+func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, apiKey chatbot.APIKey, jsonConn *jsonrpc2.Conn, mqttEvents *util.EventHandler[types.MQTTMessage], flux_cfg *influx.InfluxDBConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		auth_get, ok := c.Get("auth")
 		if !ok {
@@ -45,9 +33,12 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, ap
 			return
 		}
 		auth_status := auth_get.(types.AuthorizationStatus)
-		socketID := GenerateMessageID(20)
+		socketID := util.RandHex(20)
 		session := sessionStore.AttachSession(socketID, auth_status)
-		available_commands := InitCommands(filestore, session, sessionStore, apiKey, jsonConn)
+		available_commands := InitCommands(filestore, filesystem.FSContext{
+			Store:    filestore,
+			UserTags: auth_status.Tags,
+		}, session, sessionStore, apiKey, jsonConn, mqttEvents, flux_cfg)
 
 		clients := map[string]types.ClientInfo{}
 		client_cancels := map[string]context.CancelFunc{}
@@ -97,7 +88,7 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, ap
 					break
 				}
 				if messageType != websocket.BinaryMessage {
-					messageID := GenerateMessageID(20)
+					messageID := util.RandHex(20)
 					out_ch <- types.WebSocketMessage{
 						MessageID:   messageID,
 						MessageType: types.MsgErrResponse,
@@ -108,7 +99,7 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, ap
 
 				var ws_message types.WebSocketMessage
 				if err := msgpack.Unmarshal([]byte(msg), &ws_message); err != nil {
-					messageID := GenerateMessageID(20)
+					messageID := util.RandHex(20)
 					out_ch <- types.WebSocketMessage{
 						MessageID:   messageID,
 						MessageType: types.MsgErrResponse,
@@ -137,7 +128,7 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, ap
 					close(sess_ch)
 					return
 				}
-				messageID := GenerateMessageID(20)
+				messageID := util.RandHex(20)
 				if _, ok := clients[incoming.ClientID]; !ok {
 					if incoming.MessageType == types.MsgConnect {
 						client_map := make(map[string]string)

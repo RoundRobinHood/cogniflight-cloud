@@ -3,26 +3,47 @@ package cmd
 import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/sh"
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func InitCommands(filestore filesystem.Store, socketSession *types.SocketSession, sessionStore *types.SessionStore, apiKey chatbot.APIKey, jsonConn *jsonrpc2.Conn) []sh.Command {
+func InitCommands(filestore filesystem.Store, fsctx filesystem.FSContext, socketSession *types.SocketSession, sessionStore *types.SessionStore, apiKey chatbot.APIKey, jsonConn *jsonrpc2.Conn, mqttEvents *util.EventHandler[types.MQTTMessage], flux_cfg *influx.InfluxDBConfig) []sh.Command {
 	commands := []sh.Command{
-		&CmdLs{FileStore: filestore},
-		&CmdMkdir{FileStore: filestore},
-		&CmdCat{FileStore: filestore},
-		&CmdTee{FileStore: filestore},
+		&CmdWhoami{FileStore: filestore, Session: socketSession},
+		CmdHelp{},
+		&CmdChangePassword{FileStore: filestore},
+
 		CmdEcho{},
 		CmdError{},
-		&CmdWhoami{FileStore: filestore, Session: socketSession},
+		CmdHeartbeat{},
+
+		&CmdLs{FileStore: filestore},
+		&CmdMkdir{FileStore: filestore},
+		&CmdCat{FSCtx: fsctx},
+		&CmdTee{FileStore: filestore},
+		&CmdRm{FileStore: filestore},
+		&CmdMv{FileStore: filestore},
+		&CmdChmod{FileStore: filestore},
+		&CmdCopy{FileStore: filestore},
+
+		&CmdEmbed{Conn: jsonConn, FileStore: filestore},
+		CmdCryptoRand{},
+
 		&CmdClients{Socket: socketSession},
 		&CmdSockets{SessionStore: sessionStore},
+
 		&CmdPilots{FileStore: filestore},
-		CmdHelp{},
+		&CmdEdgeNodes{FileStore: filestore},
+
 		CmdMLRPC{Conn: jsonConn},
-		&CmdEmbed{Conn: jsonConn, FileStore: filestore},
+		CmdFluxStream{FluxCfg: flux_cfg},
+		&CmdMQTT{Events: mqttEvents},
+
+		CmdB64{},
+		CmdHex{},
 	}
 
 	activate_cmd := &CmdActivate{
