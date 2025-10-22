@@ -8,6 +8,7 @@ import "../../styles/utilities/tables.css";
 import "../../styles/utilities/pills.css";
 import "../../styles/apps/app-base.css";
 import "../../styles/apps/users-app.css";
+import "../../styles/utilities/buttons.css";
 
 export default function UsersApp() {
   const { systemState, openWindow, addNotification, closeWindow } = useSystem();
@@ -144,7 +145,7 @@ export default function UsersApp() {
           `Changes saved for ${profile?.name || username}`,
           "success"
         );
-       // await loadUsers(); // re-fetches updated user list from backend
+        // await loadUsers(); // re-fetches updated user list from backend
       } else {
         throw new Error(result.error || "Failed to save profile");
       }

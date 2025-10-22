@@ -12,13 +12,15 @@ export default function UserPermissionsApp({ instanceData }) {
   const username = user.username;
   const profile = user.user_profile || {};
   const client = usePipeClient();
-
   const [tags, setTags] = useState([]);
   const [newTag, setNewTag] = useState("");
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(true);
   const [notification, setNotification] = useState("");
   const [disabled, setDisabled] = useState(user.disabled || false);
+
+  // All known/standard system tags
+  const knownTags = ["sysadmin", "atc", "pilot", "edge-node", "user"];
 
   // Load user tags
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function UserPermissionsApp({ instanceData }) {
   const handleAddTag = () => {
     const trimmed = newTag.trim().toLowerCase();
 
-    // Basic validation: no spaces, not empty
+    // Basic validation
     if (!trimmed) {
       setNotification("Please enter a tag name.");
       setTimeout(() => setNotification(""), 2000);
@@ -83,16 +85,26 @@ export default function UserPermissionsApp({ instanceData }) {
       return;
     }
 
-    // Check for existing tag
+    // Check for duplicates
     if (tags.includes(trimmed)) {
-      if (confirm(`The tag "${trimmed}" already exists. Enable it instead?`)) {
-        toggleTag(trimmed);
-      }
+      setNotification(`The tag "${trimmed}" already exists.`);
+      setTimeout(() => setNotification(""), 2000);
       setNewTag("");
       return;
     }
 
-    // Add new tag
+    // Check for similar known tag (suggest correction)
+    const suggestion = knownTags.find((t) => t.startsWith(trimmed));
+    if (suggestion && suggestion !== trimmed) {
+      if (confirm(`Did you mean "${suggestion}"? Click OK to use it.`)) {
+        setTags((prev) => [...prev, suggestion]);
+        setNewTag("");
+        setSaved(false);
+        return;
+      }
+    }
+
+    // Add as new custom tag
     setTags((prev) => [...prev, trimmed]);
     setNewTag("");
     setSaved(false);
@@ -146,6 +158,14 @@ export default function UserPermissionsApp({ instanceData }) {
     }
   };
 
+  // Filter known tags based on what's being typed
+  const filteredSuggestions = knownTags.filter(
+    (t) =>
+      newTag &&
+      t.toLowerCase().includes(newTag.toLowerCase()) &&
+      !tags.includes(t)
+  );
+
   return (
     <div className="app-container permissions-container">
       <h2>Edit User Permissions</h2>
@@ -188,13 +208,39 @@ export default function UserPermissionsApp({ instanceData }) {
           </table>
 
           <div className="form-group add-tag-group">
-            <input
-              type="text"
-              placeholder="Enter new tag"
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              className="editable-input"
-            />
+            <div className="tag-input-wrapper">
+              <input
+                type="text"
+                placeholder="Enter new tag"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
+                className="editable-input"
+                autoComplete="off"
+              />
+
+              {filteredSuggestions.length > 0 && (
+                <ul className="tag-suggestions">
+                  {filteredSuggestions.map((t) => (
+                    <li
+                      key={t}
+                      onClick={() => {
+                        setNewTag(t);
+                        handleAddTag();
+                      }}
+                    >
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
             <button className="btn btn-secondary btn-sm" onClick={handleAddTag}>
               + Add Tag
             </button>

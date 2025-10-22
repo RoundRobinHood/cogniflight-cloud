@@ -369,29 +369,70 @@ input:checked + .slider:before {
   margin-top: 1rem;
 }
 
-/* Normal red button */
-.disable-user-btn {
-  background-color: #e23b3b;
-  color: white;
-  transition: all 0.3s ease;
+.tag-suggestions li:hover {
+  background-color: var(--hover-bg, #333);
 }
 
-/* Hover: slightly darker red */
-.disable-user-btn:hover {
-  background-color: #c12c2c;
+/* ===== User Permissions / Tag Input Styling ===== */
+
+.add-tag-group {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-/* ✅ Greyed-out state for already disabled users */
-.disable-user-btn.btn-disabled {
-  background-color: #444;
-  color: #bbb;
-  cursor: not-allowed;
-  opacity: 0.7;
+/* Wrapper around input and suggestions */
+.tag-input-wrapper {
+  position: relative;
+  width: 100%;
 }
 
-/* Optional smooth fade on "Save" -> "Saved" */
-.btn-saved {
-  background-color: #666 !important;
-  color: #ddd !important;
-  cursor: default;
+/* Input styling */
+.tag-input-wrapper .editable-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 6px;
+  background-color: var(--input-bg, #222);
+  color: var(--text-color, #eee);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.tag-input-wrapper .editable-input:focus {
+  border-color: var(--accent-color, #007bff);
+}
+
+/* Suggestions dropdown */
+.tag-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--app-bg, #222);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 6px;
+  margin-top: 4px;
+  list-style: none;
+  padding: 4px 0;
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.tag-suggestions li {
+  padding: 6px 10px;
+  cursor: pointer;
+  color: var(--text-color, #ddd);
+  transition: background 0.15s ease;
+}
+
+.tag-suggestions li:hover {
+  background-color: var(--hover-bg, #333);
+  color: var(--accent-color, #00b7ff);
+}
+
+/* Button below input */
+.add-tag-group .btn {
+  align-self: flex-start;
 }

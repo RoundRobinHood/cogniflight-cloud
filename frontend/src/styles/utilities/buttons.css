@@ -158,6 +158,33 @@
   border-bottom: 2px solid var(--color-primary);
 }
 
+/* Normal red button */
+.disable-user-btn {
+  background-color: #e23b3b;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+/* Hover: slightly darker red */
+.disable-user-btn:hover {
+  background-color: #c12c2c;
+}
+
+/* ✅ Greyed-out state for already disabled users */
+.disable-user-btn.btn-disabled {
+  background-color: #444;
+  color: #bbb;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Optional smooth fade on "Save" -> "Saved" */
+.btn-saved {
+  background-color: #666 !important;
+  color: #ddd !important;
+  cursor: default;
+}
+
 .switch {
   position: relative;
   display: inline-block;
