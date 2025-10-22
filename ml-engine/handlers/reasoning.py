@@ -21,9 +21,15 @@ CRITICAL_STRESS_INDEX = 0.75
 CRITICAL_RMSSD_LOW = 20
 CRITICAL_HR_TREND = 5
 
-# Fusion score thresholds
-FUSION_CRITICAL = 0.4
-FUSION_MODERATE = 0.6
+# Fusion score thresholds (0.0 - 1.0, higher = worse fatigue)
+DEFAULT_THRESHOLD_MILD = 0.25           # Mild fatigue threshold
+DEFAULT_THRESHOLD_MOD = 0.50            # Moderate fatigue threshold
+DEFAULT_THRESHOLD_SEVERE = 0.75         # Severe fatigue threshold
+
+# Backwards-compatible names (used in some places)
+FUSION_MILD = DEFAULT_THRESHOLD_MILD
+FUSION_MODERATE = DEFAULT_THRESHOLD_MOD
+FUSION_SEVERE = DEFAULT_THRESHOLD_SEVERE
 
 # Environmental thresholds
 TEMP_HIGH = 30
@@ -282,23 +288,35 @@ def analyze_edge_fatigue(edge_username: str, lookback_minutes: int = 10):
 
     # === PRIORITY 3: MODERATE FATIGUE INDICATORS ===
 
-    # Fusion score assessment
+    # Fusion score assessment (use descending checks: severe -> moderate -> mild -> normal)
     if pd.notna(fusion_score):
-        if fusion_score >= FUSION_MODERATE:
+        # ensure fusion_score is on 0..1 scale; if it's >1 assume 0..100 and convert
+        try:
+            fs = float(fusion_score)
+            if fs > 1.0:
+                fs = fs / 100.0
+        except Exception:
+            fs = 0.0
+
+        if fs >= DEFAULT_THRESHOLD_SEVERE:
             reasoning.append(
-                f"Pilot appears alert (fusion score: {fusion_score:.2f})")
-            # Keep criticality as-is (may have been elevated by other factors)
-        elif fusion_score >= FUSION_CRITICAL:
-            reasoning.append(
-                f"Moderate fatigue detected (fusion score: {fusion_score:.2f}) - monitor pilot closely")
-            if criticality == "normal":
-                criticality = "moderate"
-        else:
-            reasoning.append(
-                f"Critical fatigue level detected (fusion score: {fusion_score:.2f}) - immediate rest advised")
+                f"Critical fatigue level detected (fusion score: {fs:.2f}) - immediate rest advised")
             immediate_action = True
             if criticality == "normal":
                 criticality = "critical"
+        elif fs >= DEFAULT_THRESHOLD_MOD:
+            reasoning.append(
+                f"Moderate fatigue detected (fusion score: {fs:.2f}) - monitor pilot closely")
+            if criticality == "normal":
+                criticality = "moderate"
+        elif fs >= DEFAULT_THRESHOLD_MILD:
+            reasoning.append(
+                f"Mild fatigue detected (fusion score: {fs:.2f}) - increased monitoring recommended")
+            if criticality == "normal":
+                criticality = "mild"
+        else:
+            reasoning.append(
+                f"Normal alertness (fusion score: {fs:.2f})")
 
     # EAR trend analysis (gradual fatigue onset)
     if pd.notna(avg_ear):
