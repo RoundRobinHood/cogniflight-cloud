@@ -35,6 +35,7 @@ function Desktop({ user, onLogout }) {
       "notepad",
       "users",
       "pilots",
+      "flights",
     ];
     const defaultDesktopApps = [
       "settings",
@@ -42,6 +43,7 @@ function Desktop({ user, onLogout }) {
       "notepad",
       "users",
       "pilots",
+      "flights",
     ];
     console.log("Initializing systemState defaults", {
       defaultDesktopApps,
