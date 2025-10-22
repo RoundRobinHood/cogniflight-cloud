@@ -644,6 +644,30 @@ export class PipeCmdClient {
 
     return tok_str;
   }
+
+  // update_login_file updates the fields provided in new_fields to new values.
+  // For example, you could run update_login_file("username", {tags: ["user"]}) to set "username"'s tags to ["user"]
+  async update_login_file(username, new_fields = {}) {
+    const cat_cmd = await this.run_command(`cat /etc/passwd/${username}.login`);
+    if(cat_cmd.command_result != 0) {
+      throw new Error(cat_cmd.error);
+    }
+
+    const current_fields = parse(cat_cmd.output);
+    
+    const new_login_file = {...current_fields, ...new_fields};
+    const new_file = stringify(new_login_file).replace(
+      /\n/g,
+      "\r\n"
+    );
+
+    const tee_cmd = await this.run_command(`tee /etc/passwd/${username}.login`, StringIterator(new_file));
+    if(tee_cmd.command_result != 0) {
+      throw new Error(tee_cmd.error);
+    }
+
+    return new_login_file
+  }
 }
 
 export class StreamCmdClient {
