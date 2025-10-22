@@ -31,6 +31,7 @@ func InitCommands(filestore filesystem.Store, fsctx filesystem.FSContext, socket
 		CmdCryptoRand{},
 		CmdHeartbeat{},
 		&CmdMQTT{Events: mqttEvents},
+		&CmdChangePassword{FileStore: filestore},
 
 		CmdB64{},
 		CmdHex{},
