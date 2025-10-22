@@ -39,7 +39,7 @@ export default function UserPermissionsApp({ instanceData }) {
           );
 
           const parsed = YAML.parse(cmd.output);
-          console.log("Parsed user tags:", parsed);
+          // console.log("Parsed user tags:", parsed);
           setTags(parsed?.tags || []);
         } else {
           console.warn("No tags found or empty output:", cmd.output);
@@ -70,8 +70,8 @@ export default function UserPermissionsApp({ instanceData }) {
   };
 
   // Add a custom tag (with validation & duplicate handling)
-  const handleAddTag = () => {
-    const trimmed = newTag.trim().toLowerCase();
+  const handleAddTag = (tagToAdd) => {
+    const trimmed = (tagToAdd || newTag).trim().toLowerCase();
 
     // Basic validation
     if (!trimmed) {
@@ -93,39 +93,24 @@ export default function UserPermissionsApp({ instanceData }) {
       return;
     }
 
-    // Check for similar known tag (suggest correction)
-    const suggestion = knownTags.find((t) => t.startsWith(trimmed));
-    if (suggestion && suggestion !== trimmed) {
-      if (confirm(`Did you mean "${suggestion}"? Click OK to use it.`)) {
-        setTags((prev) => [...prev, suggestion]);
-        setNewTag("");
-        setSaved(false);
-        return;
-      }
-    }
-
     // Add as new custom tag
     setTags((prev) => [...prev, trimmed]);
     setNewTag("");
     setSaved(false);
   };
 
-  // Save updated tags to backend
+  // Save updated tags to backend using update_login_file helper
   const handleSave = async () => {
     try {
       setSaved(true);
       setLoading(true);
 
-      const yamlStr = YamlCRLF({ tags });
-      const result = await client.run_command(
-        `tee "/etc/passwd/${username}.login"`,
-        StringIterator(yamlStr)
-      );
+      const result = await client.update_login_file(username, { tags });
 
-      if (result.command_result === 0) {
-        setNotification(`Tags saved for ${username}`);
+      if (result) {
+        setNotification(`Tags updated for ${username}`);
       } else {
-        throw new Error(result.error || "Failed to save tags");
+        throw new Error("Update failed");
       }
     } catch (err) {
       console.error("Save error:", err);
@@ -137,6 +122,7 @@ export default function UserPermissionsApp({ instanceData }) {
     }
   };
 
+  //TODO add backend updated get_users helper here:
   // Disable user — delete signup file
   const handleDisable = async () => {
     if (!confirm("Are you sure you want to disable this user?")) return;
@@ -144,7 +130,11 @@ export default function UserPermissionsApp({ instanceData }) {
       const result = await client.run_command(
         `rm "/etc/passwd/${username}.signup"`
       );
-      if (result.command_result === 0) {
+
+      if (
+        result.command_result === 0 ||
+        result.error.includes("file does not exist")
+      ) {
         setDisabled(true);
         setNotification(`User ${username} has been disabled.`);
       } else {
@@ -159,12 +149,14 @@ export default function UserPermissionsApp({ instanceData }) {
   };
 
   // Filter known tags based on what's being typed
-  const filteredSuggestions = knownTags.filter(
-    (t) =>
-      newTag &&
-      t.toLowerCase().includes(newTag.toLowerCase()) &&
-      !tags.includes(t)
-  );
+  const filteredSuggestions = knownTags.filter((t) => {
+    if (!newTag) return false;
+
+    const input = newTag.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const tag = t.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    return tag.includes(input);
+  });
 
   return (
     <div className="app-container permissions-container">
@@ -196,7 +188,7 @@ export default function UserPermissionsApp({ instanceData }) {
                     <label className="switch">
                       <input
                         type="checkbox"
-                        checked={tags.includes(tag)}
+                        checked={true}
                         onChange={() => toggleTag(tag)}
                       />
                       <span className="slider round"></span>
@@ -226,17 +218,23 @@ export default function UserPermissionsApp({ instanceData }) {
 
               {filteredSuggestions.length > 0 && (
                 <ul className="tag-suggestions">
-                  {filteredSuggestions.map((t) => (
-                    <li
-                      key={t}
-                      onClick={() => {
-                        setNewTag(t);
-                        handleAddTag();
-                      }}
-                    >
-                      {t}
-                    </li>
-                  ))}
+                  {filteredSuggestions.map((t) => {
+                    const alreadyHas = tags.includes(t);
+                    return (
+                      <li
+                        key={t}
+                        onClick={() => {
+                          if (!alreadyHas) handleAddTag(t); // ✅ directly pass tag to add
+                        }}
+                        className={alreadyHas ? "tag-disabled" : ""}
+                      >
+                        {t}{" "}
+                        {alreadyHas && (
+                          <span className="tag-note">(already added)</span>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
