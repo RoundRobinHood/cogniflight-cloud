@@ -1,0 +1,90 @@
+/* Small rounded labels for tags/status/roles/details */
+
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-light);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  text-transform: capitalize;
+  color: var(--text-secondary);
+}
+
+/* Role/semantic variants */
+.pill--admin {
+  background: rgba(255, 95, 87, 0.12);
+  border-color: rgba(255, 95, 87, 0.35);
+  color: var(--text-primary);
+}
+.pill--ops {
+  background: rgba(0, 120, 212, 0.12);
+  border-color: rgba(0, 120, 212, 0.35);
+  color: var(--text-primary);
+}
+.pill--pilot {
+  background: rgba(40, 202, 66, 0.12);
+  border-color: rgba(40, 202, 66, 0.35);
+  color: var(--text-primary);
+}
+.pill--atc {
+  background: rgba(255, 189, 46, 0.14);
+  border-color: rgba(255, 189, 46, 0.35);
+  color: var(--text-primary);
+}
+.pill--neutral {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--glass-border);
+  color: var(--text-secondary);
+}
+
+/* Size mods */
+.pill--sm {
+  font-size: 0.75rem;
+  padding: 1px 6px;
+}
+.pill--lg {
+  font-size: 0.9rem;
+  padding: 3px 10px;
+}
+
+/* Status dots (pair with text) */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  display: inline-block;
+  margin-right: 6px;
+  background: var(--text-muted);
+}
+.status-dot--ok {
+  background: var(--color-accent-green);
+}
+.status-dot--off {
+  background: var(--color-accent-red);
+}
+.status-dot--warn {
+  background: var(--color-accent-orange);
+}
+
+/* Status pills */
+.status-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: center;
+  min-width: 70px;
+}
+
+.status-active {
+  background-color: #1f5138;
+  color: #c8f7c5;
+}
+
+.status-disabled {
+  background-color: #5a1b1b;
+  color: #f8caca;
+}

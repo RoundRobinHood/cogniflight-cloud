@@ -1,0 +1,447 @@
+/* Users App Styles */
+
+.users-container {
+  background: var(--glass-bg-dark);
+}
+
+/* Header */
+.users-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* Toolbar */
+.users-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--glass-bg-darker);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.users-title {
+  font-size: 1.1rem;
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+/* Search Bar */
+.users-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.users-search-field {
+  position: relative;
+  flex: 1;
+  width: clamp(280px, 35vw, 450px);
+}
+
+.users-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.7;
+  pointer-events: none;
+  font-size: 0.9rem;
+}
+
+.users-search-input {
+  width: 100%;
+  padding-left: 32px; /* space for icon */
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  height: 32px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.users-search-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  background: var(--glass-bg-lighter);
+}
+
+/* Invite/New User button on the right; uses  .btn + .btn-primary */
+
+/* Content states */
+.users-state,
+.users-error {
+  text-align: center;
+  padding: var(--space-lg);
+  color: var(--text-tertiary);
+}
+.users-error {
+  color: var(--color-accent-red);
+}
+
+/* Table */
+.users-table-wrap {
+  padding: 0;
+  overflow: hidden;
+}
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.users-table thead th {
+  text-align: left;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--glass-bg-darker);
+  border-bottom: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-weight: var(--font-semibold);
+}
+
+.users-table tbody td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.users-table tbody tr:hover {
+  background: var(--glass-bg-lighter);
+}
+
+.users-col-actions {
+  width: 160px;
+}
+.users-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.users-empty {
+  text-align: center;
+  color: var(--text-tertiary);
+  padding: var(--space-lg);
+}
+
+/* Role pill + status dot (local to Users app) */
+.users-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-light);
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.users-pill--admin {
+  background: rgba(255, 95, 87, 0.12);
+  border-color: rgba(255, 95, 87, 0.35);
+}
+.users-pill--ops {
+  background: rgba(0, 120, 212, 0.12);
+  border-color: rgba(0, 120, 212, 0.35);
+}
+.users-pill--pilot {
+  background: rgba(40, 202, 66, 0.12);
+  border-color: rgba(40, 202, 66, 0.35);
+}
+.users-pill--ground {
+  background: rgba(255, 189, 46, 0.14);
+  border-color: rgba(255, 189, 46, 0.35);
+}
+
+.users-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.users-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--text-muted);
+}
+.users-status-dot--ok {
+  background: var(--color-accent-green);
+}
+.users-status-dot--off {
+  background: var(--color-accent-red);
+}
+
+/* Pager */
+.users-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--glass-bg-darker);
+  border-top: 1px solid var(--glass-border);
+}
+.users-page-indicator {
+  color: var(--text-secondary);
+}
+
+/* Forbidden view */
+.users-forbidden {
+  display: grid;
+  place-items: center;
+}
+.users-forbidden-card {
+  max-width: 420px;
+  text-align: center;
+  padding: var(--space-xl);
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+.users-forbidden-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--space-md);
+  opacity: 0.9;
+}
+
+.users-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  justify-content: flex-end;
+  flex: 1;
+}
+
+/* Editable input & select fields in Users table */
+.editable-input,
+.editable-select {
+  width: 100%;
+  background-color: #2b2b2b;
+  color: #f1f1f1;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.editable-input:focus,
+.editable-select:focus {
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+}
+
+.editable-select option {
+  background-color: #2b2b2b;
+  color: #fff;
+}
+
+/* Permissions window styling */
+.permissions-container {
+  background-color: #1e1e1e;
+  color: #f1f1f1;
+  padding: 1rem;
+  border-radius: 10px;
+}
+
+/* Table inherits zebra but we darken inputs/selects */
+.permissions-table select {
+  width: 100%;
+  background-color: #2b2b2b;
+  color: #f1f1f1;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.permissions-table select:focus {
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+}
+
+.permissions-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* In-app notification banner */
+.inapp-notification {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.inapp-notification.success {
+  background-color: #1f5138;
+  color: #c8f7c5;
+}
+
+/* Compact action buttons */
+.action-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.save-btn {
+  background-color: #0078d4 !important;
+  color: white;
+}
+
+.btn-saved {
+  background-color: #444 !important;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+}
+
+/* Active/Disabled toggle switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #444;
+  border-radius: 34px;
+  transition: 0.3s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+input:checked + .slider {
+  background-color: #0078d4;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem; /* space between buttons */
+}
+
+.permissions-actions {
+  display: flex;
+  flex-direction: column; /* Stack vertically */
+  align-items: flex-end; /* Align buttons to the right */
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.tag-suggestions li:hover {
+  background-color: var(--hover-bg, #333);
+}
+
+/* ===== User Permissions / Tag Input Styling ===== */
+
+.add-tag-group {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Wrapper around input and suggestions */
+.tag-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Input styling */
+.tag-input-wrapper .editable-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 6px;
+  background-color: var(--input-bg, #222);
+  color: var(--text-color, #eee);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.tag-input-wrapper .editable-input:focus {
+  border-color: var(--accent-color, #007bff);
+}
+
+/* Suggestions dropdown */
+.tag-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--app-bg, #222);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 6px;
+  margin-top: 4px;
+  list-style: none;
+  padding: 4px 0;
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.tag-suggestions li {
+  padding: 6px 10px;
+  cursor: pointer;
+  color: var(--text-color, #ddd);
+  transition: background 0.15s ease;
+}
+
+.tag-suggestions li:hover {
+  background-color: var(--hover-bg, #333);
+  color: var(--accent-color, #00b7ff);
+}
+
+/* Button below input */
+.add-tag-group .btn {
+  align-self: flex-start;
+}
+
+.tag-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.tag-note {
+  font-size: 0.8em;
+  color: var(--muted-text, #888);
+}
