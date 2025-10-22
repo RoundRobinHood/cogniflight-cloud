@@ -18,6 +18,10 @@ function SettingsApp() {
   const [profilePictureData, setProfilePictureData] = useState(null)
   const [picturePreviewsLoading, setPicturePreviewsLoading] = useState(false)
   const [picturePreviews, setPicturePreviews] = useState({})
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
   const containerRef = useRef(null)
   const saveTimeoutRef = useRef(null)
   const client = usePipeClient();
@@ -167,11 +171,45 @@ function SettingsApp() {
   };
 
   // Handle profile picture selection
-  const handleProfilePictureSelect = (filename) => {
+  const handleProfilePictureSelect = async (filename) => {
     handleFieldChange('profile_picture', filename);
-    loadProfilePicture(filename);
+
+    if (filename) {
+      // Load the profile picture for display
+      loadProfilePicture(filename);
+
+      // Generate and save embeddings for the selected image
+      try {
+        const embedResult = await client.run_command(
+          `embed ~/Pictures/${filename} | tee ~/user.embedding`,
+          StringIterator('')
+        );
+
+        if (embedResult.command_result === 0) {
+          console.log('Profile picture embeddings generated and saved');
+        } else {
+          console.error('Failed to generate embeddings:', embedResult.error);
+        }
+      } catch (err) {
+        console.error('Error generating embeddings:', err);
+      }
+    } else {
+      // Clear profile picture
+      setProfilePictureData(null);
+
+      // Clear embeddings file when removing profile picture
+      try {
+        await client.run_command(
+          `echo "" | tee ~/user.embedding`,
+          StringIterator('')
+        );
+      } catch (err) {
+        console.error('Error clearing embeddings:', err);
+      }
+    }
+
     setShowImageSelector(false);
-    addNotification('Profile picture updated', 'success');
+    addNotification(filename ? 'Profile picture updated' : 'Profile picture removed', 'success');
   };
 
   // Debounced save function
@@ -241,6 +279,55 @@ function SettingsApp() {
   const handleNotificationsChange = (enabled) => {
     updateSystemState('userProfile.notifications', enabled)
     addNotification('Notification preferences updated', 'success')
+  }
+
+  const handlePasswordChange = async () => {
+    // Validate input fields
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      addNotification('Please fill in all password fields', 'error')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      addNotification('New passwords do not match', 'error')
+      return
+    }
+
+    if (newPassword.length < 4) {
+      addNotification('New password must be at least 4 characters long', 'error')
+      return
+    }
+
+    try {
+      setChangingPassword(true)
+
+      // Use the change-password command
+      const result = await client.run_command(
+        `change-password '${currentPassword}' '${newPassword}'`,
+        StringIterator('')
+      )
+
+      if (result.command_result === 0) {
+        addNotification('Password changed successfully', 'success')
+        // Clear password fields
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+      } else {
+        // Check if error indicates wrong current password
+        if (result.error && result.error.includes('incorrect')) {
+          addNotification('Current password is incorrect', 'error')
+        } else {
+          addNotification('Failed to change password', 'error')
+        }
+        console.error('Password change error:', result.error)
+      }
+    } catch (err) {
+      addNotification('Failed to change password', 'error')
+      console.error('Password change error:', err)
+    } finally {
+      setChangingPassword(false)
+    }
   }
 
   const isPilot = userProfile?.role?.toLowerCase() === 'pilot';
@@ -564,6 +651,78 @@ function SettingsApp() {
     );
   };
 
+  const renderPasswordSection = (showDivider = false) => (
+    <>
+      <div className="settings-section">
+        <h3 className="settings-section-title">Password</h3>
+        <p className="settings-section-subtitle">
+          Change your account password
+        </p>
+
+        <div className="settings-form-vertical">
+          <div className="form-group">
+            <label htmlFor="current_password">Current Password</label>
+            <input
+              id="current_password"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              disabled={changingPassword}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="new_password">New Password</label>
+            <input
+              id="new_password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+              disabled={changingPassword}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirm_password">Confirm New Password</label>
+            <input
+              id="confirm_password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter new password"
+              disabled={changingPassword}
+            />
+          </div>
+
+          <button
+            onClick={handlePasswordChange}
+            disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
+            style={{
+              marginTop: '16px',
+              padding: '10px 20px',
+              background: changingPassword || !currentPassword || !newPassword || !confirmPassword ?
+                'var(--glass-bg-lighter)' : 'var(--color-primary)',
+              border: '1px solid var(--glass-border)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'white',
+              cursor: changingPassword || !currentPassword || !newPassword || !confirmPassword ?
+                'not-allowed' : 'pointer',
+              fontSize: '14px',
+              fontWeight: 'var(--font-medium)',
+              opacity: changingPassword || !currentPassword || !newPassword || !confirmPassword ? 0.6 : 1,
+              transition: 'all var(--transition-fast)'
+            }}
+          >
+            {changingPassword ? 'Changing Password...' : 'Change Password'}
+          </button>
+        </div>
+      </div>
+      {showDivider && <div className="settings-divider" />}
+    </>
+  );
+
   const renderPreferencesSection = (showDivider = false) => (
     <>
       <div className="settings-section">
@@ -612,7 +771,10 @@ function SettingsApp() {
     ] : []),
   ];
 
-  const systemNavItem = { id: 'preferences', label: 'Preferences', icon: '⚙️' };
+  const systemNavItems = [
+    { id: 'password', label: 'Password', icon: '🔒' },
+    { id: 'preferences', label: 'Preferences', icon: '⚙️' }
+  ];
 
   const renderContent = () => {
     switch (activeSection) {
@@ -626,6 +788,8 @@ function SettingsApp() {
         return renderOcularSection();
       case 'cabin':
         return renderCabinPreferencesSection();
+      case 'password':
+        return renderPasswordSection();
       case 'preferences':
         return renderPreferencesSection();
       default:
@@ -658,15 +822,17 @@ function SettingsApp() {
               ))}
             </ul>
             <ul className="settings-nav settings-nav-bottom">
-              <li>
-                <button
-                  className={`settings-nav-button ${activeSection === systemNavItem.id ? 'active' : ''}`}
-                  onClick={() => setActiveSection(systemNavItem.id)}
-                >
-                  <span className="nav-icon">{systemNavItem.icon}</span>
-                  <span className="nav-label">{systemNavItem.label}</span>
-                </button>
-              </li>
+              {systemNavItems.map(item => (
+                <li key={item.id}>
+                  <button
+                    className={`settings-nav-button ${activeSection === item.id ? 'active' : ''}`}
+                    onClick={() => setActiveSection(item.id)}
+                  >
+                    <span className="nav-icon">{item.icon}</span>
+                    <span className="nav-label">{item.label}</span>
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
         </nav>
@@ -689,6 +855,7 @@ function SettingsApp() {
             {renderCardiovascularSection(true)}
             {renderOcularSection(true)}
             {renderCabinPreferencesSection(true)}
+            {renderPasswordSection(true)}
             {renderPreferencesSection(false)}
           </>
         )}
