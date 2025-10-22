@@ -4,11 +4,10 @@ import {
   FileText,
   Terminal,
   Camera,
-  Radio,
-  Activity,
   UserSquare2,
   Users,
   Plane,
+  Monitor,
 } from "lucide-react";
 
 // Lazy load components for better performance
@@ -25,9 +24,8 @@ const loadComponent = (componentName) => {
     RegisterApp: () => import("../components/apps/RegisterApp.jsx"),
     UserPermissionsApp: () =>
       import("../components/apps/UserPermissionsApp.jsx"),
-    N420HHApp: () => import("../components/apps/N420HHApp"),
-    N420HHVisualApp: () => import("../components/apps/N420HHVisualApp"),
     FlightsApp: () => import("../components/apps/FlightsApp.jsx"),
+    EdgeNodeDashboardApp: () => import("../components/apps/EdgeNodeDashboardApp"),
   };
   return components[componentName];
 };
@@ -153,26 +151,6 @@ class AppRegistry {
     });
 
     this.register({
-      id: "n420hh",
-      label: "N420HH",
-      icon: Radio,
-      color: "#00ff00",
-      component: "N420HHApp",
-      defaultTitle: "N420HH Edge Node",
-      defaultSize: { width: 900, height: 600 },
-    });
-
-    this.register({
-      id: "n420hhvisual",
-      label: "N420HH Visual",
-      icon: Activity,
-      color: "#00ffff",
-      component: "N420HHVisualApp",
-      defaultTitle: "N420HH Flight Monitor",
-      defaultSize: { width: 1200, height: 800 },
-    });
-
-    this.register({
       id: "flights",
       label: "Flights",
       icon: Plane,
@@ -184,6 +162,19 @@ class AppRegistry {
         systemState.userProfile.role === "sysadmin" ||
         systemState.userProfile.role === "atc",
       //|| systemState.userProfile.role==="data-analyst"
+    });
+
+    this.register({
+      id: "edgenodedashboard",
+      label: "Edge Dashboard",
+      icon: Monitor,
+      color: "#ff00ff",
+      component: "EdgeNodeDashboardApp",
+      defaultTitle: "Edge Node Dashboard",
+      defaultSize: { width: 1400, height: 900 },
+      visibleWhen: (systemState) =>
+        systemState.userProfile.role === "sysadmin" ||
+        systemState.userProfile.role === "atc",
     });
   }
 
