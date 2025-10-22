@@ -543,12 +543,17 @@ export class PipeCmdClient {
   // ]
   async get_users(verbose = true) {
     const passwd_files = await this.ls("/etc/passwd");
+    const home_folders = await this.ls("/home");
 
     const users = [];
     for (const file of passwd_files) {
       if (file.name.endsWith(".login")) {
         users.push(file.name.substring(0, file.name.length - ".login".length));
       }
+    }
+    for (const file of home_folders) {
+      if (!users.includes(file.name))
+        users.push(file.name);
     }
 
     if (!verbose) {
@@ -557,17 +562,17 @@ export class PipeCmdClient {
 
     const ret = [];
     for (let user of users) {
+      const fields = { username: user, user_profile: null, tags: null };
       const user_profile_cmd = await this.run_command(
         `cat "/home/${user}/user.profile"`
       );
-      let user_profile = null;
 
       if (user_profile_cmd.command_result != 0) {
         if (!user_profile_cmd.error.includes("file does not exist")) {
           throw new Error(user_profile_cmd.error);
         }
       } else {
-        user_profile = parse(user_profile_cmd.output);
+        fields.user_profile = parse(user_profile_cmd.output);
       }
 
       const login_file_cmd = await this.run_command(
@@ -575,12 +580,14 @@ export class PipeCmdClient {
       );
 
       if (login_file_cmd.command_result != 0) {
-        throw new Error(login_file_cmd.error);
+        if (!login_file_cmd.error.includes("file does not exist")) {
+          throw new Error(login_file_cmd.error);
+        }
+      } else {
+        fields.tags = parse(login_file_cmd.output);
       }
 
-      const { tags } = parse(login_file_cmd.output);
-
-      ret.push({ username: user, tags, user_profile });
+      ret.push(fields);
     }
 
     return ret;
