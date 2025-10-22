@@ -203,12 +203,6 @@ function Desktop({ user, onLogout }) {
   };
 
   const openWindow = async (appType, title, instanceData = null) => {
-    // Check if settings are locked and user is trying to open non-settings app
-    if (settingsLocked && appType !== 'settings') {
-      setShowLockPopup(true)
-      setTimeout(() => setShowLockPopup(false), 4000)
-      return
-    }
     // Get app metadata from registry
     const metadata = appRegistry.getMetadata(appType);
     if (!metadata) {
