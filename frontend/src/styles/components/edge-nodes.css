@@ -1,0 +1,102 @@
+/* Edge Nodes Widget Component Styles */
+
+/* Edge Nodes Widget in Taskbar */
+.edge-nodes-widget {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur-light));
+  transition: all var(--transition-normal);
+  background: var(--glass-bg-light);
+}
+
+.edge-nodes-widget:hover {
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-lighter);
+  transform: translateY(-1px);
+}
+
+.edge-nodes-icon {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  transition: color var(--transition-normal);
+}
+
+.edge-nodes-count {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  min-width: 40px;
+}
+
+.edge-nodes-active {
+  font-size: 16px;
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.edge-nodes-total {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: var(--font-medium);
+  line-height: 1;
+}
+
+.edge-nodes-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.edge-nodes-label {
+  font-size: 12px;
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.edge-nodes-status {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Animation for status indicator */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+  50% {
+    opacity: 0.6;
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+}
+
+.edge-nodes-status svg {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .edge-nodes-widget {
+    gap: var(--space-xs);
+    padding: var(--space-xs);
+  }
+
+  .edge-nodes-details {
+    display: none;
+  }
+
+  .edge-nodes-count {
+    min-width: 30px;
+  }
+}

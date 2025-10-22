@@ -24,7 +24,7 @@ Importing all styles in proper order to maintain specificity and functionality
 @import "./components/context-menu.css";
 @import "./components/dialogs.css";
 @import "./components/login.css";
-@import "./components/fatcon.css";
+@import "./components/edge-nodes.css";
 
 /* Application Base Styles */
 @import "./apps/app-base.css";
@@ -62,9 +62,6 @@ Importing all styles in proper order to maintain specificity and functionality
 .dialog,
 .confirm-dialog {
   z-index: var(--z-dialogs);
-}
-.fatcon-alert-dialog {
-  z-index: calc(var(--z-dialogs) + 1001);
 }
 
 /* Global Animation Classes */
