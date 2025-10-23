@@ -6,7 +6,7 @@ Cloud services and infrastructure for Cogniflight: ingesting and processing devi
 
 ## Overview
 
-Cogniflight Cloud is a comprehensive aviation fatigue monitoring platform that provides real-time telemetry processing, ML-powered fatigue analysis, and intuitive dashboards for air traffic controllers and system administrators. The system integrates edge devices (cockpit monitoring units) with cloud services to detect pilot fatigue in real-time using multimodal sensor fusion.
+Cogniflight Cloud is a comprehensive aviation fatigue monitoring platform that provides real-time telemetry processing, ML-powered fatigue analysis, and intuitive dashboards for air traffic controllers and system administrators. Built on a Service-Oriented Architecture (SOA), the system integrates edge devices (cockpit monitoring units) with cloud services to detect pilot fatigue in real-time using multimodal sensor fusion.
 
 ### Key Capabilities
 
@@ -19,7 +19,7 @@ Cogniflight Cloud is a comprehensive aviation fatigue monitoring platform that p
 
 ## Architecture
 
-Cogniflight Cloud is built as a microservices architecture with the following components:
+Cogniflight Cloud is built as a Service-Oriented Architecture (SOA) with the following components:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -53,6 +53,17 @@ Cogniflight Cloud is built as a microservices architecture with the following co
                      │ (Cockpit Devices)│
                      └──────────────────┘
 ```
+
+### SOA Design Principles
+
+The system follows Service-Oriented Architecture principles with:
+
+- **Loose Coupling**: Services communicate through well-defined interfaces (WebSocket, REST, JSON-RPC, MQTT)
+- **Service Contracts**: Clear API contracts between frontend, backend, and ML services
+- **Autonomy**: Each service can be developed, deployed, and scaled independently
+- **Reusability**: Backend services expose reusable commands and ML engine provides general-purpose RPC methods
+- **Discoverability**: Services register and expose capabilities through standardized protocols
+- **Interoperability**: JSON/YAML data formats and standard protocols enable cross-service communication
 
 ### Component Details
 
@@ -227,34 +238,7 @@ TLS_KEYFILE_PATH=/path/to/privkey.pem
 
 ## API Reference
 
-### WebSocket Command Interface
-
-Connect to `ws://localhost:8080/cmd-socket` with authentication cookie.
-
-**Available Commands**:
-- `whoami` - Get current user information
-- `ls [path]` - List directory contents
-- `cat <file>` - Read file contents
-- `pilots [--verbose]` - List all pilots
-- `edge-nodes` - List all edge nodes
-- `sockets` - List active WebSocket sessions (sysadmin only)
-- `flux <query>` - Stream InfluxDB Flux query results
-- `embed <image_files...>` - Generate face embeddings for images
-- `ml-rpc <method> <params>` - Call ML engine RPC methods
-- `mqtt subscribe <edge_username>` - Subscribe to edge node telemetry
-- `logout` - End session
-
-### REST Endpoints
-
-- `POST /signup` - Create new user account (requires invite token)
-- `POST /login` - Authenticate user
-- `GET /signup/check-username/:username` - Check username availability
-- `POST /check-mqtt-user` - MQTT authentication callback (internal)
-
-### ML Engine RPC Methods
-
-- `generate_face_embedding(image_bytes, detection_threshold)` - Generate face embedding from image
-- `analyze_edge_fatigue(edge_username, lookback_minutes)` - Analyze telemetry and provide fatigue reasoning
+For complete API documentation including WebSocket commands, REST endpoints, ML Engine RPC methods, and MQTT topics, see [API_REFERENCE.md](docs/API_REFERENCE.md).
 
 ## Development
 
