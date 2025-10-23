@@ -147,7 +147,7 @@ function FileExplorerApp({ instanceData }) {
         filePath: (currentPath === '.' || currentPath === '~') ? file.name :
                  currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`
       })
-      addNotification(`Opened ${file.name} in Notepad`, 'info')
+      // Removed redundant notification - user can see the window opened
     } else if (file.type === 'file') {
       addNotification(`Cannot open ${file.name} - no associated program`, 'error')
     }
