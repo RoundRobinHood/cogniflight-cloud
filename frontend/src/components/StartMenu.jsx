@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { User, Power, Search, Grid3X3, Pin, Monitor, FileText } from 'lucide-react'
+import { User, Power, Search, Grid3X3, Pin, Monitor } from 'lucide-react'
 import { useSystem } from './useSystem'
 import appRegistry from '../config/appRegistry'
 import { useConfirm } from '../hooks/useConfirm.jsx'
@@ -9,12 +9,6 @@ function StartMenu({ isOpen, onClose }) {
   const [searchQuery, setSearchQuery] = useState('')
 
   const pinnedApps = appRegistry.getAllApps(systemState)
-
-  const recentFiles = [
-    { name: 'readme.txt', path: 'C:\\Users\\Desktop\\readme.txt' },
-    { name: 'notes.txt', path: 'C:\\Users\\Desktop\\notes.txt' },
-    { name: 'presentation.pptx', path: 'C:\\Users\\Documents\\presentation.pptx' }
-  ]
 
   const handleAppClick = (appId, appLabel) => {
     openWindow(appId, appLabel)
@@ -131,24 +125,6 @@ function StartMenu({ isOpen, onClose }) {
                 </button>
               )
             })}
-          </div>
-        </div>
-
-        {/* Recent Files */}
-        <div className="start-menu-section">
-          <div className="start-menu-section-header">
-            <span>Recent</span>
-          </div>
-          <div className="start-menu-recent">
-            {recentFiles.map((file, index) => (
-              <div key={index} className="start-menu-recent-item">
-                <FileText size={16} />
-                <div className="start-menu-recent-info">
-                  <div className="start-menu-recent-name">{file.name}</div>
-                  <div className="start-menu-recent-path">{file.path}</div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
 
