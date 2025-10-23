@@ -50,8 +50,8 @@ export default function FlightsReport({ instanceData }) {
       (
         r._field == "heart_rate" or
         r._field == "blink_rate" or
-        r._field == "cabin_temp" or
-        r._field == "oxygen_level"
+        r._field == "temperature" or
+        r._field == "fusion_score"
       )
     )
     |> keep(columns: ["_time", "_field", "_value"])
@@ -114,7 +114,7 @@ export default function FlightsReport({ instanceData }) {
         format: "a4",
       });
 
-      // --- Logo + Title Header ---
+      // --- Logo + Title Header of Report ---
       const logo = new Image();
       logo.src = "/logo_full.png";
       await new Promise((resolve) => (logo.onload = resolve));
@@ -243,23 +243,32 @@ export default function FlightsReport({ instanceData }) {
                   type="monotone"
                   dataKey="heart_rate"
                   name="Heart Rate (bpm)"
+                  stroke="#ff4d4d" // red
+                  dot={false}
                 />
                 <Line
                   type="monotone"
                   dataKey="blink_rate"
                   name="Blink Rate (per min)"
+                  stroke="#ffcc00" // yellow
+                  dot={false}
                 />
                 <Line
                   type="monotone"
-                  dataKey="cabin_temp"
+                  dataKey="temperature"
                   name="Cabin Temp (°C)"
+                  stroke="#4da6ff" // blue
+                  dot={false}
                 />
                 <Line
                   type="monotone"
-                  dataKey="oxygen_level"
-                  name="Cabin O₂ (%)"
+                  dataKey="fusion_score"
+                  name="Fatigue Level"
+                  stroke="#00e676" // green
+                  dot={false}
                 />
               </LineChart>
+              <Legend wrapperStyle={{ color: "#ccc" }} />
             </ResponsiveContainer>
           </div>
         )}
