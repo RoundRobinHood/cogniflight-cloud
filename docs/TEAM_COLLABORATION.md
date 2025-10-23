@@ -16,6 +16,8 @@ The Cogniflight Cloud project was successfully delivered through strategic task 
 - Managed requirements gathering and ensured alignment with project goals
 - Provided critical support to developers facing blockers
 - Handled damage control and risk mitigation throughout the project
+- **Involved stakeholder Exequtech to sponsor necessary infrastructure** for the project
+- **Did whatever was necessary to ensure successful project completion**, including securing resources and removing organizational blockers
 
 **Jason Maracha Bond** - Scrum Master
 - Managed administrative tasks and sprint ceremonies
@@ -63,6 +65,7 @@ The Cogniflight Cloud project was successfully delivered through strategic task 
   - Implemented shared styling and CSS modules for consistent UI
   - Designed table components with search, filtering, and data management
   - Integrated WebSocket command calls for backend data fetching
+  - **Demonstrated exceptional flexibility and adaptability** in responding to Brian and Jeremia's rapidly changing requirements and evolving specifications
 
 **Jeremy Kahora** - ML Engine Developer (Face Authentication)
 - **Primary Responsibilities**: Face embedding generation, profile photo integration, edge node authentication
@@ -128,6 +131,7 @@ Team focused on polish, bug fixes, and production readiness with **Jason** manag
 **Backend-Frontend Collaboration**
 - Brian exposed WebSocket commands based on Jeremia's UI/UX requirements
 - Susanna and Jayden consumed backend APIs following documented contracts
+- Susanna showed great flexibility in adapting to rapidly evolving requirements from Brian and Jeremia
 - Jeremia ensured frontend needs aligned with backend capabilities
 - Brian provided mentorship on proper API integration patterns
 

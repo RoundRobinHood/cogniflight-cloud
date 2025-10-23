@@ -21,37 +21,44 @@ Cogniflight Cloud is a comprehensive aviation fatigue monitoring platform that p
 
 Cogniflight Cloud is built as a Service-Oriented Architecture (SOA) with the following components:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Frontend (React)                         │
-│  Desktop UI • Terminal • Dashboard • User/Pilot/Flight Apps     │
-└────────────────────────────┬────────────────────────────────────┘
-                             │ WebSocket + REST
-┌────────────────────────────┴────────────────────────────────────┐
-│                      Backend (Go + Gin)                          │
-│  • WebSocket Command Interface  • Authentication/Authorization  │
-│  • Virtual Filesystem (MongoDB) • MQTT Telemetry Listener       │
-│  • InfluxDB Query Streaming     • ML Engine Integration         │
-└──┬─────────────┬─────────────┬──────────────┬───────────────────┘
-   │             │             │              │
-   ▼             ▼             ▼              ▼
-┌──────┐   ┌──────────┐   ┌────────┐   ┌──────────────────────┐
-│MongoDB│   │ InfluxDB │   │ MQTT   │   │  ML Engine (Python)  │
-│       │   │          │   │Mosquitto   │  • Face Embeddings   │
-│ VFS + │   │Telemetry │   │ Broker │   │  • Telemetry Analysis│
-│GridFS │   │  + Logs  │   └────────┘   │  • Fatigue Reasoning │
-└───────┘   └─────▲────┘        ▲        └──────────────────────┘
-                  │             │
-                  │    ┌────────┴────────┐
-                  └────┤   Telegraf      │
-                       │  (MQTT → Influx)│
-                       └─────────────────┘
-                              ▲
-                              │ MQTT Telemetry
-                     ┌────────┴─────────┐
-                     │   Edge Nodes     │
-                     │ (Cockpit Devices)│
-                     └──────────────────┘
+```mermaid
+graph TB
+    subgraph Frontend["Frontend (React)"]
+        UI["Desktop UI • Terminal • Dashboard<br/>User/Pilot/Flight Apps"]
+    end
+
+    subgraph Backend["Backend (Go + Gin)"]
+        WSCmd["WebSocket Command Interface"]
+        Auth["Authentication/Authorization"]
+        VFS["Virtual Filesystem"]
+        MQTTListener["MQTT Telemetry Listener"]
+        InfluxQuery["InfluxDB Query Streaming"]
+        MLInt["ML Engine Integration"]
+    end
+
+    subgraph Services["Storage & Processing Services"]
+        MongoDB[("MongoDB<br/>VFS + GridFS")]
+        InfluxDB[("InfluxDB<br/>Telemetry + Logs")]
+        MQTT["MQTT Mosquitto<br/>Broker"]
+        Telegraf["Telegraf<br/>(MQTT → Influx)"]
+    end
+
+    subgraph ML["ML Engine (Python)"]
+        FaceEmb["Face Embeddings"]
+        TelemetryAnalysis["Telemetry Analysis"]
+        FatigueReason["Fatigue Reasoning"]
+    end
+
+    EdgeNodes["Edge Nodes<br/>(Cockpit Devices)"]
+
+    Frontend -->|WebSocket + REST| Backend
+    Backend --> MongoDB
+    Backend --> InfluxDB
+    Backend --> MQTT
+    Backend -->|JSON-RPC<br/>Unix Socket| ML
+    EdgeNodes -->|MQTT Telemetry| MQTT
+    MQTT --> Telegraf
+    Telegraf --> InfluxDB
 ```
 
 ### SOA Design Principles
