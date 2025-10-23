@@ -40,8 +40,6 @@ HR_ZERO_THRESHOLD = 10  # Consider <10 BPM as potential cardiac emergency
 client = InfluxDBClient(url=url, token=token, org=org)
 query_api = client.query_api()
 
-PILOT_USERNAME_TAG = os.getenv('PILOT_USERNAME', 'demo_pilot')
-
 
 @dispatcher.add_method
 def analyze_edge_fatigue(edge_username: str, lookback_minutes: int = 10):
@@ -64,7 +62,7 @@ def analyze_edge_fatigue(edge_username: str, lookback_minutes: int = 10):
     from(bucket: "{bucket}")
       |> range(start: {lookback})
       |> filter(fn: (r) => r._measurement == "{MEASUREMENT}")
-      |> filter(fn: (r) => r.username == "{edge_username}" or r.host == "{edge_username}" or r.pilot_username == "{PILOT_USERNAME_TAG}")
+      |> filter(fn: (r) => r.topic == "cogniflight/telemetry/{edge_username}")
       |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
       |> keep(columns: ["_time", "username", "pilot_username", "flight_id",
                         "accel_x", "accel_y", "accel_z", 
@@ -284,11 +282,11 @@ def analyze_edge_fatigue(edge_username: str, lookback_minutes: int = 10):
 
     # Fusion score assessment
     if pd.notna(fusion_score):
-        if fusion_score >= FUSION_MODERATE:
+        if fusion_score <= FUSION_MODERATE:
             reasoning.append(
                 f"Pilot appears alert (fusion score: {fusion_score:.2f})")
             # Keep criticality as-is (may have been elevated by other factors)
-        elif fusion_score >= FUSION_CRITICAL:
+        elif fusion_score <= FUSION_CRITICAL:
             reasoning.append(
                 f"Moderate fatigue detected (fusion score: {fusion_score:.2f}) - monitor pilot closely")
             if criticality == "normal":
