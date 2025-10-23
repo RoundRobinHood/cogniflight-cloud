@@ -68,19 +68,19 @@ The system follows Service-Oriented Architecture principles with:
 ### Component Details
 
 #### Backend (Go)
-- **Framework**: Gin web framework with WebSocket support
+- **Framework**: Gin web framework with WebSocket support via gorilla websockets
 - **Virtual Filesystem**: Tag-based permission system stored in MongoDB with GridFS for file storage
 - **Command Interface**: Shell-like command execution over WebSocket (ls, cat, pilots, edge-nodes, flux, etc.)
 - **MQTT Integration**: Subscribes to `cogniflight/telemetry/+` topics for real-time edge node data
 - **ML Engine RPC**: JSON-RPC over Unix socket for face embeddings and telemetry analysis
-- **Authentication**: JWT-based session management with bcrypt password hashing
+- **Authentication**: Cookie-based session management with bcrypt password hashing
 
 #### Frontend (React)
 - **Desktop-Style UI**: Windows-based interface with draggable/resizable windows and taskbar
 - **Applications**:
   - **Edge Node Dashboard**: Real-time telemetry visualization with attitude indicators, fusion scores, and alerts
   - **Users App**: User management and profile editing (sysadmin only)
-  - **Pilots App**: Pilot information and license management
+  - **Pilots App**: Pilot information
   - **Flights App**: Flight tracking and historical data
   - **Terminal**: WebSocket-based shell interface to backend commands
   - **Settings**: User profile management with face embedding upload
@@ -91,7 +91,6 @@ The system follows Service-Oriented Architecture principles with:
 - **Face Embeddings** (`face_embedding_handlers.py`):
   - InsightFace integration for generating 512-dimensional face embeddings
   - Used for seamless face authentication on edge nodes
-  - Stores embeddings in MongoDB GridFS
 - **Telemetry Analysis** (`reasoning.py`):
   - Analyzes MQTT telemetry streams from InfluxDB
   - Provides reasoning for fusion scores and fatigue indicators
@@ -185,7 +184,7 @@ open http://localhost:5173
 Or start everything at once:
 
 ```bash
-docker compose --profile mongo --profile mqtt-broker --profile receive_mqtt --profile backend up -d
+docker compose --profile '*' up -d
 ```
 
 ### 4. Login
@@ -244,6 +243,9 @@ For complete API documentation including WebSocket commands, REST endpoints, ML 
 
 ### Backend Development
 
+You'll want to get an instance of ml-engine and mongodb running with the correct env to test
+Provided by Docker, or with manual setup
+
 ```bash
 cd backend
 go mod download
@@ -254,13 +256,15 @@ Backend runs on port 8080.
 
 ### Frontend Development
 
+Set a `BACKEND_URL` in `frontend/.env` before starting, targeting a real instance of our backend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Frontend dev server runs on port 5173 with hot reload.
+Frontend dev server runs on port 1024 with hot reload.
 
 ### ML Engine Development
 
@@ -308,7 +312,7 @@ See [PROJECT_CHARTER.pdf](docs/PROJECT_CHARTER.pdf) for project scope and [TEAM_
 
 1. Create feature branch from `main`
 2. Make changes with descriptive commits
-3. Test locally with Docker Compose
+3. Test locally with Docker Compose (unless all changes are on frontend)
 4. Submit pull request for review
 
 ## License
