@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSystem } from "../useSystem";
-import { usePipeClient } from "../../api/socket"; // ✅ import the backend client
+import { usePipeClient } from "../../api/socket";
 import "../../styles/apps/app-base.css";
 import "../../styles/utilities/modal.css";
 

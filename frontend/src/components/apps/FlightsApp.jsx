@@ -15,20 +15,32 @@ export default function FlightsApp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Load flights from backend - TODO add real backend call
+  // Load flights from backend using iter_flights()
   useEffect(() => {
     if (!client) return;
 
     async function loadFlights() {
       try {
         setLoading(true);
+        setError(null);
 
-        const cmd = await client.run_command("flights");
-        if (cmd.command_result !== 0) throw new Error(cmd.error);
-        const data = JSON.parse(cmd.output || "[]");
+        const flightsList = [];
+        for await (const flight of client.iter_flights()) {
+          flightsList.push({
+            flight_number: flight.id || "-",
+            pilot: flight.pilot_username || "Null",
+            departure_time:
+              flight.departure_time ||
+              flight.start_timestamp?.toLocaleString() ||
+              "-",
+            arrival_time: flight.arrival_time || "-",
+            edge_id: flight.edge_username || "-",
+            tail_number: flight.edge_username || "-",
+          });
+        }
 
-        console.log("Loaded flights data:", data);
-        setFlights(data);
+        console.log("Loaded real flight data:", flightsList);
+        setFlights(flightsList);
       } catch (err) {
         console.error("Error loading flights:", err);
         setError("Unable to load flight data");
@@ -46,8 +58,7 @@ export default function FlightsApp() {
     return (
       f.flight_number?.toLowerCase().includes(s) ||
       f.pilot?.toLowerCase().includes(s) ||
-      f.origin?.toLowerCase().includes(s) ||
-      f.destination?.toLowerCase().includes(s)
+      f.edge_id?.toLowerCase().includes(s)
     );
   });
 
@@ -61,7 +72,7 @@ export default function FlightsApp() {
             <span className="flights-search-icon">🔍</span>
             <input
               type="text"
-              placeholder="Search by flight number, pilot, or route"
+              placeholder="Search by flight no, pilot or edge ID"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flights-search-input"
@@ -76,30 +87,30 @@ export default function FlightsApp() {
           <thead>
             <tr>
               <th>Flight No.</th>
-              <th>Origin</th>
-              <th>Destination</th>
+              <th>Edge ID</th>
               <th>Pilot</th>
               <th>Departure</th>
               <th>Arrival</th>
+
               <th className="table-col-actions">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="7" className="table-empty">
+                <td colSpan="8" className="table-empty">
                   Loading flights...
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan="7" className="table-empty">
+                <td colSpan="8" className="table-empty">
                   {error}
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan="7" className="table-empty">
+                <td colSpan="8" className="table-empty">
                   {search
                     ? `No flights found matching "${search}"`
                     : "No flight data available"}
@@ -108,12 +119,12 @@ export default function FlightsApp() {
             ) : (
               filtered.map((flight, i) => (
                 <tr key={i}>
-                  <td>{flight.flight_number || "-"}</td>
-                  <td>{flight.origin || "-"}</td>
-                  <td>{flight.destination || "-"}</td>
-                  <td>{flight.pilot || "-"}</td>
-                  <td>{flight.departure_time || "-"}</td>
-                  <td>{flight.arrival_time || "-"}</td>
+                  <td>{flight.flight_number}</td>
+                  <td>{flight.edge_id}</td>
+                  <td>{flight.pilot}</td>
+                  <td>{flight.departure_time}</td>
+                  <td>{flight.arrival_time}</td>
+
                   <td className="table-col-actions">
                     <button
                       className="btn btn-sm btn-primary"
@@ -134,17 +145,6 @@ export default function FlightsApp() {
           </tbody>
         </table>
       </div>
-
-      <footer className="app-footer">
-        {/* <button
-          className="btn btn-primary"
-          onClick={() =>
-            addNotification("Select a flight to generate its report.", "info")
-          }
-        >
-          Generate Report
-        </button> */}
-      </footer>
     </div>
   );
 }

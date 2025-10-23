@@ -211,10 +211,13 @@ function FileExplorerApp({ instanceData }) {
     if (!client || !file) return
 
     try {
-      const filePath = currentPath === '.' || currentPath === '~' ? file.name :
+      console.log(currentPath);
+      let filePath = currentPath === '.' || currentPath === '~' ? file.name :
                      currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`
+      filePath = filePath.replace(/ /g, "\\ ");
+      console.log(filePath);
 
-      const result = await client.run_command(`cat -n "${filePath}" | base64`)
+      const result = await client.run_command(`cat -n ${filePath} | base64`)
 
       if (result.command_result === 0) {
         // Decode base64 and create download

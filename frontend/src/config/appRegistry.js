@@ -21,11 +21,13 @@ const loadComponent = (componentName) => {
     UsersApp: () => import("../components/apps/UsersApp"),
     PilotsApp: () => import("../components/apps/PilotsApp.jsx"),
     InviteUserApp: () => import("../components/apps/InviteUserApp.jsx"),
-    RegisterApp: () => import("../components/apps/RegisterApp.jsx"),
     UserPermissionsApp: () =>
       import("../components/apps/UserPermissionsApp.jsx"),
     FlightsApp: () => import("../components/apps/FlightsApp.jsx"),
-    EdgeNodeDashboardApp: () => import("../components/apps/EdgeNodeDashboardApp"),
+    FlightsReport: () => import("../components/apps/FlightsReport.jsx"),
+
+    EdgeNodeDashboardApp: () =>
+      import("../components/apps/EdgeNodeDashboardApp"),
   };
   return components[componentName];
 };
@@ -126,19 +128,7 @@ class AppRegistry {
       visibleWhen: () => false,
     });
 
-    this.register({
-      id: "register-app",
-      label: "Register",
-      icon: UserSquare2,
-      color: "#0078d4",
-      component: "RegisterApp",
-      defaultTitle: "Registration",
-      defaultSize: { width: 500, height: 420 },
-      // Do not show this on desktop
-      visibleWhen: () => false,
-    });
-
-    this.register({
+     this.register({
       id: "user-permissions",
       label: "User Permissions",
       icon: UserSquare2,
@@ -162,6 +152,18 @@ class AppRegistry {
         systemState.userProfile.role === "sysadmin" ||
         systemState.userProfile.role === "atc",
       //|| systemState.userProfile.role==="data-analyst"
+    });
+
+    this.register({
+      id: "flight-report",
+      label: "Flight Report",
+      icon: FileText,
+      color: "#228be6",
+      component: "FlightsReport",
+      defaultTitle: "Flight Report",
+      defaultSize: { width: 800, height: 600 },
+      // Hidden from desktop icons, only opened from FlightsApp
+      visibleWhen: () => false,
     });
 
     this.register({
