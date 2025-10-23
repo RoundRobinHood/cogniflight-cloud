@@ -245,6 +245,7 @@ export default function UsersApp() {
                   user.disabled === true ||
                   // !user.tags ||
                   // user.tags?.length === 0;
+                  user.tags === null ||
                   (Array.isArray(user.tags) && user.tags.length === 0);
                 const statusText = isDeactivated ? "Deactivated" : "Active";
                 if (isDeactivated) {
