@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef } from 'react'
-import { useStreamClient } from '../../api/socket.js'
+import { useEffect, useState, useRef, useCallback } from 'react'
+import { useStreamClient, PipeCmdClient } from '../../api/socket.js'
 import { useSystem } from '../useSystem'
+import { parse } from 'yaml'
 
 // Import shared visualization components
 import {
@@ -15,6 +16,7 @@ import {
 function EdgeNodeCard({ nodeData, onClick, criticality }) {
   const payload = nodeData?.payload || {}
   const isOnline = nodeData?.isStreaming || false
+  const mlAnalysis = nodeData?.mlAnalysis || null
 
   // Determine alert status
   const getAlertStatus = () => {
@@ -200,6 +202,28 @@ function EdgeNodeCard({ nodeData, onClick, criticality }) {
         </div>
       </div>
 
+      {/* ML Reasoning */}
+      {mlAnalysis && mlAnalysis.reasoning && mlAnalysis.reasoning.length > 0 && (
+        <div style={{
+          borderTop: '1px solid #333',
+          paddingTop: '8px',
+          marginTop: '5px',
+          fontSize: '11px',
+          color: '#FFD700',
+          fontStyle: 'italic'
+        }}>
+          <div style={{ marginBottom: '3px', color: '#888' }}>ML Analysis:</div>
+          {mlAnalysis.reasoning.map((reason, idx) => (
+            <div key={idx} style={{
+              padding: '2px 0',
+              color: mlAnalysis.immediate_action_required ? '#ff0000' : '#00ff00'
+            }}>
+              • {reason}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Criticality Score */}
       <div style={{
         borderTop: '1px solid #333',
@@ -224,6 +248,7 @@ function EdgeNodeCard({ nodeData, onClick, criticality }) {
 function EdgeNodeDetailedView({ nodeData, onClose }) {
   const payload = nodeData?.payload || {}
   const [fusionScoreHistory, setFusionScoreHistory] = useState(nodeData.fusionHistory || [])
+  const mlAnalysis = nodeData?.mlAnalysis || null
 
   // Update fusion score history whenever nodeData changes (live updates)
   useEffect(() => {
@@ -682,6 +707,250 @@ function EdgeNodeDetailedView({ nodeData, onClose }) {
             </div>
           </div>
 
+          {/* ML Engine Analysis Card */}
+          {mlAnalysis && (
+            <div style={{
+              background: 'linear-gradient(135deg, #1a1a2e22 0%, #16213e22 100%)',
+              padding: '15px',
+              borderRadius: '10px',
+              border: mlAnalysis.immediate_action_required ? '2px solid #ff0000' : '1px solid #333',
+              marginBottom: '20px',
+              boxShadow: mlAnalysis.immediate_action_required ? '0 0 20px rgba(255, 0, 0, 0.3)' : 'none'
+            }}>
+              <h3 style={{
+                color: '#00ffff',
+                marginBottom: '15px',
+                marginTop: '5px',
+                textAlign: 'center',
+                fontSize: '16px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                ML ENGINE ANALYSIS
+                {mlAnalysis.immediate_action_required && (
+                  <span style={{
+                    fontSize: '12px',
+                    padding: '4px 12px',
+                    background: '#ff000022',
+                    border: '1px solid #ff0000',
+                    borderRadius: '5px',
+                    color: '#ff0000',
+                    fontWeight: 'bold',
+                    animation: 'pulse 2s infinite'
+                  }}>
+                    ⚠ IMMEDIATE ACTION REQUIRED
+                  </span>
+                )}
+              </h3>
+
+              {/* Top Row: Key Metrics */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: '10px',
+                marginBottom: '15px'
+              }}>
+                <div style={{
+                  padding: '10px',
+                  background: '#00000044',
+                  borderRadius: '5px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ color: '#888', fontSize: '12px', marginBottom: '5px' }}>Confidence</div>
+                  <div style={{
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    color: mlAnalysis.confidence >= 0.8 ? '#00ff00' : mlAnalysis.confidence >= 0.5 ? '#FFD700' : '#FFA500'
+                  }}>
+                    {(mlAnalysis.confidence * 100).toFixed(0)}%
+                  </div>
+                </div>
+
+                <div style={{
+                  padding: '10px',
+                  background: '#00000044',
+                  borderRadius: '5px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ color: '#888', fontSize: '12px', marginBottom: '5px' }}>Criticality</div>
+                  <div style={{
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    color: mlAnalysis.criticality === 'critical' ? '#ff0000' :
+                           mlAnalysis.criticality === 'high' ? '#FFA500' :
+                           mlAnalysis.criticality === 'elevated' ? '#FFD700' : '#00ff00'
+                  }}>
+                    {mlAnalysis.criticality ? mlAnalysis.criticality.toUpperCase() : 'N/A'}
+                  </div>
+                </div>
+
+                <div style={{
+                  padding: '10px',
+                  background: '#00000044',
+                  borderRadius: '5px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ color: '#888', fontSize: '12px', marginBottom: '5px' }}>Fusion Score</div>
+                  <div style={{
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    color: mlAnalysis.fusion_score >= 0.75 ? '#ff0000' :
+                           mlAnalysis.fusion_score >= 0.50 ? '#FFA500' :
+                           mlAnalysis.fusion_score >= 0.25 ? '#FFD700' : '#00ff00'
+                  }}>
+                    {mlAnalysis.fusion_score !== null && mlAnalysis.fusion_score !== undefined
+                      ? `${(mlAnalysis.fusion_score * 100).toFixed(0)}%`
+                      : 'N/A'}
+                  </div>
+                </div>
+
+                <div style={{
+                  padding: '10px',
+                  background: '#00000044',
+                  borderRadius: '5px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ color: '#888', fontSize: '12px', marginBottom: '5px' }}>Data Age</div>
+                  <div style={{
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    color: mlAnalysis.data_age_seconds > 60 ? '#FFA500' : mlAnalysis.data_age_seconds > 120 ? '#ff0000' : '#00ff00'
+                  }}>
+                    {mlAnalysis.data_age_seconds !== null && mlAnalysis.data_age_seconds !== undefined
+                      ? `${mlAnalysis.data_age_seconds.toFixed(1)}s`
+                      : 'N/A'}
+                  </div>
+                  <div style={{ color: '#666', fontSize: '10px', marginTop: '3px' }}>
+                    {payload.collection_time && `Live: ${Math.floor((Date.now() / 1000) - payload.collection_time)}s ago`}
+                  </div>
+                </div>
+              </div>
+
+              {/* Reasoning Section */}
+              {mlAnalysis.reasoning && mlAnalysis.reasoning.length > 0 && (
+                <div style={{
+                  background: '#00000044',
+                  padding: '12px',
+                  borderRadius: '5px',
+                  marginBottom: '15px',
+                  border: '1px solid #333'
+                }}>
+                  <div style={{
+                    color: '#00ffff',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    marginBottom: '10px'
+                  }}>
+                    REASONING:
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '5px'
+                  }}>
+                    {mlAnalysis.reasoning.map((reason, idx) => (
+                      <div key={idx} style={{
+                        padding: '5px 10px',
+                        background: mlAnalysis.immediate_action_required ? '#ff000011' : '#00ff0011',
+                        borderLeft: `3px solid ${mlAnalysis.immediate_action_required ? '#ff0000' : '#00ff00'}`,
+                        color: '#fff',
+                        fontSize: '13px'
+                      }}>
+                        • {reason}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Trend Summary */}
+              {mlAnalysis.trend_summary && (
+                <div style={{
+                  background: '#00000044',
+                  padding: '12px',
+                  borderRadius: '5px',
+                  border: '1px solid #333'
+                }}>
+                  <div style={{
+                    color: '#00ffff',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    marginBottom: '10px'
+                  }}>
+                    TREND SUMMARY:
+                  </div>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '10px'
+                  }}>
+                    {Object.entries(mlAnalysis.trend_summary).map(([key, value]) => {
+                      const isPositive = value && typeof value === 'string' && value.startsWith('+')
+                      const isNegative = value && typeof value === 'string' && value.startsWith('-')
+                      return (
+                        <div key={key} style={{
+                          padding: '8px',
+                          background: '#00000066',
+                          borderRadius: '5px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}>
+                          <span style={{ color: '#888', fontSize: '12px' }}>
+                            {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:
+                          </span>
+                          <span style={{
+                            color: isPositive ? '#ff6666' : isNegative ? '#66ff66' : '#fff',
+                            fontWeight: 'bold',
+                            fontSize: '13px'
+                          }}>
+                            {value}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Analysis Metadata */}
+              <div style={{
+                marginTop: '15px',
+                fontSize: '11px',
+                color: '#666'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '8px'
+                }}>
+                  <div>
+                    Status: <span style={{ color: mlAnalysis.successful ? '#00ff00' : '#ff0000', fontWeight: 'bold' }}>
+                      {mlAnalysis.successful ? 'SUCCESS' : 'FAILED'}
+                    </span>
+                  </div>
+                  {mlAnalysis.timestamp && (
+                    <div>
+                      Analysis Time: {new Date(mlAnalysis.timestamp).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+                <div style={{
+                  fontSize: '10px',
+                  color: '#555',
+                  fontStyle: 'italic',
+                  paddingTop: '5px',
+                  borderTop: '1px solid #333'
+                }}>
+                  Note: ML Engine reads from InfluxDB. "Data Age" reflects database latency, while "Live" shows MQTT stream age.
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Timestamp */}
           <div style={{
             textAlign: 'center',
@@ -707,7 +976,22 @@ function EdgeNodeDashboardApp() {
   const [selectedNode, setSelectedNode] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
   const mqttCommandHandleRef = useRef(null)
+  const mlClientRef = useRef(null)
+  const mlAnalysisInProgressRef = useRef({}) // Track which nodes are currently being analyzed
   const { addNotification } = useSystem()
+
+  // Initialize ML analysis client
+  useEffect(() => {
+    const mlClient = new PipeCmdClient()
+    mlClient.connect()
+    mlClientRef.current = mlClient
+
+    return () => {
+      if (mlClientRef.current) {
+        mlClientRef.current.disconnect().catch(err => console.error('Failed to disconnect ML client:', err))
+      }
+    }
+  }, [])
 
   // Get the complete list of edge nodes from the edge-nodes command
   useEffect(() => {
@@ -763,9 +1047,10 @@ function EdgeNodeDashboardApp() {
 
         for await (const yamlDoc of commandHandle.iter_yaml_output()) {
           if (yamlDoc && yamlDoc.edge_username) {
+            const nodeId = yamlDoc.edge_username
+
             setEdgeNodes(prev => {
               const updated = { ...prev }
-              const nodeId = yamlDoc.edge_username
 
               // Initialize or update node data
               if (!updated[nodeId]) {
@@ -801,6 +1086,12 @@ function EdgeNodeDashboardApp() {
 
               return updated
             })
+
+            // Trigger ML analysis when new data arrives for nodes with pilot data
+            if (yamlDoc.payload && yamlDoc.payload.pilot_username && yamlDoc.payload.fusion_score !== null) {
+              // Only analyze nodes that have active pilot monitoring
+              fetchMLAnalysis(nodeId)
+            }
           }
         }
       } catch (error) {
@@ -848,10 +1139,67 @@ function EdgeNodeDashboardApp() {
 
   // Update selected node with live data if it's currently being viewed
   useEffect(() => {
-    if (selectedNode && edgeNodes[selectedNode.edge_username]) {
+    if (selectedNode?.edge_username && edgeNodes[selectedNode.edge_username]) {
       setSelectedNode(edgeNodes[selectedNode.edge_username])
     }
   }, [edgeNodes, selectedNode?.edge_username])
+
+  // Fetch ML analysis for a specific edge node
+  const fetchMLAnalysis = useCallback(async (edgeUsername) => {
+    if (!mlClientRef.current) {
+      console.log(`[ML Analysis] ML client not ready yet`)
+      return
+    }
+
+    // Prevent multiple simultaneous requests for the same node
+    if (mlAnalysisInProgressRef.current[edgeUsername]) {
+      console.log(`[ML Analysis] Analysis already in progress for ${edgeUsername}, skipping`)
+      return
+    }
+
+    mlAnalysisInProgressRef.current[edgeUsername] = true
+
+    try {
+      console.log(`[ML Analysis] Fetching analysis for ${edgeUsername}...`)
+      const result = await mlClientRef.current.run_command(`ml-rpc analyze_edge_fatigue --edge_username ${edgeUsername}`)
+
+      console.log(`[ML Analysis] ${edgeUsername} - Exit code: ${result.command_result}`)
+      if (result.error) {
+        console.log(`[ML Analysis] ${edgeUsername} - Stderr:`, result.error)
+      }
+
+      if (result.command_result === 0 && result.output.trim().length > 0) {
+        try {
+          const analysis = parse(result.output)
+          console.log(`[ML Analysis] ${edgeUsername} - Parsed result:`, analysis)
+
+          setEdgeNodes(prev => {
+            const updated = { ...prev }
+            if (updated[edgeUsername]) {
+              updated[edgeUsername] = {
+                ...updated[edgeUsername],
+                mlAnalysis: analysis
+              }
+            }
+            return updated
+          })
+        } catch (parseError) {
+          console.error(`[ML Analysis] Failed to parse for ${edgeUsername}:`, parseError)
+          console.error(`[ML Analysis] Raw output:`, result.output)
+        }
+      } else {
+        console.log(`[ML Analysis] ${edgeUsername} - No valid output (result=${result.command_result}, output length=${result.output.length})`)
+      }
+    } catch (error) {
+      console.error(`[ML Analysis] Failed to fetch for ${edgeUsername}:`, error)
+    } finally {
+      // Always clear the in-progress flag when done
+      mlAnalysisInProgressRef.current[edgeUsername] = false
+    }
+  }, [])
+
+  // Note: ML analysis is now triggered reactively when MQTT data arrives
+  // See the MQTT streaming effect above where fetchMLAnalysis is called
 
   return (
     <div style={{
