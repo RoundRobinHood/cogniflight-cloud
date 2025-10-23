@@ -1,238 +1,85 @@
-let pilot_info_schema = {
-  bsonType: "object",
-  required: [ "license_nr", "certification_expiry", "flight_hours" ],
-
-  properties: {
-    face_embeddings: {
-      bsonType: "array",
-      items: {
-        bsonType: "array",
-        items: {
-          bsonType: "number",
-        },
-      },
-    },
-
-    license_nr: { bsonType: "string" },
-    certification_expiry: { bsonType: "date" },
-    initial_flight_hours: { bsonType: "number" },
-    baseline: { bsonType: "object" },
-
-    environment_preferences: {
+db.createCollection("vfs", {
+  validator: {
+    $jsonSchema: {
       bsonType: "object",
-      required: [ "noise_sensitivity", "light_sensitivity", "cabin_temperature_preferences" ],
-
+      required: [ "type", "permissions", "timestamps" ],
       properties: {
-        noise_sensitivity: {
-          bsonType: "string",
-          enum: [ "low", "medium", "high" ],
+        is_root: {
+          bsonType: "bool",
+          description: "Indicates if this is the root directory entry",
         },
-        light_sensitivity: {
-          bsonType: "string",
-          enum: [ "low", "medium", "high" ],
+
+        type: {
+          bsonType: "int",
+          enum: [ 0, 1 ],
+          description: "Entry type: 0 = File, 1 = Directory",
         },
-        cabin_temperature_preferences: {
+
+        permissions: {
           bsonType: "object",
-          required: [ "optimal_temperature", "tolerance_range" ],
+          required: [ "read_tags", "write_tags", "execute_tags", "updatetag_tags" ],
           properties: {
-            optimal_temperature: { bsonType: "number" },
-            tolerance_range: { bsonType: "number" },
+            read_tags: {
+              bsonType: "array",
+              items: { bsonType: "string" },
+              description: "Tags with read access",
+            },
+            write_tags: {
+              bsonType: "array",
+              items: { bsonType: "string" },
+              description: "Tags with write access",
+            },
+            execute_tags: {
+              bsonType: "array",
+              items: { bsonType: "string" },
+              description: "Tags with execute/traverse access",
+            },
+            updatetag_tags: {
+              bsonType: "array",
+              items: { bsonType: "string" },
+              description: "Tags with permission to update permission tags",
+            },
           },
         },
 
-      },
-    },
-  },
-};
-
-db.createCollection("users", {
-  validator: {
-    $jsonSchema: {
-      bsonType: "object",
-      required: [ "name", "email", "pwd", "role", "created_at" ],
-
-      properties: {
-        name: {
-          bsonType: "string",
-          description: "User full name / username - required",
-        },
-
-        email: {
-          bsonType: "string",
-          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
-          description: "Valid email address - required and unique",
-        },
-
-        phone: {
-          bsonType: "string",
-          pattern: "^[0-9]+$",
-          description: "User phone number",
-        },
-
-        pwd: {
-          bsonType: "string",
-          description: "Hashed password - required",
-        },
-
-        role: {
-          enum: ["pilot", "atc", "sysadmin"],
-          description: "User role - must be one of enum values",
-        },
-
-        pilot_info: pilot_info_schema,
-
-        created_at: { bsonType: "date" },
-      },
-    }
-  }
-});
-
-db.users.createIndex({ email: 1 }, { unique: true });
-
-db.createCollection("sessions", {
-  validator: {
-    $jsonSchema: {
-      bsonType: "object",
-      required: [ "sess_id", "user_id", "role", "created_at", "expires_at" ],
-      properties: {
-        sess_id: { bsonType: "string" },
-        user_id: { bsonType: "objectId" },
-        role: {
-          bsonType: "string",
-          enum: [ "pilot", "atc", "sysadmin" ]
-        },
-        created_at: { bsonType: "date" },
-        expires_at: { bsonType: "date" },
-      },
-    },
-  },
-});
-
-db.sessions.createIndex({ sess_id: 1 }, { unique: true });
-db.sessions.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 });
-
-db.createCollection("alerts", {
-  validator: {
-    $jsonSchema: {
-      bsonType: "object",
-      required: [ "pilot_id", "timestamp", "fusion_score", "interpretation" ],
-      properties: {
-        pilot_id: { bsonType: "objectId" },
-        timestamp: { bsonType: "date" },
-        fusion_score: { bsonType: "number" },
-        interpretation: { bsonType: "string" },
-        user_explanation: { bsonType: "string" },
-      },
-    },
-  },
-});
-
-db.createCollection("key_store", {
-  validator: {
-    $jsonSchema: {
-      bsonType: "object",
-      required: [ "salt", "hash_iterations", "key" ],
-      properties: {
-        salt: { bsonType: "binData" },
-        hash_iterations: { bsonType: "int" },
-        key: { bsonType: "binData" },
-        edge_id: { bsonType: "objectId" },
-      },
-    },
-  },
-});
-
-db.key_store.createIndex({ key: 1, hash_iterations: 1 }, { unique: 1 });
-
-db.createCollection("edge_nodes", {
-  validator: {
-    $jsonSchema: {
-      bsonType: "object",
-      required: [ "plane_info" ],
-      properties: {
-        plane_info: {
+        timestamps: {
           bsonType: "object",
-          required: [ "tail_nr", "manufacturer", "model", "year" ],
+          required: [ "created_at", "modified_at", "accessed_at" ],
           properties: {
-            tail_nr: { bsonType: "string" },
-            manufacturer: { bsonType: "string" },
-            model: { bsonType: "string" },
-            year: { bsonType: "int" },
+            created_at: { bsonType: "date" },
+            modified_at: { bsonType: "date" },
+            accessed_at: { bsonType: "date" },
           },
         },
-      },
-    },
-  },
-});
 
-db.edge_nodes.createIndex({ 'plane_info.tail_nr': 1, 'plane_info.manufacturer': 1, 'plane_info.model': 1, 'plane_info.year': 1 }, { unique: 1 });
-
-db.createCollection("flights", {
-  validator: {
-    $jsonSchema: {
-      bsonType: "object",
-      required: [ "edge_id", "pilot_id", "start_time" ],
-      properties: {
-        edge_id: { bsonType: "objectId" },
-        pilot_id: { bsonType: "objectId" },
-        start_time: { bsonType: "date" },
-        duration: { bsonType: "long" },
-      },
-    },
-  },
-});
-
-db.flights.createIndex({ edge_id: 1, pilot_id: 1 });
-
-db.createCollection("signup_tokens", {
-  validator: {
-    $jsonSchema: {
-      bsonType: "object",
-      required: [ "tok_str", "role", "created_at", "expires_at" ],
-      properties: {
-        tok_str: { bsonType: "string" },
-        email: {
-          bsonType: "string",
-          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+        entries: {
+          anyOf: [
+            {
+              bsonType: "array",
+              items: {
+                bsonType: "object",
+                required: [ "name", "ref_id" ],
+                properties: {
+                  name: { bsonType: "string", description: "Name of the file or directory" },
+                  ref_id: { bsonType: "objectId", description: "Reference to the FsEntry document" },
+                },
+              },
+            },
+            { bsonType: "null"}
+          ],
+          description: "Directory entries (array of references to child FsEntry documents) - only for directories",
         },
-        phone: {
-          bsonType: "string",
-          pattern: "^[0-9]+$",
-        },
-        role: {
-          bsonType: "string",
-          enum: [ "pilot", "atc", "sysadmin" ],
-        },
-        pilot_info: pilot_info_schema,
-        created_at: { bsonType: "date" },
-        expires_at: { bsonType: "date" },
-      },
-      anyOf: [
-        { "required": [ "email" ] },
-        { "required": [ "phone" ] },
-      ],
-    },
-  },
-});
 
-db.signup_tokens.createIndex({ tok_str: 1 }, { unique: true });
-db.signup_tokens.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 });
-
-db.createCollection("user_images", {
-  validator: {
-    $jsonSchema: {
-      bsonType: "object",
-      required: [ "user_id", "file_id", "filename", "mimetype", "created_at" ],
-      properties: {
-        user_id: { bsonType: "objectId" },
-        file_id: { bsonType: "objectId" },
-        filename: { bsonType: "string" },
-        mimetype: { bsonType: "string" },
-        created_at: { bsonType: "date" },
+        file_ref: {
+          anyOf: [
+            { bsonType: "objectId" },
+            { bsonType: "null" },
+          ],
+          description: "GridFS file reference (only for files, not directories)",
+        },
       },
     },
   },
 });
 
-db.user_images.createIndex({ file_id: 1 }, { unique: true });
-db.user_images.createIndex({ user_id: 1 });
+db.vfs.createIndex({ is_root: 1, type: 1 });
