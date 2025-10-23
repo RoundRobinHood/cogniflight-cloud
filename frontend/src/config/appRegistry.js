@@ -21,7 +21,6 @@ const loadComponent = (componentName) => {
     UsersApp: () => import("../components/apps/UsersApp"),
     PilotsApp: () => import("../components/apps/PilotsApp.jsx"),
     InviteUserApp: () => import("../components/apps/InviteUserApp.jsx"),
-    RegisterApp: () => import("../components/apps/RegisterApp.jsx"),
     UserPermissionsApp: () =>
       import("../components/apps/UserPermissionsApp.jsx"),
     FlightsApp: () => import("../components/apps/FlightsApp.jsx"),
@@ -129,19 +128,7 @@ class AppRegistry {
       visibleWhen: () => false,
     });
 
-    this.register({
-      id: "register-app",
-      label: "Register",
-      icon: UserSquare2,
-      color: "#0078d4",
-      component: "RegisterApp",
-      defaultTitle: "Registration",
-      defaultSize: { width: 500, height: 420 },
-      // Do not show this on desktop
-      visibleWhen: () => false,
-    });
-
-    this.register({
+     this.register({
       id: "user-permissions",
       label: "User Permissions",
       icon: UserSquare2,
