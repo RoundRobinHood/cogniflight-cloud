@@ -15,6 +15,7 @@ func InitCommands(filestore filesystem.Store, fsctx filesystem.FSContext, socket
 		&CmdWhoami{FileStore: filestore, Session: socketSession},
 		CmdHelp{},
 		&CmdChangePassword{FileStore: filestore},
+		&CmdLogout{FileStore: filestore},
 
 		CmdEcho{},
 		CmdError{},

@@ -65,6 +65,7 @@ func AuthMiddleware(filestore filesystem.Store) gin.HandlerFunc {
 				c.Set("auth", types.AuthorizationStatus{
 					Username: username,
 					Tags:     credentials.Tags,
+					SessID:   sess_id,
 				})
 			}
 		}

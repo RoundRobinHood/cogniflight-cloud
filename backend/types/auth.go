@@ -4,4 +4,5 @@ package types
 type AuthorizationStatus struct {
 	Username string
 	Tags     []string
+	SessID   string `yaml:"-" json:"-"`
 }
