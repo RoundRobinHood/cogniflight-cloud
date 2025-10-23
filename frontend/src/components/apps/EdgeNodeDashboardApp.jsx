@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { useStreamClient, PipeCmdClient } from '../../api/socket.js'
 import { useSystem } from '../useSystem'
 import { parse } from 'yaml'
@@ -1129,13 +1129,15 @@ function EdgeNodeDashboardApp() {
     }
   }, [client, addNotification])
 
-  // Calculate criticality and sort nodes
-  const sortedNodes = Object.values(edgeNodes).map(node => {
-    const fusionScore = node.payload?.fusion_score || 0
-    const confidence = node.payload?.confidence || 0
-    const criticality = fusionScore * confidence
-    return { ...node, criticality }
-  }).sort((a, b) => b.criticality - a.criticality)
+  // Calculate criticality and sort nodes (memoized to prevent unnecessary recalculations)
+  const sortedNodes = useMemo(() => {
+    return Object.values(edgeNodes).map(node => {
+      const fusionScore = node.payload?.fusion_score || 0
+      const confidence = node.payload?.confidence || 0
+      const criticality = fusionScore * confidence
+      return { ...node, criticality }
+    }).sort((a, b) => b.criticality - a.criticality)
+  }, [edgeNodes])
 
   // Update selected node with live data if it's currently being viewed
   useEffect(() => {

@@ -921,7 +921,7 @@ class CommandHandle {
 
     client.on("disconnected", () => {
       this.command_running = false;
-      this.#handler.emit("command_finished", result);
+      this.#handler.emit("command_finished", this.command_result);
       this.#handler.emit("disconnected");
     });
 

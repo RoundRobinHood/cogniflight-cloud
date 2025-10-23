@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { FolderOpen, File, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as TreeChevronRight, Home, Loader2, ArrowUp, Folder } from 'lucide-react'
+import { FolderOpen, File, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as TreeChevronRight, Home, Loader2, ArrowUp, Folder, Upload, Download } from 'lucide-react'
 import { useSystem } from '../useSystem'
-import { usePipeClient } from '../../api/socket'
+import { usePipeClient, BinaryIterator } from '../../api/socket'
 
 function FileExplorerApp({ instanceData }) {
-  const { openWindow, addNotification } = useSystem()
+  const { openWindow, addNotification, showContextMenu } = useSystem()
   const client = usePipeClient()
   const containerRef = useRef(null)
 
@@ -20,6 +20,8 @@ function FileExplorerApp({ instanceData }) {
   const [homeDirectory, setHomeDirectory] = useState('')
   const [absolutePath, setAbsolutePath] = useState('')
   const [isInitialized, setIsInitialized] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
 
   const folders = files.filter(f => f.type === 'directory')
   const regularFiles = files.filter(f => f.type === 'file')
@@ -150,6 +152,96 @@ function FileExplorerApp({ instanceData }) {
       // Removed redundant notification - user can see the window opened
     } else if (file.type === 'file') {
       addNotification(`Cannot open ${file.name} - no associated program`, 'error')
+    }
+  }
+
+  const handleFileRightClick = (e, file) => {
+    e.preventDefault()
+    if (file.type === 'file') {
+      const items = [
+        {
+          icon: Download,
+          label: `Download ${file.name}`,
+          action: () => handleDownload(file)
+        }
+      ]
+      showContextMenu({ x: e.clientX, y: e.clientY }, items)
+    }
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileUpload = async (event) => {
+    const files = event.target.files
+    if (!files || files.length === 0 || !client) return
+
+    setUploading(true)
+    try {
+      for (const file of files) {
+        const arrayBuffer = await file.arrayBuffer()
+        const uint8Array = new Uint8Array(arrayBuffer)
+
+        const targetPath = currentPath === '.' || currentPath === '~' ? file.name :
+                         currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`
+
+        const result = await client.run_command(`tee "${targetPath}"`, BinaryIterator(uint8Array))
+
+        if (result.command_result === 0) {
+          addNotification(`Successfully uploaded ${file.name}`, 'success')
+        } else {
+          addNotification(`Failed to upload ${file.name}: ${result.error}`, 'error')
+        }
+      }
+
+      // Refresh the directory listing
+      await loadDirectory()
+    } catch (err) {
+      console.error('Upload error:', err)
+      addNotification(`Upload failed: ${err.message}`, 'error')
+    } finally {
+      setUploading(false)
+      // Clear the input
+      event.target.value = ''
+    }
+  }
+
+  const handleDownload = async (file) => {
+    if (!client || !file) return
+
+    try {
+      const filePath = currentPath === '.' || currentPath === '~' ? file.name :
+                     currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`
+
+      const result = await client.run_command(`cat -n "${filePath}" | base64`)
+
+      if (result.command_result === 0) {
+        // Decode base64 and create download
+        const base64Data = result.output.trim()
+        const binaryString = atob(base64Data)
+        const bytes = new Uint8Array(binaryString.length)
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i)
+        }
+
+        const blob = new Blob([bytes])
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = file.name
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+
+        addNotification(`Downloaded ${file.name}`, 'success')
+      } else {
+        addNotification(`Failed to download ${file.name}: ${result.error}`, 'error')
+      }
+    } catch (err) {
+      console.error('Download error:', err)
+      addNotification(`Download failed: ${err.message}`, 'error')
     }
   }
 
@@ -431,7 +523,7 @@ function FileExplorerApp({ instanceData }) {
   }
 
   return (
-    <div ref={containerRef} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div ref={containerRef} style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div style={{
         padding: '8px',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
@@ -523,6 +615,26 @@ function FileExplorerApp({ instanceData }) {
         }}>
           {getDisplayPath(currentPath)}
         </div>
+        <button
+          onClick={handleUploadClick}
+          disabled={uploading}
+          style={{
+            background: 'rgba(255, 215, 0, 0.1)',
+            border: '1px solid rgba(255, 215, 0, 0.3)',
+            color: '#FFD700',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            cursor: uploading ? 'not-allowed' : 'pointer',
+            opacity: uploading ? 0.5 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}
+          title="Upload files"
+        >
+          {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+          <span style={{ fontSize: '12px' }}>Upload</span>
+        </button>
         {loading && <Loader2 size={16} className="animate-spin" style={{ color: '#FFD700' }} />}
       </div>
 
@@ -736,6 +848,7 @@ function FileExplorerApp({ instanceData }) {
                 <div
                   key={file.name}
                   onClick={() => handleFileClick(file)}
+                  onContextMenu={(e) => handleFileRightClick(e, file)}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -802,6 +915,16 @@ function FileExplorerApp({ instanceData }) {
           )}
         </div>
       </div>
+
+      {/* Hidden file input for uploads */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        style={{ display: 'none' }}
+        onChange={handleFileUpload}
+      />
+
     </div>
   )
 }
