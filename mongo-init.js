@@ -53,20 +53,28 @@ db.createCollection("vfs", {
         },
 
         entries: {
-          bsonType: "array",
-          items: {
-            bsonType: "object",
-            required: [ "name", "ref_id" ],
-            properties: {
-              name: { bsonType: "string", description: "Name of the file or directory" },
-              ref_id: { bsonType: "objectId", description: "Reference to the FsEntry document" },
+          anyOf: [
+            {
+              bsonType: "array",
+              items: {
+                bsonType: "object",
+                required: [ "name", "ref_id" ],
+                properties: {
+                  name: { bsonType: "string", description: "Name of the file or directory" },
+                  ref_id: { bsonType: "objectId", description: "Reference to the FsEntry document" },
+                },
+              },
             },
-          },
+            { bsonType: "null"}
+          ],
           description: "Directory entries (array of references to child FsEntry documents) - only for directories",
         },
 
         file_ref: {
-          bsonType: "objectId",
+          anyOf: [
+            { bsonType: "objectId" },
+            { bsonType: "null" },
+          ],
           description: "GridFS file reference (only for files, not directories)",
         },
       },
