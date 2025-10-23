@@ -241,7 +241,7 @@ export default function UsersApp() {
                 const isSaved = savedUsers[userKey];
 
                 const isDisabled = user.disabled === true;
-                const statusText = isDisabled ? "Disabled" : "Active";
+                const statusText = isDisabled ? "Deactivated" : "Active";
 
                 return (
                   <tr key={user.id || user.localId || `user-${i}`}>

@@ -122,10 +122,9 @@ export default function UserPermissionsApp({ instanceData }) {
     }
   };
 
-  //TODO add backend updated get_users helper here:
   // Disable user — delete signup file
   const handleDisable = async () => {
-    if (!confirm("Are you sure you want to disable this user?")) return;
+    if (!confirm("Are you sure you want to deactivate this user?")) return;
     try {
       const result = await client.run_command(
         `rm "/etc/passwd/${username}.signup"`
@@ -136,13 +135,14 @@ export default function UserPermissionsApp({ instanceData }) {
         result.error.includes("file does not exist")
       ) {
         setDisabled(true);
-        setNotification(`User ${username} has been disabled.`);
+        instanceData.user.disabled = true; // refresh status in parent
+        setNotification(`User ${username} has been deactivated.`);
       } else {
-        throw new Error(result.error || "Failed to disable user");
+        throw new Error(result.error || "Failed to deactivate user");
       }
     } catch (err) {
-      console.error("Disable error:", err);
-      setNotification("Failed to disable user.");
+      console.error("Deactivate error:", err);
+      setNotification("Failed to deactivate user.");
     } finally {
       setTimeout(() => setNotification(""), 3000);
     }
@@ -224,7 +224,7 @@ export default function UserPermissionsApp({ instanceData }) {
                       <li
                         key={t}
                         onClick={() => {
-                          if (!alreadyHas) handleAddTag(t); // ✅ directly pass tag to add
+                          if (!alreadyHas) handleAddTag(t); // directly pass tag to add
                         }}
                         className={alreadyHas ? "tag-disabled" : ""}
                       >
@@ -262,7 +262,7 @@ export default function UserPermissionsApp({ instanceData }) {
           onClick={!disabled ? handleDisable : undefined}
           disabled={disabled}
         >
-          {disabled ? "User Disabled" : "Disable User"}
+          {disabled ? "User Deactivated" : "Deactivate User"}
         </button>
       </div>
     </div>

@@ -13,20 +13,21 @@ import { usePipeClient, StringIterator } from "../../api/socket";
 import { useSystem } from "../useSystem";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { parse } from "yaml";
 import "../../styles/apps/app-base.css";
 import "../../styles/utilities/tables.css";
 import "../../styles/utilities/pills.css";
 import "../../styles/apps/flights-report.css";
 
-export default function FlightReport({ instanceData }) {
+export default function FlightsReport({ instanceData }) {
   const client = usePipeClient();
-  const { addNotification } = useSystem();
+  const { addNotification, systemState } = useSystem();
   const flight = instanceData?.flight;
-
   const [sensorData, setSensorData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  //TODO - change to use helper/function from backend, not Mqtt data.
   // Fetch sensor/telemetry data for the flight (edge-node = tail number)
   useEffect(() => {
     if (!client || !flight) return;
@@ -36,15 +37,50 @@ export default function FlightReport({ instanceData }) {
         setLoading(true);
         setError(null);
 
-        const node = flight.tail_number || flight.flight_number;
-        const cmd = await client.run_command(`telemetry "${node}"`);
+        const node =
+          flight.edge_id || flight.tail_number || flight.flight_number;
 
-        if (cmd.command_result !== 0)
-          throw new Error(cmd.error || "Failed to fetch telemetry data");
+        const fluxQuery = `
+  import "influxdata/influxdb/schema"
+  from(bucket: "telegraf")
+    |> range(start: 0)
+    |> filter(fn: (r) => 
+      r._measurement == "mqtt_consumer" and
+      r.flight_id == "${flight.flight_number}" and
+      (
+        r._field == "heart_rate" or
+        r._field == "blink_rate" or
+        r._field == "cabin_temp" or
+        r._field == "oxygen_level"
+      )
+    )
+    |> keep(columns: ["_time", "_field", "_value"])
+    |> sort(columns: ["_time"])
+`;
 
-        const parsed = JSON.parse(cmd.output || "[]");
-        console.log("Loaded telemetry data:", parsed);
-        setSensorData(parsed);
+        const cmd = await client.run_command("flux", StringIterator(fluxQuery));
+        //const cmd = await client.run_command(`flux query '${fluxQuery}'`);
+
+        if (cmd.command_result !== 0) {
+          throw new Error(
+            cmd.error || "Failed to fetch telemetry data from Flux"
+          );
+        }
+
+        // Parse YAML from backend
+        const fluxEntries = parse(cmd.output || "[]");
+
+        // Transform Flux data into chart-ready format
+        const grouped = {};
+        for (const entry of fluxEntries) {
+          const t = new Date(entry._time).toLocaleTimeString();
+          if (!grouped[t]) grouped[t] = { timestamp: t };
+          grouped[t][entry._field] = entry._value;
+        }
+
+        const formattedData = Object.values(grouped);
+        console.log("Loaded telemetry data:", formattedData);
+        setSensorData(formattedData);
       } catch (err) {
         console.error("Telemetry fetch error:", err);
         setError("Unable to load flight telemetry data.");
@@ -78,38 +114,55 @@ export default function FlightReport({ instanceData }) {
         format: "a4",
       });
 
-      // Add CogniFlight logo
+      // --- Logo + Title Header ---
       const logo = new Image();
-      logo.src = "/logo_full.png"; // Adjust if your logo is in a different folder
-      await new Promise((resolve) => {
-        logo.onload = resolve;
-      });
-      pdf.addImage(logo, "PNG", 15, 10, 30, 12);
+      logo.src = "/logo_full.png";
+      await new Promise((resolve) => (logo.onload = resolve));
 
-      // Report title
+      // maintain logo aspect ratio
+      const maxLogoHeight = 20; // slightly taller logo looks balanced
+      const aspectRatio = logo.width / logo.height;
+      const logoHeight = maxLogoHeight;
+      const logoWidth = logoHeight * aspectRatio;
+
+      // draw logo top-left
+      pdf.addImage(logo, "PNG", 15, 12, logoWidth, logoHeight);
+
+      // now align the title **vertically centered** with the logo
+      const titleY = 12 + logoHeight / 2 + 4; // 4px tweak centers nicely
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(18);
-      pdf.text("Flight Report", 50, 20);
+      pdf.text("Flight Report", 15 + logoWidth + 10, titleY);
+
+      // draw line under header
+      pdf.setLineWidth(0.3);
+      pdf.line(15, 12 + logoHeight + 8, 195, 12 + logoHeight + 8);
 
       // Flight info
+      // adjust start Y for details to appear below the line
+      let y = 12 + logoHeight + 18;
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(12);
-      pdf.text(`Flight Number: ${flight.flight_number || "-"}`, 15, 35);
-      pdf.text(`Pilot: ${flight.pilot || "-"}`, 15, 42);
-      pdf.text(`Tail Number (Edge Node): ${flight.tail_number || "-"}`, 15, 49);
+      pdf.text(`Flight Number: ${flight.flight_number || "-"}`, 15, y);
+      y += 7;
+      pdf.text(`Pilot: ${flight.pilot || "-"}`, 15, y);
+      y += 7;
+      pdf.text(`Tail Number (Edge Node): ${flight.tail_number || "-"}`, 15, y);
+      y += 7;
       pdf.text(
         `Origin: ${flight.origin || "-"} → Destination: ${
           flight.destination || "-"
         }`,
         15,
-        56
+        y
       );
+      y += 7;
       pdf.text(
         `Departure: ${flight.departure_time || "-"}   Arrival: ${
           flight.arrival_time || "-"
         }`,
         15,
-        63
+        y
       );
 
       // Insert captured chart image
@@ -128,7 +181,12 @@ export default function FlightReport({ instanceData }) {
       // Backend save path
       const safeFlightNo =
         flight.flight_number?.replace(/[^a-zA-Z0-9_-]/g, "_") || "Flight";
-      const filePath = `/home/Documents/FlightData/${safeFlightNo}_FlightReport.pdf`;
+      const username = systemState?.userProfile?.username || "unknown";
+      const dirPath = `/home/${username}/FlightData`;
+      const filePath = `${dirPath}/${safeFlightNo}_FlightReport.pdf`;
+
+      // ensure directory exists
+      await client.run_command(`mkdir -p "${dirPath}"`);
 
       // Save via socket client
       const result = await client.run_command(

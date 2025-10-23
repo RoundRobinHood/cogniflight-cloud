@@ -25,7 +25,10 @@ const loadComponent = (componentName) => {
     UserPermissionsApp: () =>
       import("../components/apps/UserPermissionsApp.jsx"),
     FlightsApp: () => import("../components/apps/FlightsApp.jsx"),
-    EdgeNodeDashboardApp: () => import("../components/apps/EdgeNodeDashboardApp"),
+    FlightsReport: () => import("../components/apps/FlightsReport.jsx"),
+
+    EdgeNodeDashboardApp: () =>
+      import("../components/apps/EdgeNodeDashboardApp"),
   };
   return components[componentName];
 };
@@ -162,6 +165,18 @@ class AppRegistry {
         systemState.userProfile.role === "sysadmin" ||
         systemState.userProfile.role === "atc",
       //|| systemState.userProfile.role==="data-analyst"
+    });
+
+    this.register({
+      id: "flight-report",
+      label: "Flight Report",
+      icon: FileText,
+      color: "#228be6",
+      component: "FlightsReport",
+      defaultTitle: "Flight Report",
+      defaultSize: { width: 800, height: 600 },
+      // Hidden from desktop icons, only opened from FlightsApp
+      visibleWhen: () => false,
     });
 
     this.register({
