@@ -18,7 +18,7 @@ src/styles/
 │   ├── context-menu.css   # Context menu component styles
 │   ├── desktop.css        # Desktop environment and icon styles
 │   ├── dialogs.css        # Dialog and modal component styles
-│   ├── fatcon.css         # FATCON widget component styles
+│   ├── edge-nodes.css     # Edge nodes widget component styles
 │   ├── login.css          # Login screen component styles
 │   ├── notifications.css  # Notification panel and toast styles
 │   ├── start-menu.css     # Start menu component styles
@@ -74,7 +74,7 @@ All styles from the original `index.css` (1626 lines) have been successfully mig
 - ✅ Notification system
 - ✅ Context menus
 - ✅ Dialog components
-- ✅ FATCON widget
+- ✅ Edge nodes widget
 - ✅ All animations and transitions
 - ✅ Responsive design rules
 - ✅ Accessibility improvements
