@@ -9,7 +9,7 @@ The Cogniflight Cloud project was successfully delivered through strategic task 
 ### Leadership & Coordination
 
 **Jeremia Fourie** - Product Owner
-- Architected the overall system design and Service-Oriented Architecture
+- Architected the overall system design and Service-Oriented Architecture in close collaboration with Brian
 - Defined UI/UX requirements and user experience specifications
 - Worked closely with Brian to coordinate backend development and manage the team
 - Ensured system met deadlines and quality standards
@@ -69,10 +69,8 @@ The Cogniflight Cloud project was successfully delivered through strategic task 
 - **Key Contributions**:
   - Implemented InsightFace integration for 512-dimensional face embeddings
   - Built face detection with configurable confidence thresholds
-  - Integrated MongoDB GridFS for storing face embeddings
   - Created the `generate_face_embedding` RPC method for Settings app profile photo uploads
   - Developed embedding normalization and validation logic
-  - Enabled seamless face authentication on edge nodes via cloud-stored embeddings
 
 **Janco Nieuwoudt** - ML Engine Developer (Telemetry Analysis)
 - **Primary Responsibilities**: ML reasoning model, MQTT data analysis, fatigue detection insights
@@ -101,12 +99,10 @@ Development proceeded in parallel across three specialized tracks:
 **Frontend Track** (Susanna & Jayden):
 - Susanna focused on user/pilot/flight management applications
 - Jayden concentrated on real-time dashboard and visualizations
-- Both worked from Jeremia's UI/UX requirements
 
 **ML Track** (Jeremy & Janco):
 - Jeremy developed face embedding functionality
 - Janco created telemetry analysis and reasoning model
-- Both integrated with Brian's backend infrastructure
 
 ### Integration Phase
 **Brian** ensured smooth integrations across all services:
@@ -138,7 +134,6 @@ Team focused on polish, bug fixes, and production readiness with **Jason** manag
 **ML-Backend Integration**
 - Brian designed Unix socket integration allowing independent ML development
 - Jeremy and Janco developed RPC methods against Brian's infrastructure
-- Clear contracts enabled parallel development without blocking
 - Brian assisted ML developers with integration challenges
 
 **Leadership Coordination**
@@ -182,7 +177,7 @@ Jason's role in the middle was crucial for:
 - Close coordination between Jeremia and Brian ensured technical coherence
 
 **Areas for Improvement**:
-- Earlier integration testing could have caught compatibility issues sooner
+- More explicit communication and requirements could have reduced code incompatibility
 - More upfront documentation could have reduced developer questions
 - Better visibility into cross-team dependencies during planning
 
