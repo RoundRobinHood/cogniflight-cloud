@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/sh"
 )
 
@@ -25,8 +27,21 @@ func (c *CmdCat) Run(ctx sh.CommandContext) int {
 		fmt.Fprint(ctx.Stderr, "error: no PWD available")
 		return 1
 	}
+
 	if len(ctx.Args) > 1 {
-		files := ctx.Args[1:]
+		opts, paths, err := util.ParseArgs([]types.OptionDescriptor{
+			{
+				Identifier: "no-newline",
+				Aliases:    []string{"n"},
+				Default:    false,
+			},
+		}, ctx.Args[1:])
+		if err != nil {
+			fmt.Fprint(ctx.Stderr, err)
+			return 1
+		}
+		files := paths
+		noNewline := opts["no-newline"].(bool)
 		for i, filepath := range files {
 			abs_path, err := filesystem.AbsPath(cwd, filepath)
 			if err != nil {
@@ -47,7 +62,9 @@ func (c *CmdCat) Run(ctx sh.CommandContext) int {
 				reader.Close()
 			}
 
-			fmt.Fprint(ctx.Stdout, "\r\n")
+			if !noNewline {
+				fmt.Fprint(ctx.Stdout, "\r\n")
+			}
 		}
 		return 0
 	}
