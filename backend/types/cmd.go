@@ -2,7 +2,6 @@ package types
 
 import (
 	"context"
-	"sync"
 )
 
 type MessageType string
@@ -15,10 +14,11 @@ const (
 	MsgDisconnectAck MessageType = "disconnect_acknowledged"
 
 	// Command passing
-	MsgRunCommand      MessageType = "run_command"
-	MsgCommandRunning  MessageType = "command_running"
-	MsgCommandFinished MessageType = "command_finished"
-	MsgSetEnv          MessageType = "set_env"
+	MsgRunCommand       MessageType = "run_command"
+	MsgCommandRunning   MessageType = "command_running"
+	MsgCommandInterrupt MessageType = "command_interrupt"
+	MsgCommandFinished  MessageType = "command_finished"
+	MsgSetEnv           MessageType = "set_env"
 
 	// Stdout
 	MsgOutputStream MessageType = "output_stream"
@@ -75,7 +75,19 @@ type Client struct {
 }
 
 type ClientInfo struct {
-	Client         Client
-	Ctx            context.Context
-	InputWaitGroup *sync.WaitGroup
+	Client       Client
+	Ctx          context.Context
+	ClientHandle ClientHandle
+}
+
+type OptionDescriptor struct {
+	// Identifier is the back-end name for the option
+	Identifier string
+
+	// Aliases should not include dashes. If len() = 1, it's a single-dash flag.
+	// If len() > 1, it's a double-dash flag
+	Aliases []string
+
+	// If Default is true/false, the option is a flag. If it's a string, the option takes a parameter
+	Default any
 }

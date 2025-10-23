@@ -1,15 +1,15 @@
 import { useState } from 'react'
 import { Bell, PinOff } from 'lucide-react'
 import { useSystem } from './useSystem'
-import FatconWidget from './FatconWidget'
+import EdgeNodesWidget from './EdgeNodesWidget'
 import StartMenu from './StartMenu'
 import appRegistry from '../config/appRegistry'
 
 function Taskbar({ windows, onWindowClick, onOpenApp }) {
-  const { systemState, showNotifications, setShowNotifications, removeFromTaskbar, showContextMenu, showFatconAlert } = useSystem()
+  const { systemState, showNotifications, setShowNotifications, removeFromTaskbar, showContextMenu } = useSystem()
   const [showStartMenu, setShowStartMenu] = useState(false)
   
-  const allApps = appRegistry.getAllApps()
+  const allApps = appRegistry.getAllApps(systemState)
 
   // Get apps that are pinned to taskbar
   const pinnedApps = allApps.filter(app => systemState.pinnedToTaskbar.includes(app.id))
@@ -44,15 +44,16 @@ function Taskbar({ windows, onWindowClick, onOpenApp }) {
     ]
   }
 
-  const handleFatconLevelChange = (newLevel, previousLevel, levelData) => {
-    showFatconAlert(levelData, previousLevel, newLevel)
+  const handleEdgeNodesClick = () => {
+    // Open the Edge Node Dashboard app
+    onOpenApp('edgenodedashboard')
   }
 
   return (
     <div className="taskbar">
-      {/* Left side - FATCON Widget */}
+      {/* Left side - Edge Nodes Widget */}
       <div className="taskbar-left">
-        <FatconWidget onLevelChange={handleFatconLevelChange} />
+        <EdgeNodesWidget onClick={handleEdgeNodesClick} />
       </div>
 
       {/* Center - Start Button + Apps */}

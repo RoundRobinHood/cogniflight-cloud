@@ -1,0 +1,37 @@
+.flights-app .flights-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.flights-app .flights-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.flights-search-field {
+  display: flex;
+  align-items: center;
+  background: var(--input-bg, #1e1e1e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 6px;
+  padding: 4px 8px;
+  width: 320px;
+}
+
+.flights-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-color, #fff);
+  font-size: 0.95rem;
+  padding-left: 6px;
+}
+
+.flights-app .app-content {
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  padding-bottom: 1rem;
+}

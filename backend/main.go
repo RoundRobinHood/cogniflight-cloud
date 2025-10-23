@@ -12,8 +12,11 @@ import (
 	"time"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
 	"github.com/sourcegraph/jsonrpc2"
@@ -33,6 +36,11 @@ func main() {
 		log.Fatalf("MongoDB init failed: %v", err)
 	}
 
+	openAIKey := os.Getenv("OPENAI_API_KEY")
+	if openAIKey == "" {
+		log.Fatal("Missing OpenAI key")
+	}
+
 	database := client.Database("cogniflight")
 	bucket, err := gridfs.NewBucket(database)
 	if err != nil {
@@ -40,6 +48,7 @@ func main() {
 	}
 
 	fileStore := filesystem.Store{Col: database.Collection("vfs"), Bucket: bucket}
+	sessionStore := types.NewSessionStore()
 
 	go func() {
 		for {
@@ -94,8 +103,13 @@ func main() {
 		}
 	}
 
+	ctx, cancel = context.WithCancel(context.Background())
+	defer cancel()
+
+	mqttEvents := ListenMQTT(ctx)
+
 	stream := jsonrpc2.NewPlainObjectStream(conn)
-	_ = jsonrpc2.NewConn(context.Background(), stream, nil)
+	jsonConn := jsonrpc2.NewConn(context.Background(), stream, nil)
 
 	r := gin.New()
 	r.SetTrustedProxies(strings.Split(os.Getenv("TRUSTED_PROXIES"), ","))
@@ -107,7 +121,11 @@ func main() {
 	r.GET("/signup/check-username/:username", auth.SignupCheckUsername(fileStore))
 	r.POST("/signup", auth.Signup(fileStore))
 	r.POST("/login", auth.Login(fileStore))
-	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore))
+	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore, sessionStore, chatbot.APIKey(openAIKey), jsonConn, mqttEvents, &influx.InfluxDBConfig{
+		URL:   os.Getenv("INFLUX_URL"),
+		Token: os.Getenv("INFLUX_TOKEN"),
+		Org:   os.Getenv("INFLUX_ORG"),
+	}))
 
 	server := &http.Server{
 		Addr:    ":8080",
@@ -128,6 +146,7 @@ func main() {
 	}
 
 	<-quit
+	cancel()
 	if gin.Mode() == gin.DebugMode {
 		fmt.Println("Shutting down server...")
 	}

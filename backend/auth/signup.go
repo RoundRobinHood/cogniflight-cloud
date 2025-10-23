@@ -163,6 +163,7 @@ func Signup(filestore filesystem.Store) gin.HandlerFunc {
 		// Beyond this point, the person is authenticated as "desiring to signup with these tags"
 		owner_tag := fmt.Sprintf("user-%s", req.Username)
 		user_tags := append(SignupFile.Tags, owner_tag)
+		user_tags = append(user_tags, SignupFile.Tags...)
 		var home_permissions types.FsEntryPermissions
 		if SignupFile.HomePermissions == nil {
 			home_permissions = types.FsEntryPermissions{
@@ -173,6 +174,10 @@ func Signup(filestore filesystem.Store) gin.HandlerFunc {
 			}
 		} else {
 			home_permissions = *SignupFile.HomePermissions
+			home_permissions.ReadTags = append(home_permissions.ReadTags, owner_tag)
+			home_permissions.WriteTags = append(home_permissions.WriteTags, owner_tag)
+			home_permissions.ExecuteTags = append(home_permissions.ExecuteTags, owner_tag)
+			home_permissions.UpdatePermissionTags = append(home_permissions.UpdatePermissionTags, owner_tag)
 		}
 		passwd_path, err := filesystem.AbsPath("/etc/passwd", req.Username+".login")
 		if err != nil {
@@ -217,14 +222,14 @@ func Signup(filestore filesystem.Store) gin.HandlerFunc {
 			c.Status(409)
 			return
 		}
-		if _, ok := passwd_folder.Entries.Get(req.Username); ok {
+		if _, ok := passwd_folder.Entries.Get(req.Username + ".login"); ok {
 			c.Status(409)
 			return
 		}
 
 		loginFile := types.CredentialsEntry{
 			Password: password_hash,
-			Tags:     SignupFile.Tags,
+			Tags:     user_tags,
 		}
 		login_bytes, err := util.YamlCRLF(loginFile)
 		if err != nil {

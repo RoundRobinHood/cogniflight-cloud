@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { Camera, CameraOff, Download, RotateCcw } from 'lucide-react'
-import { usePipeClient, StringIterator } from '../../api/socket'
+import { Camera, RotateCcw, Image as ImageIcon } from 'lucide-react'
+import { usePipeClient, StringIterator, BinaryIterator } from '../../api/socket'
 import { useSystem } from '../useSystem'
 
 function CameraApp({ windowId }) {
@@ -9,59 +9,55 @@ function CameraApp({ windowId }) {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const [stream, setStream] = useState(null)
-  const [isCameraOn, setIsCameraOn] = useState(false)
   const [capturedImage, setCapturedImage] = useState(null)
+  const [fileName, setFileName] = useState('')
+  const [showFileNamePrompt, setShowFileNamePrompt] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [deviceId, setDeviceId] = useState(null)
-  const [devices, setDevices] = useState([])
+  const [savedPhotos, setSavedPhotos] = useState([])
+  const [showGallery, setShowGallery] = useState(false)
+  const [selectedPhoto, setSelectedPhoto] = useState(null)
 
-  // Get available camera devices
+  // Auto-start camera on mount
   useEffect(() => {
-    const getCameras = async () => {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices()
-        const videoDevices = devices.filter(device => device.kind === 'videoinput')
-        setDevices(videoDevices)
-        if (videoDevices.length > 0 && !deviceId) {
-          setDeviceId(videoDevices[0].deviceId)
-        }
-      } catch (err) {
-        console.error('Error enumerating devices:', err)
+    startCamera()
+
+    // Cleanup on unmount
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop())
       }
     }
-    getCameras()
   }, [])
 
-  // Start camera
+  // Load existing photos on mount
+  useEffect(() => {
+    if (client) {
+      loadPhotos()
+    }
+  }, [client])
+
+  // Re-attach stream to video element when it becomes visible again
+  useEffect(() => {
+    if (!capturedImage && stream && videoRef.current) {
+      videoRef.current.srcObject = stream
+    }
+  }, [capturedImage, stream])
+
+  // Start camera automatically
   const startCamera = async () => {
     try {
-      const constraints = {
-        video: deviceId ? { deviceId: { exact: deviceId } } : true,
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
         audio: false
-      }
-
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
+      })
       setStream(mediaStream)
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
       }
-
-      setIsCameraOn(true)
-      addNotification('Camera started', 'success')
     } catch (err) {
       console.error('Error accessing camera:', err)
-      addNotification('Failed to access camera', 'error')
-    }
-  }
-
-  // Stop camera
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop())
-      setStream(null)
-      setIsCameraOn(false)
-      addNotification('Camera stopped', 'info')
+      addNotification('Failed to access camera. Please grant camera permissions.', 'error')
     }
   }
 
@@ -84,12 +80,15 @@ function CameraApp({ windowId }) {
     const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9)
     setCapturedImage(imageDataUrl)
 
-    addNotification('Photo captured', 'success')
+    // Generate default filename with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    setFileName(`photo_${timestamp}.jpg`)
+    setShowFileNamePrompt(true)
   }
 
   // Save photo to file system
   const savePhoto = async () => {
-    if (!capturedImage || !client) return
+    if (!capturedImage || !client || !fileName.trim()) return
 
     try {
       setIsSaving(true)
@@ -104,22 +103,29 @@ function CameraApp({ windowId }) {
         bytes[i] = binaryString.charCodeAt(i)
       }
 
-      // Convert binary data to string for piping to tee
-      const binaryStr = String.fromCharCode.apply(null, bytes)
-
-      // Generate filename with timestamp
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-      const filename = `photo_${timestamp}.jpg`
+      // Ensure .jpg extension
+      const finalFileName = fileName.endsWith('.jpg') ? fileName : `${fileName}.jpg`
 
       // Save using tee command - pipe binary data directly into tee
+      // Use BinaryIterator to send raw bytes without UTF-8 encoding
       const result = await client.run_command(
-        `tee ~/${filename}`,
-        StringIterator(binaryStr)
+        `tee ~/${finalFileName}`,
+        BinaryIterator(bytes)
       )
 
       if (result.command_result === 0) {
-        addNotification(`Photo saved as ${filename}`, 'success')
-        setCapturedImage(null) // Clear captured image after saving
+        addNotification(`Photo saved as ${finalFileName}`, 'success')
+
+        // Add to saved photos list with the base64 data
+        setSavedPhotos(prev => [...prev, {
+          filename: finalFileName,
+          data: capturedImage,
+          timestamp: new Date().toISOString()
+        }])
+
+        setCapturedImage(null)
+        setShowFileNamePrompt(false)
+        setFileName('')
       } else {
         addNotification('Failed to save photo', 'error')
         console.error('Save error:', result.error)
@@ -132,31 +138,60 @@ function CameraApp({ windowId }) {
     }
   }
 
-  // Download photo locally
-  const downloadPhoto = () => {
-    if (!capturedImage) return
+  // Load saved photos from filesystem
+  const loadPhotos = async () => {
+    if (!client) return
 
-    const link = document.createElement('a')
-    link.href = capturedImage
-    link.download = `photo_${new Date().toISOString()}.jpg`
-    link.click()
+    try {
+      // List all .jpg files in home directory
+      const result = await client.run_command(
+        `ls ~/*.jpg 2>/dev/null || true`,
+        StringIterator('')
+      )
 
-    addNotification('Photo downloaded', 'success')
+      if (result.command_result === 0 && result.output.trim()) {
+        const files = result.output.trim().split('\n').filter(f => f)
+
+        // Load each photo
+        const photos = []
+        for (const filepath of files) {
+          const filename = filepath.split('/').pop()
+          const readResult = await client.run_command(
+            `cat ${filepath}`,
+            StringIterator('')
+          )
+
+          if (readResult.command_result === 0 && readResult.output) {
+            // Convert binary output to base64
+            const base64 = btoa(readResult.output)
+            photos.push({
+              filename,
+              data: `data:image/jpeg;base64,${base64}`,
+              timestamp: new Date().toISOString()
+            })
+          }
+        }
+
+        setSavedPhotos(photos)
+      }
+    } catch (err) {
+      console.error('Error loading photos:', err)
+    }
   }
 
   // Retake photo
   const retakePhoto = () => {
     setCapturedImage(null)
+    setShowFileNamePrompt(false)
+    setFileName('')
   }
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop())
-      }
+  // Handle Enter key to save
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && fileName.trim() && !isSaving) {
+      savePhoto()
     }
-  }, [stream])
+  }
 
   return (
     <div style={{
@@ -166,222 +201,309 @@ function CameraApp({ windowId }) {
       background: 'var(--glass-bg-dark)',
       color: 'var(--text-primary)'
     }}>
-      {/* Toolbar */}
-      <div style={{
-        padding: '12px',
-        borderBottom: '1px solid var(--glass-border)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        background: 'rgba(255, 255, 255, 0.05)'
-      }}>
-        {!isCameraOn ? (
-          <button
-            onClick={startCamera}
-            style={{
-              padding: '8px 16px',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'var(--color-primary)',
-              border: 'none',
-              borderRadius: '4px',
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            <Camera size={16} />
-            Start Camera
-          </button>
-        ) : (
-          <button
-            onClick={stopCamera}
-            style={{
-              padding: '8px 16px',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'var(--color-accent-red)',
-              border: 'none',
-              borderRadius: '4px',
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            <CameraOff size={16} />
-            Stop Camera
-          </button>
-        )}
-
-        {devices.length > 1 && (
-          <select
-            value={deviceId || ''}
-            onChange={(e) => {
-              setDeviceId(e.target.value)
-              if (isCameraOn) {
-                stopCamera()
-                setTimeout(() => startCamera(), 100)
-              }
-            }}
-            style={{
-              padding: '8px',
-              background: 'var(--glass-bg-light)',
-              border: '1px solid var(--glass-border)',
-              borderRadius: '4px',
-              color: 'var(--text-primary)',
-              fontSize: '14px'
-            }}
-          >
-            {devices.map((device, idx) => (
-              <option key={device.deviceId} value={device.deviceId}>
-                {device.label || `Camera ${idx + 1}`}
-              </option>
-            ))}
-          </select>
-        )}
-
-        {isCameraOn && !capturedImage && (
-          <button
-            onClick={capturePhoto}
-            style={{
-              padding: '8px 16px',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'var(--color-accent-green)',
-              border: 'none',
-              borderRadius: '4px',
-              color: 'white',
-              cursor: 'pointer',
-              marginLeft: 'auto'
-            }}
-          >
-            <Camera size={16} />
-            Capture Photo
-          </button>
-        )}
-      </div>
-
       {/* Camera view / Preview area */}
       <div style={{
         flex: 1,
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'stretch',
         justifyContent: 'center',
         background: '#000',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        minHeight: 0
       }}>
         {!capturedImage ? (
-          <>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                display: isCameraOn ? 'block' : 'none'
-              }}
-            />
-            {!isCameraOn && (
-              <div style={{
-                textAlign: 'center',
-                color: 'var(--text-tertiary)'
-              }}>
-                <Camera size={64} style={{ marginBottom: '16px' }} />
-                <p>Click "Start Camera" to begin</p>
-              </div>
-            )}
-          </>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block'
+            }}
+          />
         ) : (
           <img
             src={capturedImage}
             alt="Captured"
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain'
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
             }}
           />
+        )}
+
+        {/* Capture button overlay at bottom center */}
+        {!capturedImage && !showGallery && (
+          <div style={{
+            position: 'absolute',
+            bottom: '32px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10
+          }}>
+            <button
+              onClick={capturePhoto}
+              style={{
+                width: '70px',
+                height: '70px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'white',
+                border: '5px solid var(--color-accent-green)',
+                borderRadius: '50%',
+                color: 'var(--color-accent-green)',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.6)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.1)'
+                e.currentTarget.style.background = 'var(--color-accent-green)'
+                e.currentTarget.style.color = 'white'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)'
+                e.currentTarget.style.background = 'white'
+                e.currentTarget.style.color = 'var(--color-accent-green)'
+              }}
+            >
+              <Camera size={32} />
+            </button>
+          </div>
+        )}
+
+        {/* Gallery button overlay at bottom right */}
+        {!capturedImage && savedPhotos.length > 0 && !showGallery && (
+          <div style={{
+            position: 'absolute',
+            bottom: '32px',
+            right: '32px',
+            zIndex: 10
+          }}>
+            <button
+              onClick={() => setShowGallery(true)}
+              style={{
+                width: '50px',
+                height: '50px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255, 255, 255, 0.9)',
+                border: 'none',
+                borderRadius: '8px',
+                color: 'var(--color-primary)',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.6)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'white'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)'}
+            >
+              <ImageIcon size={24} />
+            </button>
+          </div>
+        )}
+
+        {/* Gallery view */}
+        {showGallery && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.95)',
+            zIndex: 20,
+            overflow: 'auto',
+            padding: '16px'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <h3 style={{ margin: 0, color: 'white' }}>Saved Photos ({savedPhotos.length})</h3>
+              <button
+                onClick={() => {
+                  setShowGallery(false)
+                  setSelectedPhoto(null)
+                }}
+                style={{
+                  padding: '8px 16px',
+                  background: 'var(--glass-bg-light)',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: '4px',
+                  color: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Close
+              </button>
+            </div>
+
+            {selectedPhoto ? (
+              <div>
+                <button
+                  onClick={() => setSelectedPhoto(null)}
+                  style={{
+                    padding: '8px 16px',
+                    background: 'var(--glass-bg-light)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '4px',
+                    color: 'white',
+                    cursor: 'pointer',
+                    marginBottom: '16px'
+                  }}
+                >
+                  ← Back to Gallery
+                </button>
+                <img
+                  src={selectedPhoto.data}
+                  alt={selectedPhoto.filename}
+                  style={{
+                    width: '100%',
+                    maxHeight: 'calc(100% - 80px)',
+                    objectFit: 'contain',
+                    borderRadius: '8px'
+                  }}
+                />
+                <p style={{ color: 'white', marginTop: '8px', textAlign: 'center' }}>
+                  {selectedPhoto.filename}
+                </p>
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                gap: '16px'
+              }}>
+                {savedPhotos.map((photo, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedPhoto(photo)}
+                    style={{
+                      cursor: 'pointer',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      aspectRatio: '1',
+                      background: 'var(--glass-bg-light)',
+                      transition: 'transform 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    <img
+                      src={photo.data}
+                      alt={photo.filename}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         <canvas ref={canvasRef} style={{ display: 'none' }} />
       </div>
 
-      {/* Action buttons for captured image */}
-      {capturedImage && (
+      {/* File name prompt and save controls */}
+      {showFileNamePrompt && (
         <div style={{
           padding: '16px',
           borderTop: '1px solid var(--glass-border)',
           display: 'flex',
+          flexDirection: 'column',
           gap: '12px',
-          justifyContent: 'center',
           background: 'rgba(255, 255, 255, 0.05)'
         }}>
-          <button
-            onClick={savePhoto}
-            disabled={isSaving}
-            style={{
-              padding: '10px 20px',
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <label style={{
               fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'var(--color-primary)',
-              border: 'none',
-              borderRadius: '4px',
-              color: 'white',
-              cursor: isSaving ? 'not-allowed' : 'pointer',
-              opacity: isSaving ? 0.6 : 1
-            }}
-          >
-            <Camera size={16} />
-            {isSaving ? 'Saving...' : 'Save to ~/'}
-          </button>
+              color: 'var(--text-secondary)',
+              fontWeight: 'var(--font-medium)'
+            }}>
+              File name:
+            </label>
+            <input
+              type="text"
+              value={fileName}
+              onChange={(e) => setFileName(e.target.value)}
+              onKeyPress={handleKeyPress}
+              autoFocus
+              placeholder="Enter filename..."
+              style={{
+                padding: '8px 12px',
+                background: 'var(--glass-bg-light)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: '4px',
+                color: 'var(--text-primary)',
+                fontSize: '14px'
+              }}
+            />
+          </div>
 
-          <button
-            onClick={downloadPhoto}
-            style={{
-              padding: '10px 20px',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'var(--color-accent-green)',
-              border: 'none',
-              borderRadius: '4px',
-              color: 'white',
-              cursor: 'pointer'
-            }}
-          >
-            <Download size={16} />
-            Download
-          </button>
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center'
+          }}>
+            <button
+              onClick={savePhoto}
+              disabled={isSaving || !fileName.trim()}
+              style={{
+                padding: '10px 20px',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'var(--color-primary)',
+                border: 'none',
+                borderRadius: '4px',
+                color: 'white',
+                cursor: (isSaving || !fileName.trim()) ? 'not-allowed' : 'pointer',
+                opacity: (isSaving || !fileName.trim()) ? 0.6 : 1
+              }}
+            >
+              <Camera size={16} />
+              {isSaving ? 'Saving...' : 'Save'}
+            </button>
 
-          <button
-            onClick={retakePhoto}
-            style={{
-              padding: '10px 20px',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'var(--glass-bg-light)',
-              border: '1px solid var(--glass-border)',
-              borderRadius: '4px',
-              color: 'white',
-              cursor: 'pointer'
-            }}
-          >
-            <RotateCcw size={16} />
-            Retake
-          </button>
+            <button
+              onClick={retakePhoto}
+              disabled={isSaving}
+              style={{
+                padding: '10px 20px',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'var(--glass-bg-light)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: '4px',
+                color: 'white',
+                cursor: isSaving ? 'not-allowed' : 'pointer',
+                opacity: isSaving ? 0.6 : 1
+              }}
+            >
+              <RotateCcw size={16} />
+              Retake
+            </button>
+          </div>
         </div>
       )}
 
@@ -396,7 +518,7 @@ function CameraApp({ windowId }) {
         justifyContent: 'space-between'
       }}>
         <span>Window ID: {windowId}</span>
-        <span>Status: {isCameraOn ? '🟢 Camera Active' : '⚫ Camera Off'}</span>
+        <span>Status: {stream ? '🟢 Camera Active' : '⚫ Camera Off'}</span>
       </div>
     </div>
   )

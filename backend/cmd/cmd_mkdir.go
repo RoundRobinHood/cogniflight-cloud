@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"slices"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
@@ -18,8 +21,8 @@ func (*CmdMkdir) Identifier() string {
 }
 
 func (c *CmdMkdir) Run(ctx sh.CommandContext) int {
-	if len(ctx.Args) == 1 {
-		fmt.Fprint(ctx.Stderr, "Usage: mkdir <filepaths>")
+	if len(ctx.Args) == 1 || slices.Contains(ctx.Args, "-h") || slices.Contains(ctx.Args, "--help") {
+		fmt.Fprint(ctx.Stderr, "Usage: mkdir [-p] <filepaths>")
 		return 1
 	}
 	cwd, ok := ctx.Env["PWD"]
@@ -27,52 +30,41 @@ func (c *CmdMkdir) Run(ctx sh.CommandContext) int {
 		fmt.Fprint(ctx.Stderr, "error: no PWD available")
 		return 1
 	}
+	tags := util.GetTags(ctx.Ctx)
 
-	type Mkdir struct {
-		folder_path, filename string
+	opts, paths, err := util.ParseArgs([]types.OptionDescriptor{
+		{
+			Identifier: "make_parents",
+			Aliases:    []string{"p", "parents"},
+			Default:    false,
+		},
+	}, ctx.Args[1:])
+	if err != nil {
+		fmt.Fprint(ctx.Stderr, err)
+		return 1
 	}
-	mkdirs := make([]Mkdir, len(ctx.Args)-1)
+	make_parents := opts["make_parents"].(bool)
 
-	for i, path := range ctx.Args[1:] {
-		abs_path, err := filesystem.AbsPath(cwd, ctx.Args[1])
+	abs_paths := make([]string, len(paths))
+
+	for i, path := range paths {
+		abs_path, err := filesystem.AbsPath(cwd, path)
 		if err != nil {
 			fmt.Fprintf(ctx.Stderr, "error: invalid path (%q): %v", path, err)
 			return 1
 		}
-		folder_path, filename, err := filesystem.DirUp(abs_path)
-		if err != nil {
-			fmt.Fprintf(ctx.Stderr, "error doing DirUp (%q): %v", path, err)
+		abs_paths[i] = abs_path
+	}
+
+	for i, path := range abs_paths {
+		if _, err := c.FileStore.Mkdir(ctx.Ctx, path, tags, nil, make_parents); err != nil {
+			if errors.Is(err, os.ErrExist) && make_parents {
+				continue
+			}
+			fmt.Fprintf(ctx.Stderr, "error creating directory (%q, abs path %q): %v", paths[i], path, err)
 			return 1
 		}
-		mkdirs[i] = Mkdir{folder_path, filename}
 	}
 
-	tags := util.GetTags(ctx.Ctx)
-	failed := false
-	for _, mkdir := range mkdirs {
-		folder, err := c.FileStore.Lookup(ctx.Ctx, tags, mkdir.folder_path)
-		if err != nil {
-			fmt.Fprintf(ctx.Stderr, "error looking for folder (%q): %v\r\n", mkdir.folder_path, err)
-			failed = true
-			continue
-		}
-
-		if folder.EntryType != types.Directory {
-			fmt.Fprintf(ctx.Stderr, "error: %q is not a directory\r\n", mkdir.folder_path)
-			failed = true
-			continue
-		}
-
-		if _, err := c.FileStore.WriteDirectory(ctx.Ctx, folder.ID, mkdir.filename, tags, nil); err != nil {
-			fmt.Fprintf(ctx.Stderr, "error: failed to create folder: %v\r\n", err)
-			failed = true
-			continue
-		}
-	}
-
-	if failed {
-		return 1
-	} else {
-		return 0
-	}
+	return 0
 }

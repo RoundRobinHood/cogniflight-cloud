@@ -4,14 +4,15 @@ go 1.24.4
 
 require (
 	github.com/RoundRobinHood/jlogging v0.0.0-20250725150259-379944c99c8a
-	github.com/RoundRobinHood/sh v0.0.0-20251004113158-5b0cd4929d1d
+	github.com/RoundRobinHood/sh v0.0.0-20251013132529-1234ee2e18a6
+	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/gin-gonic/gin v1.10.1
 	github.com/goccy/go-yaml v1.18.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/sourcegraph/jsonrpc2 v0.2.1
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	go.mongodb.org/mongo-driver v1.17.3
-	golang.org/x/crypto v0.39.0
+	golang.org/x/crypto v0.42.0
 	golang.org/x/term v0.35.0
 	mvdan.cc/sh/v3 v3.12.0
 )
@@ -44,10 +45,10 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	golang.org/x/arch v0.18.0 // indirect
-	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

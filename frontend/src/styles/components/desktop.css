@@ -4,63 +4,100 @@
   height: 100vh;
   width: 100vw;
   position: relative;
-  background: 
-    radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a2e 40%, #000000 100%),
-    linear-gradient(45deg, #000014 0%, #000033 25%, #000000 50%, #001122 75%, #000000 100%);
+  background: radial-gradient(
+      ellipse at center,
+      #1a1a3e 0%,
+      #0a0a2e 40%,
+      #000000 100%
+    ),
+    linear-gradient(
+      45deg,
+      #000014 0%,
+      #000033 25%,
+      #000000 50%,
+      #001122 75%,
+      #000000 100%
+    );
   overflow: hidden;
 }
 
 .desktop::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: 
-    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+  background-image: radial-gradient(
+      1px 1px at 20px 30px,
+      rgba(255, 255, 255, 0.8),
+      transparent
+    ),
     radial-gradient(1px 1px at 40px 70px, rgba(255, 255, 255, 0.4), transparent),
     radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.6), transparent),
-    radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.3), transparent),
-    radial-gradient(1px 1px at 160px 30px, rgba(255, 255, 255, 0.7), transparent);
+    radial-gradient(
+      1px 1px at 130px 80px,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    ),
+    radial-gradient(
+      1px 1px at 160px 30px,
+      rgba(255, 255, 255, 0.7),
+      transparent
+    );
   background-size: 200px 150px;
   animation: desktopStars 25s linear infinite;
   pointer-events: none;
 }
 
 .desktop::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: 
-    radial-gradient(1px 1px at 50px 50px, rgba(135, 206, 255, 0.3), transparent),
-    radial-gradient(1px 1px at 100px 100px, rgba(255, 255, 255, 0.2), transparent),
-    radial-gradient(1px 1px at 150px 150px, rgba(135, 206, 255, 0.4), transparent),
-    radial-gradient(1px 1px at 200px 200px, rgba(255, 255, 255, 0.3), transparent);
+  background-image: radial-gradient(
+      1px 1px at 50px 50px,
+      rgba(135, 206, 255, 0.3),
+      transparent
+    ),
+    radial-gradient(
+      1px 1px at 100px 100px,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    ),
+    radial-gradient(
+      1px 1px at 150px 150px,
+      rgba(135, 206, 255, 0.4),
+      transparent
+    ),
+    radial-gradient(
+      1px 1px at 200px 200px,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
   background-size: 300px 250px;
   animation: desktopStars 40s linear infinite reverse;
   pointer-events: none;
 }
 
 @keyframes desktopStars {
-  0% { 
+  0% {
     transform: translateX(0) translateY(0);
     opacity: 1;
   }
-  50% { 
+  50% {
     opacity: 0.2;
   }
-  100% { 
+  100% {
     transform: translateX(-300px) translateY(-300px);
     opacity: 1;
   }
 }
 
 /* Desktop Icons Grid */
-.desktop-icons {
+/* .desktop-icons {
   position: absolute;
   top: var(--space-lg);
   left: var(--space-lg);
@@ -68,6 +105,21 @@
   grid-template-columns: repeat(auto-fit, 80px);
   gap: var(--space-lg);
   z-index: var(--z-desktop-icons);
+} */
+
+/* Updated css to ensure icons don't get cut off */
+.desktop-icons {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  height: calc(100vh - 60px); /* leave space for the taskbar */
+  padding: 16px;
+  gap: 16px;
+}
+
+.desktop-icons > * {
+  flex: 0 0 auto;
 }
 
 .desktop-icon {

@@ -11,12 +11,39 @@ import (
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/sh"
 )
 
 func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesystem.Store, wg *sync.WaitGroup) {
-	defer wg.Done()
 	defer log.Printf("[client %q] - closing", info.Client.ClientID)
+	defer info.ClientHandle.Disconnected()
+	defer wg.Done()
+
+	stdin_log := types.NewUnboundedChan[string]()
+	stdout_log := types.NewUnboundedChan[string]()
+	stderr_log := types.NewUnboundedChan[string]()
+
+	defer stdin_log.Close()
+	defer stdout_log.Close()
+	defer stderr_log.Close()
+
+	go func() {
+		for in := range stdin_log.Out() {
+			info.ClientHandle.Stdin(in)
+		}
+	}()
+	go func() {
+		for out := range stdout_log.Out() {
+			info.ClientHandle.Stdout(out)
+		}
+	}()
+	go func() {
+		for err := range stderr_log.Out() {
+			info.ClientHandle.Stderr(err)
+		}
+	}()
+
 	stdin := &ChannelReader{}
 	stdout := make(ChannelWriter)
 	defer close(stdout)
@@ -37,20 +64,34 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 	env := map[string]string{}
 	maps.Copy(env, info.Client.Env)
 	for {
-		fmt.Println(info.Client.In)
 		select {
 		case <-info.Ctx.Done():
-			go func() {
-				for range info.Client.In {
+			fmt.Println("context cancelled")
+			var disconnect_msg types.WebSocketMessage
+			// NOTE: if context is cancelled, it's expected that the input channel is finalized and will close soon
+			for in := range info.Client.In {
+				if in.MessageType == types.MsgDisconnect {
+					disconnect_msg = in
 				}
-			}()
-			info.InputWaitGroup.Wait()
+			}
+
+			if disconnect_msg.MessageID != "" {
+				info.Client.Out <- types.WebSocketMessage{
+					MessageID:   util.RandHex(20),
+					ClientID:    info.Client.ClientID,
+					MessageType: types.MsgDisconnectAck,
+					RefID:       disconnect_msg.MessageID,
+				}
+			}
+
 			return
 		case msg := <-info.Client.In:
 			log.Printf("[client %q] - received msg: %v", info.Client.ClientID, msg)
 			switch msg.MessageType {
 			case types.MsgRunCommand:
+				info.ClientHandle.CommandRunning(msg.Command)
 				cmd_stop := make(chan struct{})
+				cmd_ctx, cancel := context.WithCancel(info.Ctx)
 				cmd_wg := new(sync.WaitGroup)
 				cmd_wg.Add(3)
 				stdin.Chan = make(chan string)
@@ -60,9 +101,16 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 						select {
 						case <-cmd_stop:
 							return
-						case msg := <-info.Client.In:
+						case msg, ok := <-info.Client.In:
+							if !ok {
+								close(stdin.Chan)
+								return
+							}
 							switch msg.MessageType {
+							case types.MsgCommandInterrupt:
+								cancel()
 							case types.MsgInputStream:
+								stdin_log.In() <- msg.InputStream
 								if msg.InputStream != "" {
 									stdin.Chan <- msg.InputStream
 								}
@@ -80,8 +128,9 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 						case <-cmd_stop:
 							return
 						case str := <-stdout:
+							stdout_log.In() <- str
 							info.Client.Out <- types.WebSocketMessage{
-								MessageID:   GenerateMessageID(20),
+								MessageID:   util.RandHex(20),
 								ClientID:    info.Client.ClientID,
 								MessageType: types.MsgOutputStream,
 								RefID:       msg.MessageID,
@@ -98,8 +147,9 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 						case <-cmd_stop:
 							return
 						case str := <-stderr:
+							stderr_log.In() <- str
 							info.Client.Out <- types.WebSocketMessage{
-								MessageID:   GenerateMessageID(20),
+								MessageID:   util.RandHex(20),
 								ClientID:    info.Client.ClientID,
 								MessageType: types.MsgErrorStream,
 								RefID:       msg.MessageID,
@@ -110,15 +160,17 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 					}
 				}()
 
-				cmd_ctx := context.WithValue(info.Ctx, "auth_status", info.Client.AuthStatus)
+				cmd_ctx = context.WithValue(cmd_ctx, "auth_status", info.Client.AuthStatus)
 				cmd_ctx = context.WithValue(cmd_ctx, "tags", info.Client.UserTags)
 
 				info.Client.Out <- types.WebSocketMessage{
-					MessageID:   GenerateMessageID(20),
+					MessageID:   util.RandHex(20),
 					ClientID:    info.Client.ClientID,
 					MessageType: types.MsgCommandRunning,
 					RefID:       msg.MessageID,
 				}
+				log.Printf("running cmd: %q", msg.Command)
+				log.Printf("Gave stdin: %v", stdin)
 				err := runner.RunText(cmd_ctx, strings.NewReader(msg.Command))
 				close(cmd_stop)
 				cmd_wg.Wait()
@@ -132,7 +184,7 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 					} else {
 						log.Printf("Runner error: %v\n", err)
 						info.Client.Out <- types.WebSocketMessage{
-							MessageID:   GenerateMessageID(20),
+							MessageID:   util.RandHex(20),
 							ClientID:    info.Client.ClientID,
 							MessageType: types.MsgErrorStream,
 							RefID:       msg.MessageID,
@@ -142,8 +194,9 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 					}
 				}
 
+				info.ClientHandle.CommandFinished(result)
 				info.Client.Out <- types.WebSocketMessage{
-					MessageID:   GenerateMessageID(20),
+					MessageID:   util.RandHex(20),
 					ClientID:    info.Client.ClientID,
 					MessageType: types.MsgCommandFinished,
 					RefID:       msg.MessageID,
@@ -156,14 +209,14 @@ func RunClient(info types.ClientInfo, commands []sh.Command, filestore filesyste
 					for range info.Client.In {
 					}
 				}()
-				info.InputWaitGroup.Wait()
 				info.Client.Out <- types.WebSocketMessage{
-					MessageID:   GenerateMessageID(20),
+					MessageID:   util.RandHex(20),
 					ClientID:    info.Client.ClientID,
 					MessageType: types.MsgDisconnectAck,
 					RefID:       msg.MessageID,
 				}
 
+				log.Printf("[client %q] - sent disconnectAck", msg.ClientID)
 				return
 			}
 		}

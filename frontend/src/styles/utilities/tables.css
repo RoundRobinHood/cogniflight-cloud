@@ -1,0 +1,55 @@
+/* Generic table utility (glass look, dark UI) */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.table thead th {
+  text-align: left;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--glass-bg-darker);
+  border-bottom: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-weight: var(--font-semibold);
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--glass-border);
+  vertical-align: middle;
+}
+
+.table tr:hover {
+  background: var(--glass-bg-lighter);
+}
+
+/* Column helpers */
+.table-col-actions {
+  width: 160px;
+  text-align: right;
+}
+.table-col-tight {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Empty + states */
+.table-empty {
+  text-align: center;
+  color: var(--text-tertiary);
+  padding: var(--space-lg);
+}
+
+/* compact density */
+.table--compact thead th,
+.table--compact tbody td {
+  padding: var(--space-xs) var(--space-sm);
+}
+
+/* zebra */
+.table--zebra tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.04);
+}
