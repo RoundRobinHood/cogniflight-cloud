@@ -104,7 +104,7 @@
 }
 
 .btn-loading::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 16px;
   height: 16px;
@@ -158,7 +158,83 @@
   border-bottom: 2px solid var(--color-primary);
 }
 
+/* Normal red button */
+.disable-user-btn {
+  background-color: #e23b3b;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+/* Hover: slightly darker red */
+.disable-user-btn:hover {
+  background-color: #c12c2c;
+}
+
+/* ✅ Greyed-out state for already disabled users */
+.disable-user-btn.btn-disabled {
+  background-color: #444;
+  color: #bbb;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Optional smooth fade on "Save" -> "Saved" */
+.btn-saved {
+  background-color: #666 !important;
+  color: #ddd !important;
+  cursor: default;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 22px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--accent-color, #007bff);
+}
+
+input:checked + .slider:before {
+  transform: translateX(18px);
+}
+
 @keyframes spin {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }

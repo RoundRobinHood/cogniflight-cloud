@@ -4,51 +4,85 @@ Importing all styles in proper order to maintain specificity and functionality
 */
 
 /* Core Foundation Styles */
-@import './core/variables.css';
-@import './core/reset.css';
+@import "./core/variables.css";
+@import "./core/reset.css";
 
 /* Utility Classes */
-@import './utilities/layout.css';
-@import './utilities/glass.css';
-@import './utilities/animations.css';
-@import './utilities/buttons.css';
+@import "./utilities/layout.css";
+@import "./utilities/glass.css";
+@import "./utilities/animations.css";
+@import "./utilities/buttons.css";
+@import "./utilities/tables.css";
+@import "./utilities/pills.css";
 
 /* Component Styles */
-@import './components/desktop.css';
-@import './components/taskbar.css';
-@import './components/window.css';
-@import './components/start-menu.css';
-@import './components/notifications.css';
-@import './components/context-menu.css';
-@import './components/dialogs.css';
-@import './components/login.css';
-@import './components/fatcon.css';
+@import "./components/desktop.css";
+@import "./components/taskbar.css";
+@import "./components/window.css";
+@import "./components/start-menu.css";
+@import "./components/notifications.css";
+@import "./components/context-menu.css";
+@import "./components/dialogs.css";
+@import "./components/login.css";
+@import "./components/edge-nodes.css";
 
 /* Application Base Styles */
-@import './apps/app-base.css';
+@import "./apps/app-base.css";
 
 /* Additional Global Styles */
 
 /* Ensure proper Z-index stacking */
-.desktop { z-index: var(--z-base); }
-.desktop-icons { z-index: var(--z-desktop-icons); }
-.window { z-index: var(--z-windows); }
-.window.active { z-index: var(--z-window-active); }
-.taskbar { z-index: var(--z-taskbar); }
-.start-menu { z-index: var(--z-start-menu); }
-.context-menu { z-index: var(--z-context-menu); }
-.notification-panel { z-index: var(--z-notifications); }
-.notification-toast { z-index: calc(var(--z-notifications) + 100); }
-.dialog, .confirm-dialog { z-index: var(--z-dialogs); }
-.fatcon-alert-dialog { z-index: calc(var(--z-dialogs) + 1001); }
+.desktop {
+  z-index: var(--z-base);
+}
+.desktop-icons {
+  z-index: var(--z-desktop-icons);
+}
+.window {
+  z-index: var(--z-windows);
+}
+.window.active {
+  z-index: var(--z-window-active);
+}
+.taskbar {
+  z-index: var(--z-taskbar);
+}
+.start-menu {
+  z-index: var(--z-start-menu);
+}
+.context-menu {
+  z-index: var(--z-context-menu);
+}
+.notification-panel {
+  z-index: var(--z-notifications);
+}
+.notification-toast {
+  z-index: calc(var(--z-notifications) + 100);
+}
+.dialog,
+.confirm-dialog {
+  z-index: var(--z-dialogs);
+}
 
 /* Global Animation Classes */
-.slide-in-right { animation: slideInFromRight 0.3s ease-out; }
-.slide-in-left { animation: slideInFromLeft 0.3s ease-out; }
-.slide-in-top { animation: slideInFromTop 0.3s ease-out; }
-.slide-in-bottom { animation: slideInFromBottom 0.3s ease-out; }
-.fade-in { animation: fadeIn 0.3s ease-out; }
-.fade-out { animation: fadeOut 0.3s ease-out; }
+.slide-in-right {
+  animation: slideInFromRight 0.3s ease-out;
+}
+.slide-in-left {
+  animation: slideInFromLeft 0.3s ease-out;
+}
+.slide-in-top {
+  animation: slideInFromTop 0.3s ease-out;
+}
+.slide-in-bottom {
+  animation: slideInFromBottom 0.3s ease-out;
+}
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+.fade-out {
+  animation: fadeOut 0.3s ease-out;
+}
 
 /* Accessibility Improvements */
 @media (prefers-reduced-motion: reduce) {
@@ -83,11 +117,11 @@ Importing all styles in proper order to maintain specificity and functionality
   .login-screen {
     display: none !important;
   }
-  
+
   .desktop {
     background: white !important;
   }
-  
+
   .window {
     box-shadow: none !important;
     border: 1px solid #000 !important;

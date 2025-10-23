@@ -1,147 +1,234 @@
-import { Settings, FolderOpen, FileText, Terminal, Camera, Radio, Activity } from 'lucide-react'
+import {
+  Settings,
+  FolderOpen,
+  FileText,
+  Terminal,
+  Camera,
+  UserSquare2,
+  Users,
+  Plane,
+  Monitor,
+} from "lucide-react";
 
 // Lazy load components for better performance
 const loadComponent = (componentName) => {
   const components = {
-    SettingsApp: () => import('../components/apps/SettingsApp'),
-    FileExplorerApp: () => import('../components/apps/FileExplorerApp'),
-    NotepadApp: () => import('../components/apps/NotepadApp'),
-    TerminalApp: () => import('../components/apps/TerminalApp'),
-    CameraApp: () => import('../components/apps/CameraApp'),
-    N420HHApp: () => import('../components/apps/N420HHApp'),
-    N420HHVisualApp: () => import('../components/apps/N420HHVisualApp'),
-  }
-  return components[componentName]
-}
+    SettingsApp: () => import("../components/apps/SettingsApp"),
+    FileExplorerApp: () => import("../components/apps/FileExplorerApp"),
+    NotepadApp: () => import("../components/apps/NotepadApp"),
+    TerminalApp: () => import("../components/apps/TerminalApp"),
+    CameraApp: () => import("../components/apps/CameraApp"),
+    UsersApp: () => import("../components/apps/UsersApp"),
+    PilotsApp: () => import("../components/apps/PilotsApp.jsx"),
+    InviteUserApp: () => import("../components/apps/InviteUserApp.jsx"),
+    RegisterApp: () => import("../components/apps/RegisterApp.jsx"),
+    UserPermissionsApp: () =>
+      import("../components/apps/UserPermissionsApp.jsx"),
+    FlightsApp: () => import("../components/apps/FlightsApp.jsx"),
+    EdgeNodeDashboardApp: () => import("../components/apps/EdgeNodeDashboardApp"),
+  };
+  return components[componentName];
+};
 
 // Single source of truth for all app configuration
 class AppRegistry {
   constructor() {
-    this.apps = new Map()
-    this.initializeApps()
+    this.apps = new Map();
+    this.initializeApps();
   }
 
   initializeApps() {
     // Register all apps in one place
     this.register({
-      id: 'settings',
-      label: 'Settings',
+      id: "settings",
+      label: "Settings",
       icon: Settings,
-      color: '#0078d4',
-      component: 'SettingsApp',
-      defaultTitle: 'Settings',
-      defaultSize: { width: 600, height: 400 }
-    })
+      color: "#0078d4",
+      component: "SettingsApp",
+      defaultTitle: "Settings",
+      defaultSize: { width: 600, height: 400 },
+    });
 
     this.register({
-      id: 'fileexplorer',
-      label: 'File Explorer',
+      id: "fileexplorer",
+      label: "File Explorer",
       icon: FolderOpen,
-      color: '#FFD700',
-      component: 'FileExplorerApp',
-      defaultTitle: 'File Explorer',
-      defaultSize: { width: 800, height: 500 }
-    })
+      color: "#FFD700",
+      component: "FileExplorerApp",
+      defaultTitle: "File Explorer",
+      defaultSize: { width: 800, height: 500 },
+    });
 
     this.register({
-      id: 'notepad',
-      label: 'Notepad',
+      id: "notepad",
+      label: "Notepad",
       icon: FileText,
-      color: '#28ca42',
-      component: 'NotepadApp',
-      defaultTitle: 'Notepad',
-      defaultSize: { width: 700, height: 450 }
-    })
-
-    this.register({
-      id: 'terminal',
-      label: 'Terminal',
-      icon: Terminal,
-      color: '#000000',
-      component: 'TerminalApp',
-      defaultTitle: 'Terminal',
+      color: "#28ca42",
+      component: "NotepadApp",
+      defaultTitle: "Notepad",
       defaultSize: { width: 700, height: 450 },
-    })
+    });
 
     this.register({
-      id: 'camera',
-      label: 'Camera',
+      id: "terminal",
+      label: "Terminal",
+      icon: Terminal,
+      color: "#000000",
+      component: "TerminalApp",
+      defaultTitle: "Terminal",
+      defaultSize: { width: 700, height: 450 },
+    });
+
+    this.register({
+      id: "camera",
+      label: "Camera",
       icon: Camera,
-      color: '#ff6b6b',
-      component: 'CameraApp',
-      defaultTitle: 'Camera',
-      defaultSize: { width: 800, height: 600 }
-    })
+      color: "#ff6b6b",
+      component: "CameraApp",
+      defaultTitle: "Camera",
+      defaultSize: { width: 800, height: 600 },
+    });
 
     this.register({
-      id: 'n420hh',
-      label: 'N420HH',
-      icon: Radio,
-      color: '#00ff00',
-      component: 'N420HHApp',
-      defaultTitle: 'N420HH Edge Node',
-      defaultSize: { width: 900, height: 600 }
-    })
+      id: "users",
+      label: "Users",
+      icon: UserSquare2,
+      color: "#7c3aed",
+      component: "UsersApp",
+      defaultTitle: "Users",
+      defaultSize: { width: 900, height: 620 },
+      //Hide from non-admin users in Desktop
+      visibleWhen: (systemState) => systemState.userProfile.role === "sysadmin",
+    });
 
     this.register({
-      id: 'n420hhvisual',
-      label: 'N420HH Visual',
-      icon: Activity,
-      color: '#00ffff',
-      component: 'N420HHVisualApp',
-      defaultTitle: 'N420HH Flight Monitor',
-      defaultSize: { width: 1200, height: 800 }
-    })
+      id: "pilots",
+      label: "Pilots",
+      icon: Users,
+      color: "#1e90ff",
+      component: "PilotsApp",
+      defaultTitle: "Pilots",
+      defaultSize: { width: 800, height: 550 },
+      visibleWhen: (systemState) =>
+        systemState.userProfile.role === "sysadmin" ||
+        systemState.userProfile.role === "atc",
+    });
+
+    this.register({
+      id: "invite-user",
+      label: "Invite User",
+      icon: UserSquare2,
+      color: "#0078d4",
+      component: "InviteUserApp",
+      defaultTitle: "Invite New User",
+      defaultSize: { width: 500, height: 420 },
+      // Do not show this on desktop
+      visibleWhen: () => false,
+    });
+
+    this.register({
+      id: "register-app",
+      label: "Register",
+      icon: UserSquare2,
+      color: "#0078d4",
+      component: "RegisterApp",
+      defaultTitle: "Registration",
+      defaultSize: { width: 500, height: 420 },
+      // Do not show this on desktop
+      visibleWhen: () => false,
+    });
+
+    this.register({
+      id: "user-permissions",
+      label: "User Permissions",
+      icon: UserSquare2,
+      color: "#228be6",
+      component: "UserPermissionsApp",
+      defaultTitle: "User Permissions",
+      defaultSize: { width: 600, height: 500 },
+      // Do not show this on desktop
+      visibleWhen: () => false,
+    });
+
+    this.register({
+      id: "flights",
+      label: "Flights",
+      icon: Plane,
+      color: "#4dabf7",
+      component: "FlightsApp",
+      defaultTitle: "Flights",
+      defaultSize: { width: 800, height: 600 },
+      visibleWhen: (systemState) =>
+        systemState.userProfile.role === "sysadmin" ||
+        systemState.userProfile.role === "atc",
+      //|| systemState.userProfile.role==="data-analyst"
+    });
+
+    this.register({
+      id: "edgenodedashboard",
+      label: "Edge Dashboard",
+      icon: Monitor,
+      color: "#ff00ff",
+      component: "EdgeNodeDashboardApp",
+      defaultTitle: "Edge Node Dashboard",
+      defaultSize: { width: 1400, height: 900 },
+      visibleWhen: (systemState) =>
+        systemState.userProfile.role === "sysadmin" ||
+        systemState.userProfile.role === "atc",
+    });
   }
 
   register(appConfig) {
     if (!appConfig.id) {
-      throw new Error('App must have an ID')
+      throw new Error("App must have an ID");
     }
-    
+
     this.apps.set(appConfig.id, {
       ...appConfig,
-      componentLoader: loadComponent(appConfig.component)
-    })
+      componentLoader: loadComponent(appConfig.component),
+    });
   }
 
   getApp(appId) {
-    return this.apps.get(appId)
+    return this.apps.get(appId);
   }
 
-  getAllApps() {
-    return Array.from(this.apps.values()).map(app => ({
-      id: app.id,
-      label: app.label,
-      icon: app.icon,
-      color: app.color
-    }))
+  //show apps based on what the logged in user's role is
+  getAllApps(systemState) {
+    return Array.from(this.apps.values())
+      .filter((app) => !app.visibleWhen || app.visibleWhen(systemState))
+      .map((app) => ({
+        id: app.id,
+        label: app.label,
+        icon: app.icon,
+        color: app.color,
+      }));
   }
 
   async getComponent(appId) {
-    const app = this.apps.get(appId)
+    const app = this.apps.get(appId);
     if (!app) {
-      throw new Error(`App ${appId} not found`)
+      throw new Error(`App ${appId} not found`);
     }
-    
-    const module = await app.componentLoader()
-    return module.default
+
+    const module = await app.componentLoader();
+    return module.default;
   }
 
   getMetadata(appId) {
-    const app = this.apps.get(appId)
-    if (!app) return null
-    
+    const app = this.apps.get(appId);
+    if (!app) return null;
+
     return {
       id: app.id,
       label: app.label,
       defaultTitle: app.defaultTitle,
-      defaultSize: app.defaultSize
-    }
+      defaultSize: app.defaultSize,
+    };
   }
 }
 
 // Export singleton instance
-const appRegistry = new AppRegistry()
+const appRegistry = new AppRegistry();
 
-export default appRegistry
+export default appRegistry;

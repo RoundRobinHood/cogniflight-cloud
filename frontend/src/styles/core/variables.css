@@ -88,11 +88,17 @@
   --font-medium: 500;
   --font-semibold: 600;
   --font-bold: 700;
-  
-  /* FATCON Level Colors */
-  --fatcon-5: #00c853;
-  --fatcon-4: #2196f3;
-  --fatcon-3: #ffc107;
-  --fatcon-2: #ff9800;
-  --fatcon-1: #f44336;
+}
+
+/* Dark Theme Override (for future use) */
+[data-theme="dark"] {
+  /* Override variables for dark theme */
+}
+
+/* Light Theme Override (for future use) */
+[data-theme="light"] {
+  --glass-bg-dark: rgba(255, 255, 255, 0.95);
+  --glass-bg-light: rgba(0, 0, 0, 0.1);
+  --text-primary: rgba(0, 0, 0, 1);
+  --text-secondary: rgba(0, 0, 0, 0.9);
 }

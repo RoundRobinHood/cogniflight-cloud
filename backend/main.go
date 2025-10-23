@@ -15,6 +15,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
@@ -120,7 +121,11 @@ func main() {
 	r.GET("/signup/check-username/:username", auth.SignupCheckUsername(fileStore))
 	r.POST("/signup", auth.Signup(fileStore))
 	r.POST("/login", auth.Login(fileStore))
-	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore, sessionStore, chatbot.APIKey(openAIKey), jsonConn, mqttEvents))
+	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore, sessionStore, chatbot.APIKey(openAIKey), jsonConn, mqttEvents, &influx.InfluxDBConfig{
+		URL:   os.Getenv("INFLUX_URL"),
+		Token: os.Getenv("INFLUX_TOKEN"),
+		Org:   os.Getenv("INFLUX_ORG"),
+	}))
 
 	server := &http.Server{
 		Addr:    ":8080",

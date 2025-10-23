@@ -8,7 +8,7 @@ function StartMenu({ isOpen, onClose }) {
   const { systemState, openWindow, onLogout, addToTaskbar, addToDesktop, removeFromTaskbar, removeFromDesktop, showContextMenu } = useSystem()
   const [searchQuery, setSearchQuery] = useState('')
 
-  const pinnedApps = appRegistry.getAllApps()
+  const pinnedApps = appRegistry.getAllApps(systemState)
 
   const recentFiles = [
     { name: 'readme.txt', path: 'C:\\Users\\Desktop\\readme.txt' },
