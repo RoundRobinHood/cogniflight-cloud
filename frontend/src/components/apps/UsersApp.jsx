@@ -203,6 +203,7 @@ export default function UsersApp() {
         <table className="table table--zebra">
           <thead>
             <tr>
+              <th>Username</th>
               <th>Name</th>
               <th>Surname</th>
               <th>Phone</th>
@@ -240,11 +241,23 @@ export default function UsersApp() {
                 const userKey = user.id || user.localId;
                 const isSaved = savedUsers[userKey];
 
-                const isDisabled = user.disabled === true;
-                const statusText = isDisabled ? "Deactivated" : "Active";
+                const isDeactivated =
+                  user.disabled === true ||
+                  // !user.tags ||
+                  // user.tags?.length === 0;
+                  (Array.isArray(user.tags) && user.tags.length === 0);
+                const statusText = isDeactivated ? "Deactivated" : "Active";
+                if (isDeactivated) {
+                  console.log(
+                    `${user.username} is deactivated (tags:`,
+                    user.tags,
+                    ")"
+                  );
+                }
 
                 return (
                   <tr key={user.id || user.localId || `user-${i}`}>
+                    <td>{user.username}</td>
                     <td>
                       <input
                         type="text"
@@ -328,7 +341,7 @@ export default function UsersApp() {
                     <td>
                       <span
                         className={`status-pill ${
-                          isDisabled ? "status-disabled" : "status-active"
+                          isDeactivated ? "status-disabled" : "status-active"
                         }`}
                       >
                         {statusText}

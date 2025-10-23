@@ -134,8 +134,12 @@ export default function UserPermissionsApp({ instanceData }) {
         result.command_result === 0 ||
         result.error?.includes("file does not exist")
       ) {
+        //remove tags from login file
+        await client.update_login_file(username, { tags: [] });
+        setTags([]);
         setDisabled(true);
         instanceData.user.disabled = true;
+        instanceData.user.tags = []; //to immediately update UsersApp
 
         // Notify parent UsersApp to reload list
         if (client?.emit) client.emit("user-updated", { username });
