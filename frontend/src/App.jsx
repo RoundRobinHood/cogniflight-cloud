@@ -82,9 +82,16 @@ function App() {
   const handleLogin = useCallback(() => setIsAuthenticated(true),[]);
 
   const handleLogout = useCallback(() => {
-    setUser(null)
-    setIsAuthenticated(false)
-  }, []);
+    if(client !== null) {
+      client.run_command("logout").then(cmd => {
+        if(cmd.command_result != 0) {
+          throw new Error(cmd.error);
+        }
+        setUser(null)
+        setIsAuthenticated(false)
+      });
+    }
+  }, [client]);
 
   if (isLoading) {
     return (
