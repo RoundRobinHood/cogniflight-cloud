@@ -1,20 +1,53 @@
-import { useState } from 'react'
-import { User, Power, Search, Grid3X3, Pin, Monitor, FileText } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { User, Power, Search, Grid3X3, Pin, Monitor } from 'lucide-react'
 import { useSystem } from './useSystem'
 import appRegistry from '../config/appRegistry'
 import { useConfirm } from '../hooks/useConfirm.jsx'
+import { usePipeClient, StringIterator } from '../api/socket'
 
 function StartMenu({ isOpen, onClose }) {
   const { systemState, openWindow, onLogout, addToTaskbar, addToDesktop, removeFromTaskbar, removeFromDesktop, showContextMenu } = useSystem()
   const [searchQuery, setSearchQuery] = useState('')
+  const [profilePictureData, setProfilePictureData] = useState(null)
+  const client = usePipeClient()
 
   const pinnedApps = appRegistry.getAllApps(systemState)
 
-  const recentFiles = [
-    { name: 'readme.txt', path: 'C:\\Users\\Desktop\\readme.txt' },
-    { name: 'notes.txt', path: 'C:\\Users\\Desktop\\notes.txt' },
-    { name: 'presentation.pptx', path: 'C:\\Users\\Documents\\presentation.pptx' }
-  ]
+  // Load profile picture when it changes
+  useEffect(() => {
+    const loadProfilePicture = async () => {
+      const filename = systemState.userProfile?.profile_picture
+      if (!client || !filename) {
+        setProfilePictureData(null)
+        return
+      }
+
+      try {
+        const result = await client.run_command(
+          `cat ~/Pictures/${filename} | base64`,
+          StringIterator('')
+        )
+
+        if (result.command_result === 0 && result.output) {
+          const base64Data = result.output.trim().replace(/[\r\n]+$/, '')
+
+          const extension = filename.split('.').pop().toLowerCase()
+          let mimeType = 'image/jpeg'
+          if (extension === 'png') mimeType = 'image/png'
+          else if (extension === 'gif') mimeType = 'image/gif'
+          else if (extension === 'webp') mimeType = 'image/webp'
+          else if (extension === 'bmp') mimeType = 'image/bmp'
+
+          setProfilePictureData(`data:${mimeType};base64,${base64Data}`)
+        }
+      } catch (err) {
+        console.error('Error loading profile picture:', err)
+        setProfilePictureData(null)
+      }
+    }
+
+    loadProfilePicture()
+  }, [client, systemState.userProfile?.profile_picture])
 
   const handleAppClick = (appId, appLabel) => {
     openWindow(appId, appLabel)
@@ -134,36 +167,31 @@ function StartMenu({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* Recent Files */}
-        <div className="start-menu-section">
-          <div className="start-menu-section-header">
-            <span>Recent</span>
-          </div>
-          <div className="start-menu-recent">
-            {recentFiles.map((file, index) => (
-              <div key={index} className="start-menu-recent-item">
-                <FileText size={16} />
-                <div className="start-menu-recent-info">
-                  <div className="start-menu-recent-name">{file.name}</div>
-                  <div className="start-menu-recent-path">{file.path}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* User Profile & Power */}
         <div className="start-menu-footer">
           <div className="start-menu-user">
             <div className="start-menu-user-avatar">
-              <User size={20} />
+              {profilePictureData ? (
+                <img
+                  src={profilePictureData}
+                  alt="Profile"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    borderRadius: 'var(--radius-full)'
+                  }}
+                />
+              ) : (
+                <User size={20} />
+              )}
             </div>
             <div className="start-menu-user-info">
               <div className="start-menu-user-name">{systemState.userProfile.username}</div>
               <div className="start-menu-user-email">{systemState.userProfile.email}</div>
             </div>
           </div>
-          <button 
+          <button
             className="start-menu-power"
             onClick={handlePowerClick}
             title="Sign out"
