@@ -25,12 +25,15 @@ The backend exposes a WebSocket-based command interface that provides shell-like
 
 ### Command Format
 
-Commands follow shell-like syntax:
+Commands follow shell-like syntax, which generally looks like:
 ```bash
 command_name [options] [arguments]
 ```
 
-Responses are returned in YAML or JSON format with CRLF line endings.
+The exact argument format depends on the specific command. We also support various bash-like syntax, such as logical operators (&&, ||) and pipes (|).
+
+Our system operates exclusively on CRLF, because this simplifies terminal display.
+Automated responses are returned in YAML or JSON format, while interactive commands or arguments return plaintext with color.
 
 ---
 
@@ -46,16 +49,18 @@ Get current user information.
 
 **Response**:
 ```yaml
+# session info
 username: john_doe
-role: pilot
 tags:
   - user
   - pilot
-profile:
-  name: John
-  surname: Doe
-  email: john@example.com
-  phone: +1234567890
+
+# user.profile
+role: pilot
+name: John
+surname: Doe
+email: john@example.com
+phone: +1234567890
 ```
 
 #### `logout`
@@ -66,7 +71,7 @@ End the current session.
 
 **Permissions**: Any authenticated user
 
-**Response**: Session terminated, WebSocket closed
+**Response**: Session no longer valid, client refreshes to kick the user out.
 
 ---
 
@@ -76,13 +81,15 @@ End the current session.
 
 List directory contents.
 
-**Usage**: `ls [path]`
+**Usage**: `ls [paths...]`
 
 **Permissions**: Based on directory execute permissions
 
 **Options**:
 - No path: Lists current working directory (PWD)
-- Absolute path: Lists specified directory
+- Path(s): Lists specified directory(s)
+- "-y" flag: output has YAML
+- "-l" flag: long-format response (including timestamps, permissions, etc)
 
 **Response**:
 ```yaml
@@ -107,11 +114,16 @@ List directory contents.
 
 Read file contents.
 
-**Usage**: `cat <file_path>`
+**Usage**: `cat [-n] [file_paths...]`
 
 **Permissions**: Requires read permission on file
 
-**Response**: Raw file contents
+**Options**:
+- No arguments: Copies from input to output
+- One or more paths: Print all paths, with optional newlines between them
+- "-n" flag: disable added newlines for more "raw" output
+
+**Response**: Raw file contents or received user input
 
 **Example**:
 ```bash
@@ -122,27 +134,34 @@ cat /home/admin/settings.yaml
 
 Create a new directory.
 
-**Usage**: `mkdir <directory_path>`
+**Usage**: `mkdir [-p] <directory_paths...>`
 
 **Permissions**: Requires write permission on parent directory
 
-**Response**: Success message or error
+**Options**:
+- "-p" flag: tells mkdir to try and create parent directories if they don't exist, and not to fail if the directories already exist.
+
+**Response**: Blank or error
 
 #### `rm`
 
 Remove a file or directory.
 
-**Usage**: `rm <path>`
+**Usage**: `rm [-rf] <paths...>`
 
-**Permissions**: Requires write permission on parent directory
+**Permissions**: Requires write permission on parent directory(s)
 
-**Response**: Success message or error
+**Options**:
+- "-r" flag: allows deletion of folders
+- "-f" flag: overrides permissions if the user has update tag permissions on the parent directory(s)
+
+**Response**: Blank or error
 
 #### `mv`
 
 Move or rename a file/directory.
 
-**Usage**: `mv <source> <destination>`
+**Usage**: `mv <sources...> <destination>`
 
 **Permissions**: Requires write permission on both source and destination parent directories
 
@@ -150,27 +169,39 @@ Move or rename a file/directory.
 
 Copy a file or directory.
 
-**Usage**: `copy <source> <destination>`
+**Usage**: `copy [-r] <sources...> <destination>`
 
 **Permissions**: Requires read on source, write on destination parent
+
+**Options**:
+- "-r" flag: allow copying directories
 
 #### `chmod`
 
 Change file/directory permissions.
 
-**Usage**: `chmod <path> <permission_type> <tags...>`
+**Usage**: `chmod [-R] <mode> <file_paths...>`
 
 **Permission Types**:
-- `read` - Set read tags
-- `write` - Set write tags
-- `execute` - Set execute/traverse tags
-- `updatetag` - Set permission update tags
+- `read`, 'r' - Set read tags
+- `write`, 'w' - Set write tags
+- `execute`, 'x' - Set execute/traverse tags
+- `updatetag`, 'p' - Set permission update tags
 
-**Permissions**: Requires updatetag permission
+**Permissions**: Requires updatetag permission, and ownership of the tag names being added or removed for updatetag tags (unless you're sysadmin)
+
+**Mode string**: "<tag_name><+-><perms...>"
+- This string describes how the command should update permissions on the relevant files
+- The tag_name is what gets added/removed, and it's done so against specific permissions.
+- For example, to give a user access to read and traverse their own home directory: `chmod -R user-Username+rx /home/Username` (user-Username is the tag, and we "+" read and execute)
+
+**Options**:
+- Mode string
+- "-R" flag: tells chmod to perform the permission update recursively (otherwise it only affects the target directory itself)
 
 **Example**:
 ```bash
-chmod /home/pilot/data read user atc data-analyst
+chmod -R user-rwxp /etc
 ```
 
 ---
@@ -181,35 +212,15 @@ chmod /home/pilot/data read user atc data-analyst
 
 List all pilots in the system.
 
-**Usage**: `pilots [--verbose]`
+**Usage**: `pilots`
 
 **Permissions**: `sysadmin` or `atc` tags required
 
-**Options**:
-- `--verbose`: Include full user profile information
-
-**Response** (non-verbose):
+**Response**:
 ```
 pilot1
 pilot2
 pilot3
-```
-
-**Response** (verbose):
-```yaml
-- username: pilot1
-  profile:
-    name: John
-    surname: Smith
-    license_number: ATP-12345
-    email: john.smith@example.com
-
-- username: pilot2
-  profile:
-    name: Jane
-    surname: Doe
-    license_number: CPL-67890
-    email: jane.doe@example.com
 ```
 
 #### `edge-nodes`
@@ -229,11 +240,11 @@ N123XY
 
 #### `clients`
 
-List active client connections.
+List active client connections in the current socket session.
 
 **Usage**: `clients`
 
-**Permissions**: `sysadmin` tag required
+**Permissions**: Anyone is allowed (it's your own session)
 
 **Response**:
 ```yaml
@@ -274,11 +285,11 @@ List all active WebSocket sessions with client details.
 
 ### Telemetry & Monitoring Commands
 
-#### `mqtt subscribe`
+#### `mqtt`
 
 Subscribe to edge node telemetry stream.
 
-**Usage**: `mqtt subscribe <edge_username>`
+**Usage**: `mqtt`
 
 **Permissions**: `sysadmin`, `atc`, or `data-analyst` tags required
 
@@ -286,7 +297,7 @@ Subscribe to edge node telemetry stream.
 
 **Example**:
 ```bash
-mqtt subscribe N420HH
+mqtt
 ```
 
 **Stream Output**:
@@ -315,7 +326,7 @@ payload:
 
 Execute InfluxDB Flux query and stream results.
 
-**Usage**: `flux <query>`
+**Usage**: `flux` and send query over stdin
 
 **Permissions**: `sysadmin` or `data-analyst` tags required
 
@@ -325,7 +336,7 @@ Execute InfluxDB Flux query and stream results.
 
 **Example**:
 ```bash
-flux from(bucket:"telegraf") |> range(start: -1h) |> filter(fn: (r) => r.topic == "cogniflight/telemetry/N420HH")
+echo 'from(bucket:"telegraf") |> range(start: -1h) |> filter(fn: (r) => r.topic == "cogniflight/telemetry/N420HH"' | flux
 ```
 
 ---
@@ -340,32 +351,26 @@ Generate face embeddings for images.
 
 **Permissions**: `sysadmin`, `data-analyst`, `atc`, or `edge-node` tags required
 
-**Response**:
-```yaml
-- file: /home/pilot1/profile_photo.jpg
-  success: true
-  embedding: [0.123, -0.456, 0.789, ...]  # 512-dimensional vector
-  confidence: 0.95
-
-- file: /home/pilot2/photo.png
-  success: false
-  error: "No face detected in image"
+**Response**: (every image has a b64 embedding on its own line
+```
+abcdefg0123456789...
+abcdefg0123456789...
 ```
 
 #### `ml-rpc`
 
 Call ML engine RPC methods directly.
 
-**Usage**: `ml-rpc <method_name> <params_json>`
+**Usage**: `ml-rpc <method_name> [options...]`
 
-**Permissions**: Varies by method
+**Permissions**: `sysadmin`, `data-analyst`, or `atc` tags required
 
 **Example**:
 ```bash
-ml-rpc analyze_edge_fatigue {"edge_username": "N420HH", "lookback_minutes": 10}
+ml-rpc analyze_edge_fatigue --edge_username N420HH --lookback_minutes 10
 ```
 
-**Response**: JSON-RPC result
+**Response**: Method-specific YAML output after conversion from JSON-RPC
 
 ---
 
@@ -375,9 +380,13 @@ ml-rpc analyze_edge_fatigue {"edge_username": "N420HH", "lookback_minutes": 10}
 
 Echo text to output.
 
-**Usage**: `echo <text...>`
+**Usage**: `echo [-en] <text...>`
 
 **Permissions**: Any authenticated user
+
+**Options**:
+- "-e" flag: tells command to escape strings (e.g., turn '\n' into a newline)
+- "-n" flag: tells echo not to write a newline after the output text
 
 #### `help`
 
@@ -389,33 +398,45 @@ Display available commands.
 
 #### `heartbeat`
 
-Server health check.
+Server heartbeat loop (used to ensure the server is still alive, and that context cancellation works).
+It prints a piece of text in a closed loop until told to stop.
 
-**Usage**: `heartbeat`
+**Usage**: `heartbeat [--delay ms] [print_text...]`
 
 **Permissions**: Any authenticated user
 
-**Response**: Timestamp and server status
+**Options**:
+- "--delay" flag: updates the delay, default is half a second (500ms)
+- Positional arguments: if arguments are present, positional arguments are printed instead of "beep" 
+
+**Response**: Continuous stream of text on new lines, with overrides from options
+```
+beep
+beep
+...
+^C
+# stopped
+```
 
 #### `tee`
 
 Write stdin to file and stdout.
 
-**Usage**: `command | tee <file_path>`
+**Usage**: `command | tee <file_paths...>`
 
-**Permissions**: Requires write permission on file path
+**Permissions**: Requires write permission on file paths
 
 #### `hex`
 
 Convert data to hexadecimal representation.
 
-**Usage**: `hex <data>`
+**Usage**: `command | hex`
 
 #### `b64`
 
-Base64 encode/decode.
+Base64 encode.
 
-**Usage**: `b64 <encode|decode> <data>`
+**Usage**: `command | b64`
 
 #### `crypto-rand`
 
@@ -441,22 +462,11 @@ Authenticate user and create session.
 }
 ```
 
-**Response** (Success - 200):
-```json
-{
-  "success": true,
-  "session_token": "abc123..."
-}
-```
+**Response**: Success - 200, no response body
 
 Sets `session` cookie with authentication token.
 
-**Response** (Failure - 401):
-```json
-{
-  "error": "Invalid credentials"
-}
-```
+**Response**: Failure - 401
 
 ---
 
@@ -473,43 +483,30 @@ Create new user account.
 }
 ```
 
-**Response** (Success - 201):
-```json
-{
-  "success": true,
-  "username": "new_user"
-}
-```
+**Response**: Success - 201, no response body
 
 **Response** (Failure - 400):
 ```json
 {
-  "error": "Invalid invite token"
+  "error": "Required field 'username' is missing"
 }
 ```
 
 ---
 
-#### `GET /signup/check-username/:username`
+#### `GET /signup/check-username/:username?token=...`
 
 Check if username is available.
 
 **URL Parameters**:
 - `username`: Username to check
 
-**Response** (Available - 200):
-```json
-{
-  "available": true
-}
-```
+**Query Parameters**:
+- `token`: Signup token
 
-**Response** (Taken - 200):
-```json
-{
-  "available": false
-}
-```
+**Response**: Available - 200
+
+**Response**: Taken - 409
 
 ---
 
@@ -522,24 +519,15 @@ MQTT broker authentication callback (internal use only).
 **Request Body**:
 ```json
 {
+  "client_id": "backend_internal_...",
   "username": "edge_node_username",
   "password": "mqtt_password"
 }
 ```
 
-**Response** (Authorized - 200):
-```json
-{
-  "authorized": true
-}
-```
+**Response**: Authorized - 200
 
-**Response** (Unauthorized - 403):
-```json
-{
-  "authorized": false
-}
-```
+**Response**: Unauthorized - 403
 
 ---
 
@@ -564,13 +552,14 @@ The ML Engine exposes JSON-RPC 2.0 methods over Unix socket (`/sockets/ml-engine
 
 **Socket Path**: `/sockets/ml-engine.sock` (configurable via `ML_SOCK_FILE` env var)
 
-**Message Format**: Line-delimited JSON
+**Message Format**: Newline-delimited JSON (NDJSON)
 
 ---
 
 ### `generate_face_embedding`
 
 Generate 512-dimensional face embedding from image using InsightFace.
+This is used by the backend through a helper function with GridFS to facilitate backend-context interactions with the file-system (for the `embed` command)
 
 **Parameters**:
 - `image_bytes` (string|bytes): Base64-encoded or raw image bytes
@@ -738,7 +727,6 @@ Analyze edge node telemetry from InfluxDB and provide intelligent fatigue reason
 
 ```json
 {
-  "username": "N420HH",
   "pilot_username": "pilot1",
   "flight_id": "FLT001",
   "timestamp": 1698062730,
@@ -790,7 +778,6 @@ Analyze edge node telemetry from InfluxDB and provide intelligent fatigue reason
 ### Field Descriptions
 
 **Identity**:
-- `username`: Edge node identifier
 - `pilot_username`: Currently logged-in pilot
 - `flight_id`: Active flight identifier
 - `timestamp`: Unix timestamp
@@ -871,7 +858,6 @@ Cogniflight Cloud uses a tag-based permission system:
 
 **Pilot** (`pilot`):
 - Own profile access
-- Flight data access
 
 **Edge Node** (`edge-node`):
 - Telemetry publishing
@@ -889,6 +875,7 @@ Cogniflight Cloud uses a tag-based permission system:
 - `401 Unauthorized`: Authentication required
 - `403 Forbidden`: Insufficient permissions
 - `404 Not Found`: Resource not found
+- `409 Conflict`: Operation violates server schema
 - `500 Internal Server Error`: Server error
 
 ### WebSocket Error Codes
