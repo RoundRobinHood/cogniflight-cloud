@@ -132,10 +132,14 @@ export default function UserPermissionsApp({ instanceData }) {
 
       if (
         result.command_result === 0 ||
-        result.error.includes("file does not exist")
+        result.error?.includes("file does not exist")
       ) {
         setDisabled(true);
-        instanceData.user.disabled = true; // refresh status in parent
+        instanceData.user.disabled = true;
+
+        // Notify parent UsersApp to reload list
+        if (client?.emit) client.emit("user-updated", { username });
+
         setNotification(`User ${username} has been deactivated.`);
       } else {
         throw new Error(result.error || "Failed to deactivate user");

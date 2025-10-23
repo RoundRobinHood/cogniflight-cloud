@@ -28,9 +28,7 @@ export default function FlightsApp() {
         for await (const flight of client.iter_flights()) {
           flightsList.push({
             flight_number: flight.id || "-",
-            pilot: flight.pilot_username || "Unknown",
-            origin: flight.origin || "-",
-            destination: flight.destination || "-",
+            pilot: flight.pilot_username || "Null",
             departure_time:
               flight.departure_time ||
               flight.start_timestamp?.toLocaleString() ||
@@ -60,8 +58,6 @@ export default function FlightsApp() {
     return (
       f.flight_number?.toLowerCase().includes(s) ||
       f.pilot?.toLowerCase().includes(s) ||
-      f.origin?.toLowerCase().includes(s) ||
-      f.destination?.toLowerCase().includes(s) ||
       f.edge_id?.toLowerCase().includes(s)
     );
   });
@@ -76,7 +72,7 @@ export default function FlightsApp() {
             <span className="flights-search-icon">🔍</span>
             <input
               type="text"
-              placeholder="Search by flight, pilot, route or edge ID"
+              placeholder="Search by flight no, pilot or edge ID"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flights-search-input"
@@ -93,8 +89,6 @@ export default function FlightsApp() {
               <th>Flight No.</th>
               <th>Edge ID</th>
               <th>Pilot</th>
-              <th>Origin</th>
-              <th>Destination</th>
               <th>Departure</th>
               <th>Arrival</th>
 
@@ -128,8 +122,6 @@ export default function FlightsApp() {
                   <td>{flight.flight_number}</td>
                   <td>{flight.edge_id}</td>
                   <td>{flight.pilot}</td>
-                  <td>{flight.origin}</td>
-                  <td>{flight.destination}</td>
                   <td>{flight.departure_time}</td>
                   <td>{flight.arrival_time}</td>
 

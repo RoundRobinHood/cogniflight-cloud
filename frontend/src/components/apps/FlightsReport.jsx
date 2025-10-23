@@ -150,14 +150,6 @@ export default function FlightsReport({ instanceData }) {
       pdf.text(`Tail Number (Edge Node): ${flight.tail_number || "-"}`, 15, y);
       y += 7;
       pdf.text(
-        `Origin: ${flight.origin || "-"} → Destination: ${
-          flight.destination || "-"
-        }`,
-        15,
-        y
-      );
-      y += 7;
-      pdf.text(
         `Departure: ${flight.departure_time || "-"}   Arrival: ${
           flight.arrival_time || "-"
         }`,
