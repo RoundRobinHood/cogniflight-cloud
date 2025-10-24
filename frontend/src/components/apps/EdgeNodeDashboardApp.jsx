@@ -12,20 +12,313 @@ import {
   FusionScoreGraph
 } from './visualizations/FlightVisualizations'
 
+// Helper function to detect if pilot data exists
+function hasPilotData(payload) {
+  if (!payload) return false
+
+  // Check for vision data
+  const hasVisionData =
+    payload.blink_rate !== null && payload.blink_rate !== undefined ||
+    payload.microsleep_count !== null && payload.microsleep_count !== undefined ||
+    payload.eyes_closed !== null && payload.eyes_closed !== undefined ||
+    payload.closure_duration !== null && payload.closure_duration !== undefined ||
+    payload.yawning !== null && payload.yawning !== undefined ||
+    payload.yawn_count !== null && payload.yawn_count !== undefined ||
+    payload.yawn_duration !== null && payload.yawn_duration !== undefined
+
+  // Check for heart rate data
+  const hasHeartRateData = payload.heart_rate !== null && payload.heart_rate !== undefined
+
+  // Need at least vision data OR heart rate data to indicate pilot is detected
+  return hasVisionData || hasHeartRateData
+}
+
+// Intruder Alert Component
+function IntruderAlert({ nodeData, onDismiss, onViewDetails }) {
+  if (!nodeData) return null
+
+  const payload = nodeData?.payload || {}
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.95)',
+      zIndex: 9999,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      animation: 'fadeIn 0.3s ease-in'
+    }}>
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+          20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+        @keyframes flashRed {
+          0%, 100% { background: rgba(255, 0, 0, 0.2); }
+          50% { background: rgba(255, 0, 0, 0.4); }
+        }
+      `}</style>
+
+      <div style={{
+        background: 'linear-gradient(135deg, #1a0000 0%, #330000 100%)',
+        border: '4px solid #ff0000',
+        borderRadius: '20px',
+        padding: '40px',
+        maxWidth: '700px',
+        width: '90%',
+        boxShadow: '0 0 50px rgba(255, 0, 0, 0.8), 0 0 100px rgba(255, 0, 0, 0.5)',
+        animation: 'shake 0.5s ease-in-out, flashRed 2s infinite',
+        position: 'relative'
+      }}>
+        {/* Alert Icon */}
+        <div style={{
+          textAlign: 'center',
+          fontSize: '100px',
+          marginBottom: '20px',
+          animation: 'pulse 1.5s infinite'
+        }}>
+          🚨
+        </div>
+
+        {/* Main Alert Text */}
+        <h1 style={{
+          margin: '0 0 20px 0',
+          fontSize: '48px',
+          color: '#ff0000',
+          textAlign: 'center',
+          fontWeight: 'bold',
+          textShadow: '0 0 20px rgba(255, 0, 0, 0.8)',
+          letterSpacing: '2px'
+        }}>
+          ⚠ TSOTSI DETECTED ⚠
+        </h1>
+
+        {/* Subtitle */}
+        <div style={{
+          textAlign: 'center',
+          fontSize: '20px',
+          color: '#ffaaaa',
+          marginBottom: '30px',
+          fontWeight: 'bold'
+        }}>
+          UNAUTHORIZED INTRUDER DETECTED
+        </div>
+
+        {/* Edge Node Details */}
+        <div style={{
+          background: '#00000066',
+          border: '2px solid #ff0000',
+          borderRadius: '10px',
+          padding: '20px',
+          marginBottom: '30px'
+        }}>
+          <h3 style={{
+            margin: '0 0 15px 0',
+            color: '#ff6666',
+            fontSize: '18px',
+            borderBottom: '1px solid #ff000066',
+            paddingBottom: '10px'
+          }}>
+            EDGE NODE DETAILS
+          </h3>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '15px',
+            fontSize: '14px'
+          }}>
+            <div>
+              <div style={{ color: '#888', marginBottom: '5px' }}>Edge Node:</div>
+              <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '16px' }}>
+                {nodeData.edge_username || 'Unknown'}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ color: '#888', marginBottom: '5px' }}>Status:</div>
+              <div style={{ color: '#ff0000', fontWeight: 'bold', fontSize: '16px' }}>
+                {payload.system_state ? payload.system_state.toUpperCase() : 'INTRUDER_DETECTED'}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ color: '#888', marginBottom: '5px' }}>Pilot:</div>
+              <div style={{ color: '#fff', fontWeight: 'bold' }}>
+                {payload.pilot_username || 'N/A'}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ color: '#888', marginBottom: '5px' }}>Flight ID:</div>
+              <div style={{ color: '#fff', fontWeight: 'bold' }}>
+                {payload.flight_id || 'N/A'}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ color: '#888', marginBottom: '5px' }}>Location:</div>
+              <div style={{ color: '#fff', fontWeight: 'bold' }}>
+                {payload.altitude ? `${payload.altitude}m altitude` : 'N/A'}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ color: '#888', marginBottom: '5px' }}>Detection Time:</div>
+              <div style={{ color: '#fff', fontWeight: 'bold' }}>
+                {payload.collection_time
+                  ? new Date(payload.collection_time * 1000).toLocaleTimeString()
+                  : 'N/A'}
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Critical Info */}
+          {(payload.temperature || payload.heart_rate) && (
+            <div style={{
+              marginTop: '15px',
+              paddingTop: '15px',
+              borderTop: '1px solid #ff000066'
+            }}>
+              <div style={{ color: '#888', marginBottom: '10px', fontSize: '12px' }}>
+                ADDITIONAL TELEMETRY:
+              </div>
+              <div style={{
+                display: 'flex',
+                gap: '20px',
+                flexWrap: 'wrap',
+                fontSize: '13px'
+              }}>
+                {payload.heart_rate && (
+                  <div>
+                    <span style={{ color: '#888' }}>Heart Rate: </span>
+                    <span style={{ color: '#ff6666', fontWeight: 'bold' }}>
+                      {payload.heart_rate} BPM
+                    </span>
+                  </div>
+                )}
+                {payload.temperature && (
+                  <div>
+                    <span style={{ color: '#888' }}>Temperature: </span>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>
+                      {payload.temperature}°C
+                    </span>
+                  </div>
+                )}
+                {payload.pressure && (
+                  <div>
+                    <span style={{ color: '#888' }}>Pressure: </span>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>
+                      {payload.pressure} hPa
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{
+          display: 'flex',
+          gap: '15px',
+          justifyContent: 'center'
+        }}>
+          <button
+            onClick={onViewDetails}
+            style={{
+              padding: '15px 30px',
+              background: '#ff0000',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '10px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              boxShadow: '0 0 20px rgba(255, 0, 0, 0.5)'
+            }}
+            onMouseEnter={e => {
+              e.target.style.background = '#cc0000'
+              e.target.style.transform = 'scale(1.05)'
+            }}
+            onMouseLeave={e => {
+              e.target.style.background = '#ff0000'
+              e.target.style.transform = 'scale(1)'
+            }}
+          >
+            VIEW FULL DETAILS
+          </button>
+
+          <button
+            onClick={onDismiss}
+            style={{
+              padding: '15px 30px',
+              background: '#333',
+              color: '#fff',
+              border: '2px solid #666',
+              borderRadius: '10px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'all 0.3s'
+            }}
+            onMouseEnter={e => {
+              e.target.style.background = '#444'
+              e.target.style.borderColor = '#888'
+            }}
+            onMouseLeave={e => {
+              e.target.style.background = '#333'
+              e.target.style.borderColor = '#666'
+            }}
+          >
+            DISMISS
+          </button>
+        </div>
+
+        {/* Warning Message */}
+        <div style={{
+          marginTop: '20px',
+          textAlign: 'center',
+          fontSize: '12px',
+          color: '#ff6666',
+          fontStyle: 'italic'
+        }}>
+          ⚠ This alert indicates unauthorized access detected by the edge node
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Edge Node Card Component
 function EdgeNodeCard({ nodeData, onClick, criticality }) {
   const payload = nodeData?.payload || {}
   const isOnline = nodeData?.isStreaming || false
   const mlAnalysis = nodeData?.mlAnalysis || null
+  const pilotDetected = hasPilotData(payload)
 
-  // Determine alert status
+  // Determine alert status based on system state and fusion scores (only when pilot detected)
   const getAlertStatus = () => {
     if (!isOnline) return 'offline'
     if (payload.system_state === 'alert_high') return 'critical'
     if (payload.system_state === 'alert_moderate') return 'warning'
-    if (payload.fusion_score >= 0.75) return 'critical'
-    if (payload.fusion_score >= 0.50) return 'warning'
-    if (payload.fusion_score >= 0.25) return 'caution'
+    // Only check fusion scores if pilot is detected
+    if (pilotDetected) {
+      if (payload.fusion_score >= 0.75) return 'critical'
+      if (payload.fusion_score >= 0.50) return 'warning'
+      if (payload.fusion_score >= 0.25) return 'caution'
+    }
     return 'normal'
   }
 
@@ -116,94 +409,193 @@ function EdgeNodeCard({ nodeData, onClick, criticality }) {
           }}>
             {isOnline ? 'ONLINE' : 'OFFLINE'}
           </span>
+          {isOnline && !pilotDetected && (
+            <span style={{
+              fontSize: '10px',
+              padding: '2px 6px',
+              background: '#88888822',
+              border: '1px solid #888',
+              borderRadius: '8px',
+              color: '#888',
+              marginLeft: '5px'
+            }}>
+              NO PILOT
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Critical Metrics */}
-      <div style={{
-        flex: 1,
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '10px',
-        fontSize: '12px'
-      }}>
-        {/* Fusion Score */}
+      {/* Metrics Display */}
+      {pilotDetected ? (
+        /* Pilot-specific metrics */
         <div style={{
-          background: '#00000044',
-          padding: '8px',
-          borderRadius: '5px',
-          textAlign: 'center'
+          flex: 1,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '10px',
+          fontSize: '12px'
         }}>
-          <div style={{ color: '#888', marginBottom: '5px' }}>Fatigue Score</div>
+          {/* Fusion Score */}
           <div style={{
-            fontSize: '20px',
-            fontWeight: 'bold',
-            color: payload.fusion_score >= 0.75 ? '#ff0000' :
-                   payload.fusion_score >= 0.50 ? '#FFA500' :
-                   payload.fusion_score >= 0.25 ? '#FFD700' : '#00ff00'
+            background: '#00000044',
+            padding: '8px',
+            borderRadius: '5px',
+            textAlign: 'center'
           }}>
-            {payload.fusion_score !== null && payload.fusion_score !== undefined
-              ? `${(payload.fusion_score * 100).toFixed(0)}%`
-              : 'N/A'}
+            <div style={{ color: '#888', marginBottom: '5px' }}>Fatigue Score</div>
+            <div style={{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              color: payload.fusion_score >= 0.75 ? '#ff0000' :
+                     payload.fusion_score >= 0.50 ? '#FFA500' :
+                     payload.fusion_score >= 0.25 ? '#FFD700' : '#00ff00'
+            }}>
+              {payload.fusion_score !== null && payload.fusion_score !== undefined
+                ? `${(payload.fusion_score * 100).toFixed(0)}%`
+                : 'N/A'}
+            </div>
+          </div>
+
+          {/* Confidence */}
+          <div style={{
+            background: '#00000044',
+            padding: '8px',
+            borderRadius: '5px',
+            textAlign: 'center'
+          }}>
+            <div style={{ color: '#888', marginBottom: '5px' }}>Confidence</div>
+            <div style={{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              color: '#ff00ff'
+            }}>
+              {payload.confidence !== null && payload.confidence !== undefined
+                ? `${(payload.confidence * 100).toFixed(0)}%`
+                : 'N/A'}
+            </div>
+          </div>
+
+          {/* Heart Rate */}
+          <div style={{
+            background: '#00000044',
+            padding: '8px',
+            borderRadius: '5px'
+          }}>
+            <span style={{ color: '#888' }}>Heart Rate:</span>
+            <span style={{
+              float: 'right',
+              color: payload.heart_rate > 150 ? '#ff0000' : '#fff',
+              fontWeight: payload.heart_rate > 150 ? 'bold' : 'normal'
+            }}>
+              {payload.heart_rate || 'N/A'} BPM
+            </span>
+          </div>
+
+          {/* Microsleeps */}
+          <div style={{
+            background: '#00000044',
+            padding: '8px',
+            borderRadius: '5px'
+          }}>
+            <span style={{ color: '#888' }}>Microsleeps:</span>
+            <span style={{
+              float: 'right',
+              color: payload.microsleep_count > 0 ? '#ff0000' : '#00ff00',
+              fontWeight: payload.microsleep_count > 0 ? 'bold' : 'normal'
+            }}>
+              {payload.microsleep_count !== null && payload.microsleep_count !== undefined
+                ? payload.microsleep_count
+                : 'N/A'}
+            </span>
           </div>
         </div>
-
-        {/* Confidence */}
+      ) : (
+        /* Environmental/Flight metrics when no pilot */
         <div style={{
-          background: '#00000044',
-          padding: '8px',
-          borderRadius: '5px',
-          textAlign: 'center'
+          flex: 1,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '10px',
+          fontSize: '12px'
         }}>
-          <div style={{ color: '#888', marginBottom: '5px' }}>Confidence</div>
+          {/* Temperature */}
           <div style={{
-            fontSize: '20px',
-            fontWeight: 'bold',
-            color: '#ff00ff'
+            background: '#00000044',
+            padding: '8px',
+            borderRadius: '5px',
+            textAlign: 'center'
           }}>
-            {payload.confidence !== null && payload.confidence !== undefined
-              ? `${(payload.confidence * 100).toFixed(0)}%`
-              : 'N/A'}
+            <div style={{ color: '#888', marginBottom: '5px' }}>Temperature</div>
+            <div style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: '#00aaff'
+            }}>
+              {payload.temperature !== null && payload.temperature !== undefined
+                ? `${payload.temperature}°C`
+                : 'N/A'}
+            </div>
+          </div>
+
+          {/* Altitude */}
+          <div style={{
+            background: '#00000044',
+            padding: '8px',
+            borderRadius: '5px',
+            textAlign: 'center'
+          }}>
+            <div style={{ color: '#888', marginBottom: '5px' }}>Altitude</div>
+            <div style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: '#ffaa00'
+            }}>
+              {payload.altitude !== null && payload.altitude !== undefined
+                ? `${payload.altitude}m`
+                : 'N/A'}
+            </div>
+          </div>
+
+          {/* Humidity */}
+          <div style={{
+            background: '#00000044',
+            padding: '8px',
+            borderRadius: '5px'
+          }}>
+            <span style={{ color: '#888' }}>Humidity:</span>
+            <span style={{
+              float: 'right',
+              color: '#00ff88',
+              fontWeight: 'bold'
+            }}>
+              {payload.humidity !== null && payload.humidity !== undefined
+                ? `${payload.humidity}%`
+                : 'N/A'}
+            </span>
+          </div>
+
+          {/* Pressure */}
+          <div style={{
+            background: '#00000044',
+            padding: '8px',
+            borderRadius: '5px'
+          }}>
+            <span style={{ color: '#888' }}>Pressure:</span>
+            <span style={{
+              float: 'right',
+              color: '#aa00ff',
+              fontWeight: 'bold'
+            }}>
+              {payload.pressure !== null && payload.pressure !== undefined
+                ? `${payload.pressure} hPa`
+                : 'N/A'}
+            </span>
           </div>
         </div>
+      )}
 
-        {/* Heart Rate */}
-        <div style={{
-          background: '#00000044',
-          padding: '8px',
-          borderRadius: '5px'
-        }}>
-          <span style={{ color: '#888' }}>Heart Rate:</span>
-          <span style={{
-            float: 'right',
-            color: payload.heart_rate > 150 ? '#ff0000' : '#fff',
-            fontWeight: payload.heart_rate > 150 ? 'bold' : 'normal'
-          }}>
-            {payload.heart_rate || 'N/A'} BPM
-          </span>
-        </div>
-
-        {/* Microsleeps */}
-        <div style={{
-          background: '#00000044',
-          padding: '8px',
-          borderRadius: '5px'
-        }}>
-          <span style={{ color: '#888' }}>Microsleeps:</span>
-          <span style={{
-            float: 'right',
-            color: payload.microsleep_count > 0 ? '#ff0000' : '#00ff00',
-            fontWeight: payload.microsleep_count > 0 ? 'bold' : 'normal'
-          }}>
-            {payload.microsleep_count !== null && payload.microsleep_count !== undefined
-              ? payload.microsleep_count
-              : 'N/A'}
-          </span>
-        </div>
-      </div>
-
-      {/* ML Reasoning */}
-      {mlAnalysis && mlAnalysis.reasoning && mlAnalysis.reasoning.length > 0 && (
+      {/* ML Reasoning - Only show if pilot is detected */}
+      {pilotDetected && mlAnalysis && mlAnalysis.reasoning && mlAnalysis.reasoning.length > 0 && (
         <div style={{
           borderTop: '1px solid #333',
           paddingTop: '8px',
@@ -249,6 +641,7 @@ function EdgeNodeDetailedView({ nodeData, onClose }) {
   const payload = nodeData?.payload || {}
   const [fusionScoreHistory, setFusionScoreHistory] = useState(nodeData.fusionHistory || [])
   const mlAnalysis = nodeData?.mlAnalysis || null
+  const pilotDetected = hasPilotData(payload)
 
   // Update fusion score history whenever nodeData changes (live updates)
   useEffect(() => {
@@ -363,67 +756,70 @@ function EdgeNodeDetailedView({ nodeData, onClose }) {
 
         {/* Full flight monitoring dashboard */}
         <div>
-          {/* Top Row: Fusion Score Graph + Vision Monitoring */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '2fr 1fr',
-            gap: '20px',
-            marginBottom: '20px'
-          }}>
-            {/* Fusion Score Graph */}
-            <div style={{
-              background: 'linear-gradient(135deg, #1a1a2e22 0%, #16213e22 100%)',
-              padding: '15px',
-              borderRadius: '10px',
-              border: '1px solid #333'
-            }}>
-              <h3 style={{ color: '#00ffff', marginBottom: '15px', marginTop: '5px', textAlign: 'center', fontSize: '16px' }}>
-                FATIGUE FUSION SCORE - TIME SERIES
-              </h3>
-              <FusionScoreGraph history={fusionScoreHistory} />
+          {/* Pilot Monitoring Section - Only show when pilot detected */}
+          {pilotDetected && (
+            <>
+              {/* Top Row: Fusion Score Graph + Vision Monitoring */}
               <div style={{
-                marginTop: '15px',
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '40px',
-                flexWrap: 'wrap'
+                display: 'grid',
+                gridTemplateColumns: '2fr 1fr',
+                gap: '20px',
+                marginBottom: '20px'
               }}>
-                {payload.fusion_score !== null && payload.fusion_score !== undefined && (
+                {/* Fusion Score Graph */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #1a1a2e22 0%, #16213e22 100%)',
+                  padding: '15px',
+                  borderRadius: '10px',
+                  border: '1px solid #333'
+                }}>
+                  <h3 style={{ color: '#00ffff', marginBottom: '15px', marginTop: '5px', textAlign: 'center', fontSize: '16px' }}>
+                    FATIGUE FUSION SCORE - TIME SERIES
+                  </h3>
+                  <FusionScoreGraph history={fusionScoreHistory} />
                   <div style={{
-                    textAlign: 'center',
-                    fontSize: '14px',
-                    color: '#888'
+                    marginTop: '15px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '40px',
+                    flexWrap: 'wrap'
                   }}>
-                    <div style={{ marginBottom: '5px', color: '#00ffff' }}>Current Fusion Score</div>
-                    <div style={{
-                      color: payload.fusion_score < 0.25 ? '#00ff00' :
-                             payload.fusion_score < 0.50 ? '#FFD700' :
-                             payload.fusion_score < 0.75 ? '#FFA500' : '#FF0000',
-                      fontWeight: 'bold',
-                      fontSize: '24px'
-                    }}>
-                      {(payload.fusion_score * 100).toFixed(1)}%
-                    </div>
+                    {payload.fusion_score !== null && payload.fusion_score !== undefined && (
+                      <div style={{
+                        textAlign: 'center',
+                        fontSize: '14px',
+                        color: '#888'
+                      }}>
+                        <div style={{ marginBottom: '5px', color: '#00ffff' }}>Current Fusion Score</div>
+                        <div style={{
+                          color: payload.fusion_score < 0.25 ? '#00ff00' :
+                                 payload.fusion_score < 0.50 ? '#FFD700' :
+                                 payload.fusion_score < 0.75 ? '#FFA500' : '#FF0000',
+                          fontWeight: 'bold',
+                          fontSize: '24px'
+                        }}>
+                          {(payload.fusion_score * 100).toFixed(1)}%
+                        </div>
+                      </div>
+                    )}
+                    {payload.confidence !== null && payload.confidence !== undefined && (
+                      <div style={{
+                        textAlign: 'center',
+                        fontSize: '14px',
+                        color: '#888'
+                      }}>
+                        <div style={{ marginBottom: '5px', color: '#ff00ff' }}>Prediction Confidence</div>
+                        <div style={{
+                          color: '#ff00ff',
+                          fontWeight: 'bold',
+                          fontSize: '24px'
+                        }}>
+                          {(payload.confidence * 100).toFixed(1)}%
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-                {payload.confidence !== null && payload.confidence !== undefined && (
-                  <div style={{
-                    textAlign: 'center',
-                    fontSize: '14px',
-                    color: '#888'
-                  }}>
-                    <div style={{ marginBottom: '5px', color: '#ff00ff' }}>Prediction Confidence</div>
-                    <div style={{
-                      color: '#ff00ff',
-                      fontWeight: 'bold',
-                      fontSize: '24px'
-                    }}>
-                      {(payload.confidence * 100).toFixed(1)}%
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+                </div>
 
             {/* Vision Monitoring */}
             <div style={{
@@ -511,6 +907,8 @@ function EdgeNodeDetailedView({ nodeData, onClose }) {
               </div>
             </div>
           </div>
+            </>
+          )}
 
           {/* Main Dashboard Grid */}
           <div style={{
@@ -533,8 +931,9 @@ function EdgeNodeDetailedView({ nodeData, onClose }) {
               <AttitudeIndicator pitch={payload.pitch} roll={payload.roll} />
             </div>
 
-            {/* Cardiovascular Vitals */}
-            <div style={{
+            {/* Cardiovascular Vitals - Only show when pilot detected */}
+            {pilotDetected && (
+              <div style={{
               background: 'linear-gradient(135deg, #1a1a2e22 0%, #16213e22 100%)',
               padding: '15px',
               borderRadius: '10px',
@@ -609,7 +1008,8 @@ function EdgeNodeDetailedView({ nodeData, onClose }) {
                   </span>
                 </div>
               </div>
-            </div>
+              </div>
+            )}
 
             {/* Accelerometer */}
             <div style={{
@@ -707,8 +1107,8 @@ function EdgeNodeDetailedView({ nodeData, onClose }) {
             </div>
           </div>
 
-          {/* ML Engine Analysis Card */}
-          {mlAnalysis && (
+          {/* ML Engine Analysis Card - Only show if pilot is detected */}
+          {pilotDetected && mlAnalysis && (
             <div style={{
               background: 'linear-gradient(135deg, #1a1a2e22 0%, #16213e22 100%)',
               padding: '15px',
@@ -975,9 +1375,11 @@ function EdgeNodeDashboardApp() {
   const [edgeNodes, setEdgeNodes] = useState({})
   const [selectedNode, setSelectedNode] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
+  const [intruderAlert, setIntruderAlert] = useState(null) // Track intruder detection
   const mqttCommandHandleRef = useRef(null)
   const mlClientRef = useRef(null)
   const mlAnalysisInProgressRef = useRef({}) // Track which nodes are currently being analyzed
+  const intruderDetectedRef = useRef({}) // Track which nodes have already triggered alerts
   const { addNotification } = useSystem()
 
   // Initialize ML analysis client
@@ -1087,9 +1489,9 @@ function EdgeNodeDashboardApp() {
               return updated
             })
 
-            // Trigger ML analysis when new data arrives for nodes with pilot data
-            if (yamlDoc.payload && yamlDoc.payload.pilot_username && yamlDoc.payload.fusion_score !== null) {
-              // Only analyze nodes that have active pilot monitoring
+            // Trigger ML analysis only when pilot data is detected
+            if (yamlDoc.payload && hasPilotData(yamlDoc.payload)) {
+              // Only analyze nodes that have active pilot monitoring with vision or heart rate data
               fetchMLAnalysis(nodeId)
             }
           }
@@ -1145,6 +1547,37 @@ function EdgeNodeDashboardApp() {
       setSelectedNode(edgeNodes[selectedNode.edge_username])
     }
   }, [edgeNodes, selectedNode?.edge_username])
+
+  // Monitor for intruder_detected state and trigger alert
+  useEffect(() => {
+    Object.values(edgeNodes).forEach(node => {
+      const nodeId = node.edge_username
+      const systemState = node.payload?.system_state
+
+      // Check if this node has intruder_detected state
+      if (systemState === 'intruder_detected') {
+        // Only trigger alert if we haven't already alerted for this node
+        if (!intruderDetectedRef.current[nodeId]) {
+          console.log(`[INTRUDER ALERT] Tsotsi detected on node: ${nodeId}`)
+
+          // Mark this node as having triggered an alert
+          intruderDetectedRef.current[nodeId] = true
+
+          // Set the intruder alert state to show the popup
+          setIntruderAlert(node)
+
+          // Send a system notification
+          addNotification(`🚨 TSOTSI DETECTED on ${nodeId}!`, 'error')
+        }
+      } else {
+        // If the state is no longer intruder_detected, reset the flag
+        // This allows the alert to trigger again if the state changes back to intruder_detected
+        if (intruderDetectedRef.current[nodeId]) {
+          intruderDetectedRef.current[nodeId] = false
+        }
+      }
+    })
+  }, [edgeNodes, addNotification])
 
   // Fetch ML analysis for a specific edge node
   const fetchMLAnalysis = useCallback(async (edgeUsername) => {
@@ -1325,6 +1758,18 @@ function EdgeNodeDashboardApp() {
         <EdgeNodeDetailedView
           nodeData={selectedNode}
           onClose={() => setSelectedNode(null)}
+        />
+      )}
+
+      {/* Intruder Alert Popup */}
+      {intruderAlert && (
+        <IntruderAlert
+          nodeData={intruderAlert}
+          onDismiss={() => setIntruderAlert(null)}
+          onViewDetails={() => {
+            setSelectedNode(intruderAlert)
+            setIntruderAlert(null)
+          }}
         />
       )}
     </div>
