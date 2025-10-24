@@ -1,12 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { Monitor, Circle } from 'lucide-react'
 import { useStreamClient } from '../api/socket.js'
+import { useSystem } from './useSystem'
+import IntruderAlert from './IntruderAlert'
 
 function EdgeNodesWidget({ onClick }) {
   const client = useStreamClient()
   const [edgeNodes, setEdgeNodes] = useState({})
   const [isConnected, setIsConnected] = useState(false)
+  const [intruderAlert, setIntruderAlert] = useState(null)
   const mqttCommandHandleRef = useRef(null)
+  const intruderDetectedRef = useRef({})
+  const { addNotification } = useSystem()
 
   // Get the complete list of edge nodes from the edge-nodes command
   useEffect(() => {
@@ -66,12 +71,16 @@ function EdgeNodesWidget({ onClick }) {
               if (!updated[nodeId]) {
                 updated[nodeId] = {
                   edge_username: nodeId,
+                  payload: yamlDoc.payload || {},
+                  timestamp: yamlDoc.timestamp,
                   isStreaming: true,
                   lastUpdate: Date.now()
                 }
               } else {
                 updated[nodeId] = {
                   ...updated[nodeId],
+                  payload: yamlDoc.payload || {},
+                  timestamp: yamlDoc.timestamp,
                   isStreaming: true,
                   lastUpdate: Date.now()
                 }
@@ -115,6 +124,37 @@ function EdgeNodesWidget({ onClick }) {
     }
   }, [client])
 
+  // Monitor for intruder_detected state and trigger global alert
+  useEffect(() => {
+    Object.values(edgeNodes).forEach(node => {
+      const nodeId = node.edge_username
+      const systemState = node.payload?.system_state
+
+      // Check if this node has intruder_detected state
+      if (systemState === 'intruder_detected') {
+        // Only trigger alert if we haven't already alerted for this node
+        if (!intruderDetectedRef.current[nodeId]) {
+          console.log(`[GLOBAL INTRUDER ALERT] Tsotsi detected on node: ${nodeId}`)
+
+          // Mark this node as having triggered an alert
+          intruderDetectedRef.current[nodeId] = true
+
+          // Set the intruder alert state to show the popup
+          setIntruderAlert(node)
+
+          // Send a system notification
+          addNotification(`🚨 TSOTSI DETECTED on ${nodeId}!`, 'error')
+        }
+      } else {
+        // If the state is no longer intruder_detected, reset the flag
+        // This allows the alert to trigger again if the state changes back to intruder_detected
+        if (intruderDetectedRef.current[nodeId]) {
+          intruderDetectedRef.current[nodeId] = false
+        }
+      }
+    })
+  }, [edgeNodes, addNotification])
+
   const totalNodes = Object.keys(edgeNodes).length
   const activeNodes = Object.values(edgeNodes).filter(node => node.isStreaming).length
 
@@ -129,34 +169,49 @@ function EdgeNodesWidget({ onClick }) {
   const statusColor = getStatusColor()
 
   return (
-    <div
-      className="edge-nodes-widget"
-      onClick={onClick}
-      style={{
-        cursor: onClick ? 'pointer' : 'default',
-        borderColor: `${statusColor}33`
-      }}
-    >
-      <div className="edge-nodes-icon" style={{ color: statusColor }}>
-        <Monitor size={16} />
-      </div>
-      <div className="edge-nodes-count">
-        <div className="edge-nodes-active">{activeNodes}</div>
-        <div className="edge-nodes-total">/ {totalNodes}</div>
-      </div>
-      <div className="edge-nodes-details">
-        <div className="edge-nodes-label">Edge Nodes</div>
-        <div className="edge-nodes-status" style={{ color: statusColor }}>
-          <Circle size={6} fill={statusColor} />
-          <span>
-            {!isConnected ? 'Connecting...' :
-             activeNodes === 0 ? 'No nodes' :
-             activeNodes === totalNodes ? 'All online' :
-             `${activeNodes} active`}
-          </span>
+    <>
+      <div
+        className="edge-nodes-widget"
+        onClick={onClick}
+        style={{
+          cursor: onClick ? 'pointer' : 'default',
+          borderColor: `${statusColor}33`
+        }}
+      >
+        <div className="edge-nodes-icon" style={{ color: statusColor }}>
+          <Monitor size={16} />
+        </div>
+        <div className="edge-nodes-count">
+          <div className="edge-nodes-active">{activeNodes}</div>
+          <div className="edge-nodes-total">/ {totalNodes}</div>
+        </div>
+        <div className="edge-nodes-details">
+          <div className="edge-nodes-label">Edge Nodes</div>
+          <div className="edge-nodes-status" style={{ color: statusColor }}>
+            <Circle size={6} fill={statusColor} />
+            <span>
+              {!isConnected ? 'Connecting...' :
+               activeNodes === 0 ? 'No nodes' :
+               activeNodes === totalNodes ? 'All online' :
+               `${activeNodes} active`}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Global Intruder Alert Popup */}
+      {intruderAlert && (
+        <IntruderAlert
+          nodeData={intruderAlert}
+          onDismiss={() => setIntruderAlert(null)}
+          onViewDetails={() => {
+            // Open dashboard to view details
+            if (onClick) onClick()
+            setIntruderAlert(null)
+          }}
+        />
+      )}
+    </>
   )
 }
 
