@@ -4,13 +4,14 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/reversed_rpc"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/RoundRobinHood/sh"
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func InitCommands(filestore filesystem.Store, fsctx filesystem.FSContext, socketSession *types.SocketSession, sessionStore *types.SessionStore, apiKey chatbot.APIKey, jsonConn *jsonrpc2.Conn, mqttEvents *util.EventHandler[types.MQTTMessage], flux_cfg *influx.InfluxDBConfig) []sh.Command {
+func InitCommands(filestore filesystem.Store, fsctx filesystem.FSContext, socketSession *types.SocketSession, sessionStore *types.SessionStore, apiKey chatbot.APIKey, jsonConn *jsonrpc2.Conn, mqttEvents *util.EventHandler[types.MQTTMessage], flux_cfg *influx.InfluxDBConfig, registry *reversed_rpc.RPCRegistry) []sh.Command {
 	commands := []sh.Command{
 		&CmdWhoami{FileStore: filestore, Session: socketSession},
 		CmdHelp{},
@@ -45,6 +46,8 @@ func InitCommands(filestore filesystem.Store, fsctx filesystem.FSContext, socket
 
 		CmdB64{},
 		CmdHex{},
+
+		&CmdEdgeCat{Registry: registry},
 	}
 
 	activate_cmd := &CmdActivate{

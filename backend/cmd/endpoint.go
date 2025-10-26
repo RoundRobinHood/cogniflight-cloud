@@ -10,6 +10,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/reversed_rpc"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/gin-gonic/gin"
@@ -24,7 +25,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, apiKey chatbot.APIKey, jsonConn *jsonrpc2.Conn, mqttEvents *util.EventHandler[types.MQTTMessage], flux_cfg *influx.InfluxDBConfig) gin.HandlerFunc {
+func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, apiKey chatbot.APIKey, jsonConn *jsonrpc2.Conn, mqttEvents *util.EventHandler[types.MQTTMessage], flux_cfg *influx.InfluxDBConfig, registry *reversed_rpc.RPCRegistry) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		auth_get, ok := c.Get("auth")
 		if !ok {
@@ -38,7 +39,7 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, ap
 		available_commands := InitCommands(filestore, filesystem.FSContext{
 			Store:    filestore,
 			UserTags: auth_status.Tags,
-		}, session, sessionStore, apiKey, jsonConn, mqttEvents, flux_cfg)
+		}, session, sessionStore, apiKey, jsonConn, mqttEvents, flux_cfg, registry)
 
 		clients := map[string]types.ClientInfo{}
 		client_cancels := map[string]context.CancelFunc{}
@@ -49,6 +50,7 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, ap
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			log.Println("Upgrade failed:", err)
+			sessionStore.DetachSession(socketID)
 			return
 		}
 		defer conn.Close()

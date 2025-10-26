@@ -16,6 +16,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/reversed_rpc"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
@@ -111,6 +112,8 @@ func main() {
 	stream := jsonrpc2.NewPlainObjectStream(conn)
 	jsonConn := jsonrpc2.NewConn(context.Background(), stream, nil)
 
+	rpc_registry := reversed_rpc.NewRPCRegistry()
+
 	r := gin.New()
 	r.SetTrustedProxies(strings.Split(os.Getenv("TRUSTED_PROXIES"), ","))
 	r.Use(jlogging.Middleware())
@@ -125,7 +128,8 @@ func main() {
 		URL:   os.Getenv("INFLUX_URL"),
 		Token: os.Getenv("INFLUX_TOKEN"),
 		Org:   os.Getenv("INFLUX_ORG"),
-	}))
+	}, rpc_registry))
+	r.GET("/edge-rpc-socket", auth.AuthMiddleware(fileStore), reversed_rpc.RPCWebhook(rpc_registry))
 
 	server := &http.Server{
 		Addr:    ":8080",
