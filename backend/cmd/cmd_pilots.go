@@ -24,7 +24,7 @@ func (c *CmdPilots) Identifier() string {
 
 func (c *CmdPilots) Run(ctx sh.CommandContext) int {
 	tags := util.GetTags(ctx.Ctx)
-	if !slices.Contains(tags, "sysadmin") && !slices.Contains(tags, "atc") {
+	if !slices.Contains(tags, "sysadmin") && !slices.Contains(tags, "atc") && !slices.Contains(tags, "edge-node") {
 		fmt.Fprint(ctx.Stderr, "error: insufficient permissions")
 		return 1
 	}
