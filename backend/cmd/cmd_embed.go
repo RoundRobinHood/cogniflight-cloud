@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
-	"slices"
 	"time"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
@@ -27,10 +26,6 @@ func (c *CmdEmbed) Identifier() string {
 
 func (c *CmdEmbed) Run(ctx sh.CommandContext) int {
 	tags := util.GetTags(ctx.Ctx)
-	if !slices.Contains(tags, "sysadmin") && !slices.Contains(tags, "data-analyst") && !slices.Contains(tags, "atc") && !slices.Contains(tags, "edge-node") {
-		fmt.Fprint(ctx.Stderr, "access denied")
-		return 1
-	}
 
 	if len(ctx.Args) == 1 {
 		fmt.Fprint(ctx.Stderr, "usage: embed <IMG FILES...>")
