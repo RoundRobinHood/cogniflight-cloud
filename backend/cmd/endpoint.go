@@ -8,9 +8,11 @@ import (
 	"sync"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/email"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/uazapi"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/util"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -24,7 +26,16 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, apiKey chatbot.APIKey, jsonConn *jsonrpc2.Conn, mqttEvents *util.EventHandler[types.MQTTMessage], flux_cfg *influx.InfluxDBConfig) gin.HandlerFunc {
+func CmdWebhook(
+	filestore filesystem.Store,
+	sessionStore *types.SessionStore,
+	apiKey chatbot.APIKey,
+	jsonConn *jsonrpc2.Conn,
+	mqttEvents *util.EventHandler[types.MQTTMessage],
+	flux_cfg *influx.InfluxDBConfig,
+	uazapi_cfg uazapi.UazapiConfig,
+	email_cfg email.EmailConfig,
+) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		auth_get, ok := c.Get("auth")
 		if !ok {
@@ -35,10 +46,21 @@ func CmdWebhook(filestore filesystem.Store, sessionStore *types.SessionStore, ap
 		auth_status := auth_get.(types.AuthorizationStatus)
 		socketID := util.RandHex(20)
 		session := sessionStore.AttachSession(socketID, auth_status)
-		available_commands := InitCommands(filestore, filesystem.FSContext{
-			Store:    filestore,
-			UserTags: auth_status.Tags,
-		}, session, sessionStore, apiKey, jsonConn, mqttEvents, flux_cfg)
+		available_commands := InitCommands(
+			filestore,
+			filesystem.FSContext{
+				Store:    filestore,
+				UserTags: auth_status.Tags,
+			},
+			session,
+			sessionStore,
+			apiKey,
+			jsonConn,
+			mqttEvents,
+			flux_cfg,
+			uazapi_cfg,
+			email_cfg,
+		)
 
 		clients := map[string]types.ClientInfo{}
 		client_cancels := map[string]context.CancelFunc{}

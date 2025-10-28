@@ -14,9 +14,11 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/email"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/uazapi"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
 	"github.com/sourcegraph/jsonrpc2"
@@ -39,6 +41,38 @@ func main() {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	if openAIKey == "" {
 		log.Fatal("Missing OpenAI key")
+	}
+
+	uazapi_url := os.Getenv("UAZAPI_URL")
+	if uazapi_url == "" {
+		log.Fatal("Missing UAZAPI URL")
+	}
+
+	uazapi_key := os.Getenv("UAZAPI_API_KEY")
+	if uazapi_key == "" {
+		log.Fatal("Missing UAZAPI API Key")
+	}
+
+	email_username := os.Getenv("EMAIL_USERNAME")
+	if email_username == "" {
+		log.Fatal("Missing email username")
+	}
+
+	email_password := os.Getenv("EMAIL_PASSWORD")
+	if email_password == "" {
+		log.Fatal("Missing email password")
+	}
+
+	email_host := os.Getenv("EMAIL_HOST")
+	if email_host == "" {
+		log.Fatal("Missing email host")
+	}
+
+	email_port := 465
+	if port_str := os.Getenv("EMAIL_PORT"); port_str != "" {
+		if _, err := fmt.Sscan(port_str, &email_port); err != nil {
+			log.Fatal("invalid email port: ", err)
+		}
 	}
 
 	database := client.Database("cogniflight")
@@ -121,11 +155,30 @@ func main() {
 	r.GET("/signup/check-username/:username", auth.SignupCheckUsername(fileStore))
 	r.POST("/signup", auth.Signup(fileStore))
 	r.POST("/login", auth.Login(fileStore))
-	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore, sessionStore, chatbot.APIKey(openAIKey), jsonConn, mqttEvents, &influx.InfluxDBConfig{
-		URL:   os.Getenv("INFLUX_URL"),
-		Token: os.Getenv("INFLUX_TOKEN"),
-		Org:   os.Getenv("INFLUX_ORG"),
-	}))
+	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore),
+		cmd.CmdWebhook(
+			fileStore,
+			sessionStore,
+			chatbot.APIKey(openAIKey),
+			jsonConn,
+			mqttEvents,
+			&influx.InfluxDBConfig{
+				URL:   os.Getenv("INFLUX_URL"),
+				Token: os.Getenv("INFLUX_TOKEN"),
+				Org:   os.Getenv("INFLUX_ORG"),
+			},
+			uazapi.UazapiConfig{
+				BaseURL:    uazapi_url,
+				APIKey:     uazapi_key,
+				HTTPClient: &http.Client{},
+			},
+			email.EmailConfig{
+				Username: email_username,
+				Password: email_password,
+				Host:     email_host,
+				Port:     email_port,
+			},
+		))
 
 	server := &http.Server{
 		Addr:    ":8080",
