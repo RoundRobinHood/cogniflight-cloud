@@ -138,6 +138,7 @@ export async function Connect() {
       };
       tmp_websocket.addEventListener("open", open);
       const close = async () => {
+        location.reload();
         websocket = null;
         connecting = false;
         tmp_websocket.removeEventListener("close", close);

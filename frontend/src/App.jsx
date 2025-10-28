@@ -87,8 +87,7 @@ function App() {
         if(cmd.command_result != 0) {
           throw new Error(cmd.error);
         }
-        setUser(null)
-        setIsAuthenticated(false)
+        location.reload();
       });
     }
   }, [client]);
