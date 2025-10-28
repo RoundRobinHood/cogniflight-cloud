@@ -568,43 +568,6 @@ function SettingsApp() {
     );
   };
 
-  const renderOcularSection = (showDivider = false) => {
-    if (!isPilot) return null;
-
-    return (
-      <>
-        <div className="settings-section">
-          <h3 className="settings-section-title">Ocular Baselines</h3>
-          <p className="settings-section-subtitle">
-            Eye tracking and blink monitoring baselines
-          </p>
-
-          <div className="settings-form-vertical">
-            <div className="form-group">
-              <label htmlFor="baseline_blink_rate_per_minute">Baseline Blink Rate (per minute)</label>
-              <input
-                id="baseline_blink_rate_per_minute"
-                type="number"
-                value={userProfile?.ocular_baselines?.baseline_blink_rate_per_minute || ''}
-                onChange={(e) => handleFieldChange('ocular_baselines.baseline_blink_rate_per_minute', parseFloat(e.target.value) || 0)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="baseline_blink_duration_ms">Baseline Blink Duration (ms)</label>
-              <input
-                id="baseline_blink_duration_ms"
-                type="number"
-                value={userProfile?.ocular_baselines?.baseline_blink_duration_ms || ''}
-                onChange={(e) => handleFieldChange('ocular_baselines.baseline_blink_duration_ms', parseFloat(e.target.value) || 0)}
-              />
-            </div>
-          </div>
-        </div>
-        {showDivider && <div className="settings-divider" />}
-      </>
-    );
-  };
 
   const renderCabinPreferencesSection = (showDivider = false) => {
     if (!isPilot) return null;
@@ -723,7 +686,6 @@ function SettingsApp() {
     ...(isPilot ? [
       { id: 'pilot', label: 'Pilot Info', icon: '✈️' },
       { id: 'cardiovascular', label: 'Cardiovascular', icon: '❤️' },
-      { id: 'ocular', label: 'Ocular', icon: '👁️' },
       { id: 'cabin', label: 'Cabin Preferences', icon: '🌡️' },
     ] : []),
   ];
@@ -740,8 +702,6 @@ function SettingsApp() {
         return renderPilotSection();
       case 'cardiovascular':
         return renderCardiovascularSection();
-      case 'ocular':
-        return renderOcularSection();
       case 'cabin':
         return renderCabinPreferencesSection();
       case 'password':
@@ -836,7 +796,6 @@ function SettingsApp() {
             {renderGeneralSection(true)}
             {renderPilotSection(true)}
             {renderCardiovascularSection(true)}
-            {renderOcularSection(true)}
             {renderCabinPreferencesSection(true)}
             {renderPasswordSection(false)}
           </>

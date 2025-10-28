@@ -194,6 +194,30 @@ function Desktop({ user, onLogout }) {
       }
     }
 
+    // For pilots, also check cardiovascular baselines and cabin preferences
+    if (isPilot) {
+      // Check cardiovascular baselines
+      const cardiovascular = userProfile?.cardiovascular_baselines
+      if (!cardiovascular ||
+          !cardiovascular.resting_heart_rate_bpm ||
+          !cardiovascular.resting_heart_rate_std_dev ||
+          !cardiovascular.max_heart_rate_bpm) {
+        return false
+      }
+
+      // Check cabin preferences
+      const cabin = userProfile?.cabin_preferences
+      if (!cabin ||
+          cabin.preferred_temperature_celsius === undefined ||
+          cabin.preferred_temperature_celsius === null ||
+          cabin.preferred_temperature_celsius === '' ||
+          cabin.temperature_tolerance_range_celsius === undefined ||
+          cabin.temperature_tolerance_range_celsius === null ||
+          cabin.temperature_tolerance_range_celsius === '') {
+        return false
+      }
+    }
+
     return true
   }, [systemState.userProfile])
 
@@ -211,6 +235,18 @@ function Desktop({ user, onLogout }) {
       setTimeout(() => setShowLockPopup(false), 4000)
       return
     }
+
+    // Single instance enforcement for settings app
+    if (appType === 'settings') {
+      const existingSettingsWindow = windows.find(w => w.appType === 'settings')
+      if (existingSettingsWindow) {
+        // Focus the existing settings window instead of creating a new one
+        focusWindow(existingSettingsWindow.id)
+        addNotification("Settings already open", "info")
+        return
+      }
+    }
+
     // Get app metadata from registry
     const metadata = appRegistry.getMetadata(appType);
     if (!metadata) {
@@ -238,6 +274,57 @@ function Desktop({ user, onLogout }) {
     setNextZIndex((prev) => prev + 1);
     addNotification(`${title} opened`, "success");
   };
+
+  // Helper function to open/focus settings with proper single instance handling
+  const openOrFocusSettings = (title = 'Settings - Please Complete Your Profile') => {
+    setWindows((prevWindows) => {
+      const existingSettingsWindow = prevWindows.find(w => w.appType === 'settings')
+
+      if (existingSettingsWindow) {
+        // Settings already exists, maximize and focus it
+        setNextZIndex(prev => prev + 1)
+        return prevWindows.map(w =>
+          w.id === existingSettingsWindow.id
+            ? {
+                ...w,
+                isMaximized: true,
+                isMinimized: false,
+                prevX: w.isMaximized ? w.prevX : w.x,
+                prevY: w.isMaximized ? w.prevY : w.y,
+                prevWidth: w.isMaximized ? w.prevWidth : w.width,
+                prevHeight: w.isMaximized ? w.prevHeight : w.height,
+                x: 0,
+                y: 0,
+                width: window.innerWidth,
+                height: window.innerHeight - 48,
+                zIndex: nextZIndex + 1
+              }
+            : w
+        )
+      } else {
+        // No settings window exists, create a new maximized one
+        const newWindow = {
+          id: Date.now(),
+          appType: 'settings',
+          title,
+          x: 0,
+          y: 0,
+          width: window.innerWidth,
+          height: window.innerHeight - 48,
+          isMaximized: true,
+          isMinimized: false,
+          zIndex: nextZIndex + 1,
+          instanceData: null,
+          prevX: Math.random() * 200 + 100,
+          prevY: Math.random() * 100 + 50,
+          prevWidth: 600,
+          prevHeight: 400,
+        };
+        setNextZIndex(prev => prev + 2)
+        return [...prevWindows, newWindow];
+      }
+    })
+  }
 
   const closeWindow = (id) => {
     setWindows((prev) => prev.filter((w) => w.id !== id));
@@ -364,33 +451,9 @@ function Desktop({ user, onLogout }) {
 
     if (!hasAllCriticalInfo || firstLogin) {
       setSettingsLocked(true)
-      // Auto-open settings app and maximize it
+      // Auto-open settings app and maximize it using the helper function
       setTimeout(() => {
-        openWindow('settings', 'Settings - Please Complete Your Profile').then(() => {
-          // Find the settings window and maximize it
-          setWindows(prev => {
-            const settingsWindow = prev.find(w => w.appType === 'settings')
-            if (settingsWindow) {
-              return prev.map(w =>
-                w.id === settingsWindow.id
-                  ? {
-                      ...w,
-                      isMaximized: true,
-                      prevX: w.x,
-                      prevY: w.y,
-                      prevWidth: w.width,
-                      prevHeight: w.height,
-                      x: 0,
-                      y: 0,
-                      width: window.innerWidth,
-                      height: window.innerHeight - 48
-                    }
-                  : w
-              )
-            }
-            return prev
-          })
-        })
+        openOrFocusSettings('Settings - Please Complete Your Profile')
       }, 500)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -409,35 +472,8 @@ function Desktop({ user, onLogout }) {
       setShowLockPopup(true)
       setTimeout(() => setShowLockPopup(false), 4000)
 
-      // Check if Settings app is open, if not, open it
-      const hasSettingsOpen = windows.some(w => w.appType === 'settings')
-      if (!hasSettingsOpen) {
-        openWindow('settings', 'Settings - Please Complete Your Profile').then(() => {
-          // Maximize the settings window
-          setWindows(prev => {
-            const settingsWindow = prev.find(w => w.appType === 'settings')
-            if (settingsWindow) {
-              return prev.map(w =>
-                w.id === settingsWindow.id
-                  ? {
-                      ...w,
-                      isMaximized: true,
-                      prevX: w.x,
-                      prevY: w.y,
-                      prevWidth: w.width,
-                      prevHeight: w.height,
-                      x: 0,
-                      y: 0,
-                      width: window.innerWidth,
-                      height: window.innerHeight - 48
-                    }
-                  : w
-              )
-            }
-            return prev
-          })
-        })
-      }
+      // Open or focus settings using the helper function
+      openOrFocusSettings('Settings - Please Complete Your Profile')
 
       addNotification('Critical information missing! Please complete your profile.', 'error')
     }
