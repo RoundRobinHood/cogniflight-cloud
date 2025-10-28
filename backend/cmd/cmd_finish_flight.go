@@ -49,7 +49,7 @@ func (c *CmdFinishFlight) Run(ctx sh.CommandContext) int {
 	}
 
 	fsCtx := &filesystem.FSContext{
-		Store: c.FileStore,
+		Store:    c.FileStore,
 		UserTags: []string{"sysadmin"},
 	}
 
@@ -58,8 +58,10 @@ func (c *CmdFinishFlight) Run(ctx sh.CommandContext) int {
 		if err != nil {
 			if !errors.Is(err, types.ErrCantAccessFs) && !errors.Is(err, os.ErrNotExist) {
 				fmt.Fprintf(ctx.Stderr, "failed to grab user.profile: %v", err)
+				return 1
+			} else {
+				continue
 			}
-			return 1
 		}
 
 		var RoleFile struct {
@@ -77,7 +79,7 @@ func (c *CmdFinishFlight) Run(ctx sh.CommandContext) int {
 
 		flight_path := fmt.Sprintf("/home/%s/flights/%s.flight", entry.Name, flight_id)
 
-		if readWriter, err := fsCtx.Open(ctx.Ctx, flight_path, os.O_RDWR | os.O_APPEND, 0); err != nil {
+		if readWriter, err := fsCtx.Open(ctx.Ctx, flight_path, os.O_RDWR|os.O_APPEND, 0); err != nil {
 			if !errors.Is(err, os.ErrNotExist) && !errors.Is(err, types.ErrCantAccessFs) {
 				fmt.Fprint(ctx.Stderr, "failed to open flight file: ", err)
 				return 1
