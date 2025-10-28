@@ -129,6 +129,9 @@ services:
 
       MQTT_KEY: "${MQTT_KEY:-mqttpass}"
       OPENAI_API_KEY: "$OPENAI_API_KEY"
+
+      UAZAPI_URL: "${UAZAPI_URL}"
+      UAZAPI_API_KEY: "${UAZAPI_API_KEY}"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`${SERVER_DOMAIN:-localhost}`) && PathPrefix(`/api`)"

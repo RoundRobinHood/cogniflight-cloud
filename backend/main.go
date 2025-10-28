@@ -17,6 +17,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/uazapi"
 	"github.com/RoundRobinHood/jlogging"
 	"github.com/gin-gonic/gin"
 	"github.com/sourcegraph/jsonrpc2"
@@ -39,6 +40,16 @@ func main() {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	if openAIKey == "" {
 		log.Fatal("Missing OpenAI key")
+	}
+
+	uazapi_url := os.Getenv("UAZAPI_URL")
+	if uazapi_url == "" {
+		log.Fatal("Missing UAZAPI URL")
+	}
+
+	uazapi_key := os.Getenv("UAZAPI_API_KEY")
+	if uazapi_key == "" {
+		log.Fatal("Missing UAZAPI API Key")
 	}
 
 	database := client.Database("cogniflight")
@@ -121,11 +132,24 @@ func main() {
 	r.GET("/signup/check-username/:username", auth.SignupCheckUsername(fileStore))
 	r.POST("/signup", auth.Signup(fileStore))
 	r.POST("/login", auth.Login(fileStore))
-	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore), cmd.CmdWebhook(fileStore, sessionStore, chatbot.APIKey(openAIKey), jsonConn, mqttEvents, &influx.InfluxDBConfig{
-		URL:   os.Getenv("INFLUX_URL"),
-		Token: os.Getenv("INFLUX_TOKEN"),
-		Org:   os.Getenv("INFLUX_ORG"),
-	}))
+	r.GET("/cmd-socket", auth.AuthMiddleware(fileStore),
+		cmd.CmdWebhook(
+			fileStore,
+			sessionStore,
+			chatbot.APIKey(openAIKey),
+			jsonConn,
+			mqttEvents,
+			&influx.InfluxDBConfig{
+				URL:   os.Getenv("INFLUX_URL"),
+				Token: os.Getenv("INFLUX_TOKEN"),
+				Org:   os.Getenv("INFLUX_ORG"),
+			},
+			uazapi.UazapiConfig{
+				BaseURL:    uazapi_url,
+				APIKey:     uazapi_key,
+				HTTPClient: &http.Client{},
+			},
+		))
 
 	server := &http.Server{
 		Addr:    ":8080",

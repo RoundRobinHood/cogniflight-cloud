@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSystem } from "../useSystem";
-import { usePipeClient } from "../../api/socket";
+import { StringIterator, usePipeClient } from "../../api/socket";
 import "../../styles/apps/app-base.css";
 import "../../styles/utilities/modal.css";
 
@@ -36,7 +36,19 @@ export default function InviteUserApp({ instanceData }) {
       const contactInfo = email ? { email } : { phone };
       const token = await client.create_invite(role, contactInfo);
 
-      const link = `https://cogniflight.exequtech.com?token=${token}`;
+      const link = window.location.origin + "?token=" + token;
+
+      if(phone) {
+        try {
+          const cmd = await client.run_command(`send-text -p '${phone}'`, StringIterator(`Hello! You've been invited to sign up to a cogniflight instance.\n Here's your invite link: ${link}`));
+          if(cmd.command_result != 0) {
+            throw new Error(cmd.error);
+          }
+          addNotification("sent whatsapp to " + phone, "success");
+        } catch(err) {
+          addNotification("failed to send invite message: " + err, "error");
+        }
+      }
       setInviteLink(link);
       setShowPopup(true);
       addNotification("Invitation created successfully!", "success");
