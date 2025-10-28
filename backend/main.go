@@ -14,6 +14,7 @@ import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/auth"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/cmd"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/email"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
@@ -50,6 +51,28 @@ func main() {
 	uazapi_key := os.Getenv("UAZAPI_API_KEY")
 	if uazapi_key == "" {
 		log.Fatal("Missing UAZAPI API Key")
+	}
+
+	email_username := os.Getenv("EMAIL_USERNAME")
+	if email_username == "" {
+		log.Fatal("Missing email username")
+	}
+
+	email_password := os.Getenv("EMAIL_PASSWORD")
+	if email_password == "" {
+		log.Fatal("Missing email password")
+	}
+
+	email_host := os.Getenv("EMAIL_HOST")
+	if email_host == "" {
+		log.Fatal("Missing email host")
+	}
+
+	email_port := 465
+	if port_str := os.Getenv("EMAIL_PORT"); port_str != "" {
+		if _, err := fmt.Sscan(port_str, &email_port); err != nil {
+			log.Fatal("invalid email port: ", err)
+		}
 	}
 
 	database := client.Database("cogniflight")
@@ -148,6 +171,12 @@ func main() {
 				BaseURL:    uazapi_url,
 				APIKey:     uazapi_key,
 				HTTPClient: &http.Client{},
+			},
+			email.EmailConfig{
+				Username: email_username,
+				Password: email_password,
+				Host:     email_host,
+				Port:     email_port,
 			},
 		))
 

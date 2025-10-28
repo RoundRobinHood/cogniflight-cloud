@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/email"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
@@ -33,6 +34,7 @@ func CmdWebhook(
 	mqttEvents *util.EventHandler[types.MQTTMessage],
 	flux_cfg *influx.InfluxDBConfig,
 	uazapi_cfg uazapi.UazapiConfig,
+	email_cfg email.EmailConfig,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		auth_get, ok := c.Get("auth")
@@ -57,6 +59,7 @@ func CmdWebhook(
 			mqttEvents,
 			flux_cfg,
 			uazapi_cfg,
+			email_cfg,
 		)
 
 		clients := map[string]types.ClientInfo{}

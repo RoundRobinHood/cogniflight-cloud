@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/chatbot"
+	"github.com/RoundRobinHood/cogniflight-cloud/backend/email"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/filesystem"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/influx"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
@@ -21,6 +22,7 @@ func InitCommands(
 	mqttEvents *util.EventHandler[types.MQTTMessage],
 	flux_cfg *influx.InfluxDBConfig,
 	uazapi_cfg uazapi.UazapiConfig,
+	email_cfg email.EmailConfig,
 ) []sh.Command {
 	commands := []sh.Command{
 		&CmdWhoami{FileStore: filestore, Session: socketSession},
@@ -59,6 +61,7 @@ func InitCommands(
 		CmdHex{},
 
 		&CmdSendText{UazapiConfig: uazapi_cfg},
+		CmdEmail{EmailConfig: email_cfg},
 	}
 
 	activate_cmd := &CmdActivate{
