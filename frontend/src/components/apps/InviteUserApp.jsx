@@ -49,6 +49,17 @@ export default function InviteUserApp({ instanceData }) {
           addNotification("failed to send invite message: " + err, "error");
         }
       }
+      if(email) {
+        try {
+          const cmd = await client.run_command(`email -s 'Invite to platform' -c 'text/html' '${email}'`, StringIterator(`Hello! You've been invited to sign up to a cogniflight instance.<br/> Click <a href="${link}">here</a> to sign up.`));
+          if(cmd.command_result != 0) {
+            throw new Error(cmd.error);
+          }
+          addNotification("sent email to " + email, "success");
+        } catch(err) {
+          addNotification("failed to send email: " + err, "error");
+        }
+      }
       setInviteLink(link);
       setShowPopup(true);
       addNotification("Invitation created successfully!", "success");
