@@ -1,7 +1,50 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Camera, RotateCcw, Image as ImageIcon } from 'lucide-react'
 import { usePipeClient, StringIterator, BinaryIterator } from '../../api/socket'
 import { useSystem } from '../useSystem'
+
+// Global webcam manager to coordinate between multiple camera app instances
+class WebcamManager {
+  constructor() {
+    this.activeInstances = new Set()
+    this.sharedStream = null
+  }
+
+  async acquireStream(instanceId) {
+    this.activeInstances.add(instanceId)
+
+    if (!this.sharedStream) {
+      try {
+        this.sharedStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        })
+      } catch (err) {
+        console.error('Error accessing camera:', err)
+        throw err
+      }
+    }
+
+    return this.sharedStream
+  }
+
+  releaseStream(instanceId) {
+    this.activeInstances.delete(instanceId)
+
+    // If no more instances are using the webcam, stop the stream
+    if (this.activeInstances.size === 0 && this.sharedStream) {
+      this.sharedStream.getTracks().forEach(track => track.stop())
+      this.sharedStream = null
+    }
+  }
+
+  getActiveInstanceCount() {
+    return this.activeInstances.size
+  }
+}
+
+// Singleton webcam manager
+const webcamManager = new WebcamManager()
 
 function CameraApp({ windowId }) {
   const { addNotification } = useSystem()
@@ -17,39 +60,10 @@ function CameraApp({ windowId }) {
   const [showGallery, setShowGallery] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState(null)
 
-  // Auto-start camera on mount
-  useEffect(() => {
-    startCamera()
-
-    // Cleanup on unmount
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop())
-      }
-    }
-  }, [])
-
-  // Load existing photos on mount
-  useEffect(() => {
-    if (client) {
-      loadPhotos()
-    }
-  }, [client])
-
-  // Re-attach stream to video element when it becomes visible again
-  useEffect(() => {
-    if (!capturedImage && stream && videoRef.current) {
-      videoRef.current.srcObject = stream
-    }
-  }, [capturedImage, stream])
-
   // Start camera automatically
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: false
-      })
+      const mediaStream = await webcamManager.acquireStream(windowId)
       setStream(mediaStream)
 
       if (videoRef.current) {
@@ -59,7 +73,87 @@ function CameraApp({ windowId }) {
       console.error('Error accessing camera:', err)
       addNotification('Failed to access camera. Please grant camera permissions.', 'error')
     }
-  }
+  }, [windowId, addNotification])
+
+  // Load saved photos from filesystem
+  const loadPhotos = useCallback(async () => {
+    if (!client) return
+
+    try {
+      // Create Pictures directory if it doesn't exist
+      await client.run_command(
+        `mkdir -p ~/Pictures`,
+        StringIterator('')
+      )
+
+      // List all files in Pictures directory using client.ls
+      const fileList = await client.ls('~/Pictures')
+
+      // Filter for image files based on common image extensions
+      const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
+      const imageFiles = fileList.filter(file => {
+        if (file.type !== 'file') return false
+        const extension = file.name.split('.').pop().toLowerCase()
+        return imageExtensions.includes(extension)
+      })
+
+      // Load each photo
+      const photos = []
+      for (const file of imageFiles) {
+        const readResult = await client.run_command(
+          `cat ~/Pictures/${file.name} | base64`,
+          StringIterator('')
+        )
+
+        if (readResult.command_result === 0 && readResult.output) {
+          // Remove the \r\n that cat adds at the end
+          const base64Data = readResult.output.trim().replace(/[\r\n]+$/, '')
+          const extension = file.name.split('.').pop().toLowerCase()
+
+          // Detect MIME type based on extension
+          let mimeType = 'image/jpeg'
+          if (extension === 'png') mimeType = 'image/png'
+          else if (extension === 'gif') mimeType = 'image/gif'
+          else if (extension === 'webp') mimeType = 'image/webp'
+          else if (extension === 'bmp') mimeType = 'image/bmp'
+
+          photos.push({
+            filename: file.name,
+            data: `data:${mimeType};base64,${base64Data}`,
+            timestamp: new Date().toISOString()
+          })
+        }
+      }
+
+      setSavedPhotos(photos)
+    } catch (err) {
+      console.error('Error loading photos:', err)
+    }
+  }, [client])
+
+  // Auto-start camera on mount
+  useEffect(() => {
+    startCamera()
+
+    // Cleanup on unmount - use webcam manager for proper coordination
+    return () => {
+      webcamManager.releaseStream(windowId)
+    }
+  }, [windowId, startCamera])
+
+  // Load existing photos on mount
+  useEffect(() => {
+    if (client) {
+      loadPhotos()
+    }
+  }, [client, loadPhotos])
+
+  // Re-attach stream to video element when it becomes visible again
+  useEffect(() => {
+    if (!capturedImage && stream && videoRef.current) {
+      videoRef.current.srcObject = stream
+    }
+  }, [capturedImage, stream])
 
   // Capture photo
   const capturePhoto = () => {
@@ -141,62 +235,6 @@ function CameraApp({ windowId }) {
       console.error('Save error:', err)
     } finally {
       setIsSaving(false)
-    }
-  }
-
-  // Load saved photos from filesystem
-  const loadPhotos = async () => {
-    if (!client) return
-
-    try {
-      // Create Pictures directory if it doesn't exist
-      await client.run_command(
-        `mkdir -p ~/Pictures`,
-        StringIterator('')
-      )
-
-      // List all files in Pictures directory using client.ls
-      const fileList = await client.ls('~/Pictures')
-
-      // Filter for image files based on common image extensions
-      const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
-      const imageFiles = fileList.filter(file => {
-        if (file.type !== 'file') return false
-        const extension = file.name.split('.').pop().toLowerCase()
-        return imageExtensions.includes(extension)
-      })
-
-      // Load each photo
-      const photos = []
-      for (const file of imageFiles) {
-        const readResult = await client.run_command(
-          `cat ~/Pictures/${file.name} | base64`,
-          StringIterator('')
-        )
-
-        if (readResult.command_result === 0 && readResult.output) {
-          // Remove the \r\n that cat adds at the end
-          const base64Data = readResult.output.trim().replace(/[\r\n]+$/, '')
-          const extension = file.name.split('.').pop().toLowerCase()
-
-          // Detect MIME type based on extension
-          let mimeType = 'image/jpeg'
-          if (extension === 'png') mimeType = 'image/png'
-          else if (extension === 'gif') mimeType = 'image/gif'
-          else if (extension === 'webp') mimeType = 'image/webp'
-          else if (extension === 'bmp') mimeType = 'image/bmp'
-
-          photos.push({
-            filename: file.name,
-            data: `data:${mimeType};base64,${base64Data}`,
-            timestamp: new Date().toISOString()
-          })
-        }
-      }
-
-      setSavedPhotos(photos)
-    } catch (err) {
-      console.error('Error loading photos:', err)
     }
   }
 
@@ -539,7 +577,7 @@ function CameraApp({ windowId }) {
         justifyContent: 'space-between'
       }}>
         <span>Window ID: {windowId}</span>
-        <span>Status: {stream ? '🟢 Camera Active' : '⚫ Camera Off'}</span>
+        <span>Status: {stream ? `🟢 Camera Active (${webcamManager.getActiveInstanceCount()} instance${webcamManager.getActiveInstanceCount() !== 1 ? 's' : ''})` : '⚫ Camera Off'}</span>
       </div>
     </div>
   )
