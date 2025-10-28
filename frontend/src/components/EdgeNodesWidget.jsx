@@ -11,11 +11,15 @@ function EdgeNodesWidget({ onClick }) {
   const [intruderAlert, setIntruderAlert] = useState(null)
   const mqttCommandHandleRef = useRef(null)
   const intruderDetectedRef = useRef({})
-  const { addNotification } = useSystem()
+  const { addNotification, systemState } = useSystem()
+
+  // Check if user has pilot tag
+  const userTags = systemState?.userProfile?.tags || []
+  const isPilot = userTags.includes('pilot')
 
   // Get the complete list of edge nodes from the edge-nodes command
   useEffect(() => {
-    if (!client) return
+    if (!client || isPilot) return
 
     const loadEdgeNodesList = async () => {
       try {
@@ -49,11 +53,11 @@ function EdgeNodesWidget({ onClick }) {
     }
 
     loadEdgeNodesList()
-  }, [client])
+  }, [client, isPilot])
 
   // Start MQTT streaming to track active nodes
   useEffect(() => {
-    if (!client) return
+    if (!client || isPilot) return
 
     const startStreaming = async () => {
       try {
@@ -122,10 +126,12 @@ function EdgeNodesWidget({ onClick }) {
         }
       }
     }
-  }, [client])
+  }, [client, isPilot])
 
   // Monitor for intruder_detected state and trigger global alert
   useEffect(() => {
+    if (isPilot) return
+
     Object.values(edgeNodes).forEach(node => {
       const nodeId = node.edge_username
       const systemState = node.payload?.system_state
@@ -167,6 +173,30 @@ function EdgeNodesWidget({ onClick }) {
   }
 
   const statusColor = getStatusColor()
+
+  // If user is a pilot, show access denied
+  if (isPilot) {
+    return (
+      <div
+        className="edge-nodes-widget"
+        style={{
+          cursor: 'default',
+          borderColor: '#ff000033',
+          opacity: 0.7
+        }}
+      >
+        <div className="edge-nodes-icon" style={{ color: '#ff0000' }}>
+          <Monitor size={16} />
+        </div>
+        <div className="edge-nodes-details" style={{ flex: 1, textAlign: 'center' }}>
+          <div className="edge-nodes-label">Edge Nodes</div>
+          <div className="edge-nodes-status" style={{ color: '#ff0000' }}>
+            <span>Access Denied</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>

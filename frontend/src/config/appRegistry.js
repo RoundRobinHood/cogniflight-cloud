@@ -174,9 +174,11 @@ class AppRegistry {
       component: "EdgeNodeDashboardApp",
       defaultTitle: "Edge Node Dashboard",
       defaultSize: { width: 1400, height: 900 },
-      visibleWhen: (systemState) =>
-        systemState.userProfile.role === "sysadmin" ||
-        systemState.userProfile.role === "atc",
+      visibleWhen: (systemState) => {
+        const userTags = systemState.userProfile.tags || [];
+        const isPilot = userTags.includes('pilot');
+        return !isPilot && (systemState.userProfile.role === "sysadmin" || systemState.userProfile.role === "atc");
+      },
     });
   }
 
