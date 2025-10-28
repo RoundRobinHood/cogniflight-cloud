@@ -20,7 +20,7 @@ func (c *CmdMQTT) Identifier() string {
 
 func (c *CmdMQTT) Run(ctx sh.CommandContext) int {
 	tags := util.GetTags(ctx.Ctx)
-	if !slices.Contains(tags, "sysadmin") && !slices.Contains(tags, "atc") {
+	if !slices.Contains(tags, "sysadmin") && !slices.Contains(tags, "atc") && !slices.Contains(tags, "pilot") {
 		fmt.Fprint(ctx.Stderr, "access denied")
 		return 1
 	}
