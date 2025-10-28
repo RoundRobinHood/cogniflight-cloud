@@ -194,6 +194,30 @@ function Desktop({ user, onLogout }) {
       }
     }
 
+    // For pilots, also check cardiovascular baselines and cabin preferences
+    if (isPilot) {
+      // Check cardiovascular baselines
+      const cardiovascular = userProfile?.cardiovascular_baselines
+      if (!cardiovascular ||
+          !cardiovascular.resting_heart_rate_bpm ||
+          !cardiovascular.resting_heart_rate_std_dev ||
+          !cardiovascular.max_heart_rate_bpm) {
+        return false
+      }
+
+      // Check cabin preferences
+      const cabin = userProfile?.cabin_preferences
+      if (!cabin ||
+          cabin.preferred_temperature_celsius === undefined ||
+          cabin.preferred_temperature_celsius === null ||
+          cabin.preferred_temperature_celsius === '' ||
+          cabin.temperature_tolerance_range_celsius === undefined ||
+          cabin.temperature_tolerance_range_celsius === null ||
+          cabin.temperature_tolerance_range_celsius === '') {
+        return false
+      }
+    }
+
     return true
   }, [systemState.userProfile])
 
