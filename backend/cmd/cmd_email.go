@@ -21,7 +21,7 @@ func (c CmdEmail) Identifier() string {
 
 func (c CmdEmail) Run(ctx sh.CommandContext) int {
 	tags := util.GetTags(ctx.Ctx)
-	if !slices.Contains(tags, "sysadmin") {
+	if !slices.Contains(tags, "sysadmin") && !slices.Contains(tags, "atc") {
 		fmt.Fprint(ctx.Stderr, "access denied")
 		return 1
 	}

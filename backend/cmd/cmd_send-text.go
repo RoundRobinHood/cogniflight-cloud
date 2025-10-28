@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"slices"
 
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/types"
 	"github.com/RoundRobinHood/cogniflight-cloud/backend/uazapi"
@@ -19,6 +20,12 @@ func (c *CmdSendText) Identifier() string {
 }
 
 func (c *CmdSendText) Run(ctx sh.CommandContext) int {
+	tags := util.GetTags(ctx.Ctx)
+	if !slices.Contains(tags, "sysadmin") && !slices.Contains(tags, "atc") {
+		fmt.Fprint(ctx.Stderr, "access denied")
+		return 1
+	}
+
 	if len(ctx.Args) == 1 {
 		fmt.Fprint(ctx.Stderr, "usage: send-text [-p] <numbers...>")
 		return 1
