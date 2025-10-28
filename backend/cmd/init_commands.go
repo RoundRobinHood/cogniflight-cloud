@@ -42,6 +42,7 @@ func InitCommands(filestore filesystem.Store, fsctx filesystem.FSContext, socket
 		CmdMLRPC{Conn: jsonConn},
 		CmdFluxStream{FluxCfg: flux_cfg},
 		&CmdMQTT{Events: mqttEvents},
+		&CmdFinishFlight{FileStore: filestore},
 
 		CmdB64{},
 		CmdHex{},
